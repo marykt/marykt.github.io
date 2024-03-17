@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="小边的博客">
+<meta property="og:url" content="http://yoursite.com/page/4/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="marykt">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-linux/Readme" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/Readme/" class="article-date">
+  <time datetime="2024-03-17T14:14:18.905Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/Readme/" data-id="cltvlnllc00039kqqc068dyf5" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/全志h3 开发" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E5%85%A8%E5%BF%97h3%20%E5%BC%80%E5%8F%91/" class="article-date">
+  <time datetime="2024-03-17T14:14:18.213Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="主线内核编译"><a href="#主线内核编译" class="headerlink" title="主线内核编译"></a>主线内核编译</h1><p>1.编译内核：<br>和U-boot编译类似，<br>进入内核主线目录下输入<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf- sun8iw7p1smp_defconfig<br>1<br>生成配置文件<br>接着输入：<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf-<br>1<br>CPU高级的记得加上-j<br>编译完成后在	&#x2F;home&#x2F;mainline&#x2F;mainline_kernel&#x2F;arch&#x2F;arm&#x2F;boot<br>zImage，这是我们内核目标文件，还需要处理一下，先不管。<br>接着输入：<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf- dtbs<br>编译设备树<br>目标文件在&#x2F;home&#x2F;mainline&#x2F;mainline_kernel&#x2F;arch&#x2F;arm&#x2F;boot&#x2F;dts下<br>sun8i-h3-orangepi-pc-plus.dtb文件<br>再输入<br>mkdir output<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf- INSTALL_MOD_PATH&#x3D;&#x2F;home&#x2F;mainline&#x2F;mainline_kernel&#x2F;output modules_install<br>在output文件夹下得到一系列模块文件，先不管<br>至此编译流程结束，再简单处理一下即可烧入至SD中启动香橙派PC_Plus。<br>第一次写博客，操作不熟悉，看的不爽望原谅，接下来会写如何U-boot启动内核和内核的一些配置及坑</p>
+<p>4.补充问题及解决方法<br>安装交叉编译器：<br>apt-get install gcc-arm-linux-gnueabihf<br>recipe for target ‘scripts&#x2F;basic&#x2F;fixdep’ failed<br>apt-get install</p>
+<p>Python.h: No such file or directory<br>sudo apt-get install python3-dev</p>
+<h1 id="烧入内核"><a href="#烧入内核" class="headerlink" title="烧入内核"></a>烧入内核</h1><p>分区不会损坏之前烧入的U-boot,Linux分区从2048块开始，块单位是512B,也就是分区是从2048*0.5KB&#x3D;1MB处开始的，U-boot大小约为450KB,所以不用担心会损坏U-boot文件<br>首先，我们对TF卡进行分区，当然也可以不用分区，十分建议分区，用分区的原因下面再解释<br>输入命令：fdisk 你的tf卡<br>我这里是 :fdisk &#x2F;dev&#x2F;sdb<br>输入：p先查看信息</p>
+<p>Disk &#x2F;dev&#x2F;sdb：29.5 GiB，31666995200 字节，61849600 个扇区<br>单元：扇区 &#x2F; 1 * 512 &#x3D; 512 字节<br>扇区大小(逻辑&#x2F;物理)：512 字节 &#x2F; 512 字节<br>I&#x2F;O 大小(最小&#x2F;最佳)：512 字节 &#x2F; 512 字节</p>
+<p>再输入：n</p>
+<p>分区类型<br>   p   主分区 (0个主分区，0个扩展分区，4空闲)<br>   e   扩展分区 (逻辑分区容器)<br>选择 (默认 p)： p<br>分区号 (1-4, 默认  1): 1<br>第一个扇区 (2048-61849599, 默认 2048): 2048<br>上个扇区，+sectors 或 +size{K,M,G,T,P} (2048-61849599, 默认 61849599):+100M</p>
+<p>以此类推，再创建一个10G大小的分区<br>100M用于存储设备树文件和内核<br>10G用于储存根文件系统<br>大小没有特殊要求，设置为100G和1T也可以。<br>接着我们需要格式化分区，100M格式化成FAT,10G格式化为EXT2或3或4</p>
+<p>fdisk &#x2F;dev&#x2F;sdb<br>输入：t再选择分区1<br>输入L打印所有可以文件系统格式<br>再输入6，选择FAT16 FAT32都可以<br>我这里另外一个分区默认是ext4,不用管</p>
+<p>接着将<br>sun8i-h3-orangepi-pc-plus.dtb和UImage复制进分区1<br>最后拔出内存卡，插入香橙派，老样子插电打开串口。<br>进入U-boot控制台：<br>    输入：<br>        load mmc 0:1 0x43000000 sun8i-h3-orangepi-pc-plus.dtb<br>        load mmc 0:1 0x42000000 uImage<br>        bootm 0x42000000 - 0x43000000<br>    解释一下：load不用多说是加载的意思，mmc 0:1是指从mmc 第0个分区和第一个分区<br>    寻找名字叫sun8i-h3-orangepi-pc-plus.dtb的文件，然后加载到主存位置0x43000000来。<br>    为什么是分区0和分区1看全志手册：全志优先先给TF分配分区，所以是0和1,然后其他的比如EMMC的分区3，4。<br>    bootm的意思大概能猜出来了把，两个地址分别对应内核文件和设备树文件，缺一不可。</p>
+<pre><code>上文说过可以不用格式化为FAT，因为只要知道sun8i-h3-orangepi-pc-plus.dtb和uImage地址和文件大小，
+同样可以完成加载。
+
+打印：
+=&gt; load mmc 0:1 0x42000000 uImage
+7933608 bytes read in 357 ms (21.2 MiB/s)
+=&gt; load mmc 0:1 0x43000000 sun8i-h3-orangepi-pc-plus.dtb
+30640 bytes read in 5 ms (5.8 MiB/s)
+=&gt; bootm 0x42000000 - 0x43000000
+## Booting kernel from Legacy Image at 42000000 ...
+Image Name:   linux-5.3.5+
+Image Type:   ARM Linux Kernel Image (uncompressed)
+Data Size:    7933544 Bytes = 7.6 MiB
+Load Address: 46000000
+Entry Point:  46000000
+Verifying Checksum ... OK
+## Flattened Device Tree blob at 43000000
+Booting using the fdt blob at 0x43000000
+EHCI failed to shut down host controller.
+Loading Kernel Image
+Loading Device Tree to 49ff5000, end 49fff7af ... OK
+
+Starting kernel ...
+</code></pre>
+<p>这里代表内核启动成功了。<br>下面还有一串阿巴阿巴的信息，先不用管，因为我们的根文件系统还没拷贝进去。</p>
+<h1 id="根文件系统"><a href="#根文件系统" class="headerlink" title="根文件系统"></a>根文件系统</h1><p><a href="https://blog.csdn.net/qq_40937426/article/details/107553193">https://blog.csdn.net/qq_40937426/article/details/107553193</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E5%85%A8%E5%BF%97h3%20%E5%BC%80%E5%8F%91/" data-id="cltvlnllj00099kqq0aax6w3j" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/内核常用数据结构" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E5%86%85%E6%A0%B8%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" class="article-date">
+  <time datetime="2024-03-17T14:14:17.521Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="双向链表"><a href="#双向链表" class="headerlink" title="双向链表"></a>双向链表</h2><p>linux 内核定义了 list_head 数据结构，字段prev和next 分别标识双向链表的向前和向后的指针元素。<br>![](.&#x2F;static&#x2F;用list_head 数据结构构造的双向链表.png)</p>
+<ul>
+<li>新链表使用 LIST_HEAD(list_name) 宏进行初始化，见上图b</li>
+</ul>
+<p>有几个实现原语的函数和宏，如下表所示：<br><img src="/./static/%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8-%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0%E5%92%8C%E5%AE%8F.png"></p>
+<h3 id="散列表中的双向链表"><a href="#散列表中的双向链表" class="headerlink" title="散列表中的双向链表"></a>散列表中的双向链表</h3><p>散列表中用到的双向链表和一般双向链表有明显区别，其不是循环链表，而是使用hlist_head+hlist_node 进行构建。<br>可以用hlist_add_head() 等hlist函数和宏进行操纵。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E5%86%85%E6%A0%B8%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" data-id="cltvlnlll000a9kqqdzjv2vj7" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/内核进阶之旅-【官方教学】嵌入式Linux C，内核驱动编程全套教程/P6.ARM64处理器架构" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/P6.ARM64%E5%A4%84%E7%90%86%E5%99%A8%E6%9E%B6%E6%9E%84/" class="article-date">
+  <time datetime="2024-03-17T14:14:16.841Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="P6-ARM64处理器架构"><a href="#P6-ARM64处理器架构" class="headerlink" title="P6.ARM64处理器架构"></a>P6.ARM64处理器架构</h1><ul>
+<li>深入理解linux 内核： 第三章 进程<br>keywords： ARM64、处理器、aarch64</li>
+</ul>
+<h2 id="内核地址空间布局-（linux-6-0-arch-arm64-include-asm-memory-h-33-81）"><a href="#内核地址空间布局-（linux-6-0-arch-arm64-include-asm-memory-h-33-81）" class="headerlink" title="内核地址空间布局 （linux_6.0&#x2F;arch&#x2F;arm64&#x2F;include&#x2F;asm&#x2F;memory.h 33-81）"></a>内核地址空间布局 （linux_6.0&#x2F;arch&#x2F;arm64&#x2F;include&#x2F;asm&#x2F;memory.h 33-81）</h2><p><img src="/./static/%E5%86%85%E6%A0%B8%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4.png"></p>
+<ul>
+<li>线性映射区域部分范围为[PAGE_OFFSET,2^64-1]，其中PAGE_OFFSET&#x3D;(UL(0fffffffffffffff)&lt;&lt;(VA_BITS - 1)),总长度是内核虚拟地址空间的一半。其中线性的原因是：<br>虚拟地址&#x3D;（物理地址-PHYS_OFFSET）+ PAGE_OFFSET</li>
+<li>vmemmap 区域范围为[VMEMMAP_START,PAGE_OFFSET]，长度为VMEMMAP_SIZE&#x3D;(线性映射区域长度&#x2F;页长度*page结构体的长度上限)？</li>
+<li>PCI IO区域用于外部PCI设备</li>
+<li>固定映射会映射到物理地址</li>
+<li>vmalloc区域 ：内核动态内存空间</li>
+<li>KASCAN影子区域 ：KernelAddressSANitizer（KASAN）是一个动态检测内存错误的工具。它为找到use-after-free和out-of-bounds问题提供了一个快速和全面的解决方案。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/P6.ARM64%E5%A4%84%E7%90%86%E5%99%A8%E6%9E%B6%E6%9E%84/" data-id="cltvlnlm6000z9kqqdxf45svk" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/内核进阶之旅-【官方教学】嵌入式Linux C，内核驱动编程全套教程/资源" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/%E8%B5%84%E6%BA%90/" class="article-date">
+  <time datetime="2024-03-17T14:14:16.153Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="https://www.bilibili.com/video/BV1x24y1C7ZE/?spm_id_from=333.999.0.0&vd_source=dfe5cc749f33d786e3fcae1cd7244fbc">https://www.bilibili.com/video/BV1x24y1C7ZE/?spm_id_from=333.999.0.0&amp;vd_source=dfe5cc749f33d786e3fcae1cd7244fbc</a></p>
+<h1 id="进程间通信"><a href="#进程间通信" class="headerlink" title="进程间通信"></a>进程间通信</h1><p>进程间驱动demo</p>
+<h1 id="网卡驱动"><a href="#网卡驱动" class="headerlink" title="网卡驱动"></a>网卡驱动</h1><p>实现一个网卡驱动</p>
+<h1 id="用户态协议栈"><a href="#用户态协议栈" class="headerlink" title="用户态协议栈"></a>用户态协议栈</h1><p>实现一个用户态协议栈程序</p>
+<h1 id="P2P-程序"><a href="#P2P-程序" class="headerlink" title="P2P 程序"></a>P2P 程序</h1><h1 id=""><a href="#" class="headerlink" title=""></a></h1>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/%E8%B5%84%E6%BA%90/" data-id="cltvlnlm700109kqqg56k8is8" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/精通linux设备驱动开发/linux驱动结构" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/linux%E9%A9%B1%E5%8A%A8%E7%BB%93%E6%9E%84/" class="article-date">
+  <time datetime="2024-03-17T14:14:15.449Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="关键数据结构"><a href="#关键数据结构" class="headerlink" title="关键数据结构"></a>关键数据结构</h1><h1 id="向系统注册"><a href="#向系统注册" class="headerlink" title="向系统注册"></a>向系统注册</h1><h1 id="操作函数内容"><a href="#操作函数内容" class="headerlink" title="操作函数内容"></a>操作函数内容</h1>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/linux%E9%A9%B1%E5%8A%A8%E7%BB%93%E6%9E%84/" data-id="cltvlnlm800119kqqcudw1vlh" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/精通linux设备驱动开发/pci驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/pci%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:15.449Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="PCI"><a href="#PCI" class="headerlink" title="PCI"></a>PCI</h1><p>PCI(Peripheral Component Interconnect, 外围组件互联) 是一种适用范围很广的I&#x2F;O总线。</p>
+<ul>
+<li>PCI总线是一种32位总线，它的数据总线宽度为32位，工作频率为33MHz&#x2F;66MHZ，理论上的带宽为133MB&#x2F;s或266MB&#x2F;s。</li>
+<li>minipci 是一种小型的PCI接口，主要用于笔记本电脑。工作频率为33MHz，理论带宽为133MB&#x2F;s。</li>
+<li>pci-x 扩展数据位宽到64位，工作频率为133MHz，理论带宽为1GB&#x2F;s。最新版本的pci-x 2.0，工作频率为533MHz，理论带宽为4GB&#x2F;s。</li>
+<li>pci-e 是一种新型的总线，采用串行传输,最大支持32个串行，每个连接传输方向速度250MB&#x2F;s,理论带宽为8GB&#x2F;s。PCI-E 2.0的带宽为16GB&#x2F;s。 minipcie 也替换掉了minipci。<br>对开发人员来说PCI具有设备自动配置的优势，启动时，BIOS类的固件会遍历PCI总线并分配资源。</li>
+</ul>
+<h2 id="寻址和识别"><a href="#寻址和识别" class="headerlink" title="寻址和识别"></a>寻址和识别</h2><p>PCI设备的地址由总线号、设备号和功能号组成。分别称为：厂家ID、设备ID和设备类代码。<br>使用lspci的输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)</span><br><span class="line">00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]</span><br><span class="line">00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]</span><br><span class="line">00:01.3 Bridge: Intel Corporation 82371AB/EB/MB PIIX4 ACPI (rev 03)</span><br><span class="line">00:02.0 VGA compatible controller: InnoTek Systemberatung GmbH VirtualBox Graphics Adapter</span><br><span class="line">00:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 02)</span><br><span class="line">00:04.0 System peripheral: InnoTek Systemberatung GmbH VirtualBox Guest Service</span><br></pre></td></tr></table></figure>
+<p>第一列是总线号、设备号和功能号，第二列是设备的厂家ID和设备ID，第三列是设备的类代码。其中，总线号、设备号和功能号的格式为：总线号:设备号.功能号。例如，00:01.0表示总线号为0，设备号为1，功能号为0的设备。<br>其中一个PCI域能容纳256个总线（PCI总线），每个总线最多可以容纳32个设备，每个设备最多可以容纳8个功能。因此，PCI域最多可以容纳256<em>32</em>8&#x3D;65536个设备。<br>PCI总线上有一个PCI桥的设备上，使用lspci -t 的输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">-[0000:00]-+-00.0  Intel Corporation 440FX - 82441FX PMC [Natoma]</span><br><span class="line">           +-01.0  Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]</span><br><span class="line">           +-01.1  Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]</span><br><span class="line">           +-01.3  Intel Corporation 82371AB/EB/MB PIIX4 ACPI</span><br><span class="line">           +-02.0  </span><br><span class="line">           +-1e.0-[0000:02-05]--+-[0000:03]--+-00.0  InnoTek Systemberatung GmbH VirtualBox Graphics &lt;--</span><br><span class="line">           |                    |            \-00.1  InnoTek Systemberatung GmbH VirtualBox Guest</span><br><span class="line">           |                    \-[0000:04]--+-00.0  Intel Corporation 82540EM Gigabit Ethernet</span><br><span class="line">           |+-1f.0  Intel Corporation 82801AA 8xx/9xx Series IDE Controller  </span><br></pre></td></tr></table></figure>
+<p>如上：要找到设备03:00.0,首先要经过PCI-PCI桥0000:00:1e.0,最后经过地址0000:03:00.0,找到设备。<br>PCI设备具有256B的空间，用于存放配置寄存器，可以通过lspci -x 查看：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)</span><br><span class="line">00: 86 80 22 04 07 00 10 02 02 00 00 06 00 00 00 00</span><br><span class="line">10: 0</span><br><span class="line">20:</span><br><span class="line">30:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>PCI 设备的空间是小端字节序的，前64B是PCI设备的配置空间，后192B是PCI设备的扩展配置空间。PCI 配置空间的含义：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">偏移地址：含义</span><br><span class="line">00-01h：厂商ID  对应上面的 0x8086</span><br><span class="line">02-03h：设备ID </span><br><span class="line">设备类型代码：00-05h：PCI设备，06-0Bh：PCI-PCI桥，0C-0Fh：CardBus桥</span><br><span class="line">基址寄存器</span><br><span class="line">子厂家ID</span><br><span class="line">子设备ID</span><br><span class="line">扩展ROM基址</span><br></pre></td></tr></table></figure>
+<h2 id="访问PCI"><a href="#访问PCI" class="headerlink" title="访问PCI"></a>访问PCI</h2><p>PCI设备包括三个可寻址空间：配置空间、IO端口和设备内存。</p>
+<ol>
+<li>配置区：<code>pci_[read/write]_config_[byte|word|dword](struct pci_dev *pdev,int offset,int [*/ ]value)</code>。配置区前64B是PCI设备的配置空间，后192B是PCI设备的扩展配置空间。通过offset进行操作。</li>
+<li>IO和内存区域：PCI设备共有6个IO或内存区域，IO存放寄存器，内存区域存放数据。IO功能和设备有关系，内存区域由设备决定存在与否。<code>unsigned long pci_resource_[start|len|end|flags](struct pci_dev *pdev,int bar)</code><br>为了操作IO区域，如PCI视频卡设备控制寄存器，驱动器需要完成以下事情：</li>
+<li>从配置区相应基址寄存器里得到IO区域的基址： iobase &#x3D; pci_resouce_satrt(pdev,bar)</li>
+<li>用内核的request_region()常规机制获得这个IO区域，并标明它对应的设备 :request_region(iobase,length,”my_deriver”)</li>
+<li>用寄存器手册上的偏移地址加上第一步的基址，然后用inb()和outb()函数访问这些寄存器: inl(io_base+REGISTER_OFFSET)<br>为了操作内存区域：</li>
+<li>获得基址、内存区域长度和相关标志：pci_resource_xxx</li>
+<li>用内核的request_mem_region()常规基址标记这片内存的拥有者</li>
+<li>使用lib&#x2F;iomap.c中定义的pci_iomap() 来获取指针。buffer &#x3D; pci_iomap(pdev,bar,mmio_length)</li>
+</ol>
+<h2 id="DMA"><a href="#DMA" class="headerlink" title="DMA"></a>DMA</h2><p>DMA可以同步传送数据也可以异步传送数据。</p>
+<ul>
+<li>同步传输示例：用DMA从系统帧缓冲到LCD控制器传送数据，用户程序通过&#x2F;dev&#x2F;fbX 设备节点把像素数据写入到DMA帧缓冲区，同时LCD控制器用DMA同步方式取出数据。</li>
+<li>异步传输示例：网络数据传输等IO占用缓冲区时间长的工作</li>
+</ul>
+<p>DMA缓冲区是DMA传送时用作源地址和目的地址的内存区，受限于总线的寻址的位数24位ISA（16MB ZONE_DMA）、PCI 32位(32位系统无限制)，占用系统底部的部分内存空间。可以通过下面函数告诉内核系统中可用作DMA缓冲区的地址的特殊要求：</p>
+<p>dma_set_mask(struct device *dev,u64 mask)</p>
+<p>如果函数成功返回，就可以在mask指定的范围内进行DMA操作。</p>
+<p>内核提供一些API函数来屏蔽DMA的细节：include&#x2F;asm&#x2F;-genetic&#x2F;pci-dma-compat.h。内核为PCI驱动程序提供两类DMA服务：</p>
+<ul>
+<li>一致性DMA访问方法。pci_alloc_consistent。当cpu和PCI设备都有可能干预DMA缓冲区时，保证数据一致性</li>
+<li>流式DMA访问。当不太需要CPU和IO设备共享DMA缓冲区时使用，速度快，如网络 。函数为：<code>pci_[map|umap|dma_sync]_single</code>（单一缓冲区） 和<code>pci_[map|umap|dma_sync]_sg</code>(缓冲区链)</li>
+</ul>
+<h2 id="设备实例：以太网-调制解调卡"><a href="#设备实例：以太网-调制解调卡" class="headerlink" title="设备实例：以太网-调制解调卡"></a>设备实例：以太网-调制解调卡</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/pci%E9%A9%B1%E5%8A%A8/" data-id="cltvlnlm800129kqq166nb5py" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/精通linux设备驱动开发/usb驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/usb%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:14.741Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="usb"><a href="#usb" class="headerlink" title="usb"></a>usb</h1><p>USB通信协议采用主从结构，实现了主机控制器和外围设备的通信。</p>
+<p>在PC机中usb主机控制器属于南桥芯片的一部分，通过PCI总线和处理器通信。<br>在嵌入式设备上，Soc内嵌的控制器通过总线和CPU通信，控制器和外设通过usb总线通信。</p>
+<ul>
+<li>主机模式：主机控制器通过usb总线控制外设</li>
+<li>从机模式：外设通过usb总线控制主机控制器</li>
+<li>OTG模式：主机控制器和外设都可以控制usb总线<br>此章节的驱动主要是针对主机模式的驱动。</li>
+</ul>
+<h2 id="usb主机控制器"><a href="#usb主机控制器" class="headerlink" title="usb主机控制器"></a>usb主机控制器</h2><p>usb主机控制器是一个集成了usb控制器和usb主机控制器的芯片，主要功能是控制usb总线上的外设。主要分为以下几种：</p>
+<ul>
+<li>UHCI(Universal Host Controller Interface)：Intel公司开发的。</li>
+<li>OHCI(Open Host Controller Interface)：Compaq公司和微软开发的。</li>
+<li>EHCI(Enhanced Host Controller Interface)：Intel公司开发的。支持高速usb2.0设备，为了兼容1.1通常也包含UHCI或OHCI控制器。</li>
+<li>USB OTG控制器：嵌入式微控制领域广泛使用。使用HNP（Host Negotiation Protocol,主机沟通协议）初始化设备连接后，这样的设备可以在主从模式之间切换。</li>
+</ul>
+<h2 id="传输模式"><a href="#传输模式" class="headerlink" title="传输模式"></a>传输模式</h2><p>USB设备传输数据的模式有四种：</p>
+<ul>
+<li>控制传输模式，用来传送外设和主机之间的控制、状态、配置等信息。</li>
+<li>批量传输模式，用来传送大量时延要求不高的数据。如打印机。</li>
+<li>中断传输模式，传输数据量小，用来传送时延要求高的数据。如鼠标。</li>
+<li>等时传输模式，用来传输实时数据。如音频设备。</li>
+</ul>
+<h2 id="寻址"><a href="#寻址" class="headerlink" title="寻址"></a>寻址</h2><p>可寻址单元称为端点。端点地址由端点号和端点方向组成。端点号是一个8位的无符号整数，端点方向是一个位，0表示OUT（输出到设备），1表示IN（输入到主机）。端点0是一个特殊的端点，用来传输控制信息。</p>
+<p>usb和I2c的异同如下：</p>
+<ul>
+<li>相同点：都是主从结构，都是通过总线通信。寻址不占用CPU寻址范围。地址数为7位。都有主机控制器和外设。都有控制器和外设的通信协议。</li>
+<li>不同点：usb是主机控制器控制外设，I2c是外设控制主机控制器。usb是异步通信，I2c是同步通信。</li>
+</ul>
+<p>usb和pci的异同如下：</p>
+<ul>
+<li>相同点：都支持热插拔，驱动架构相似，支持高速传输，通常都可获得DMA控制，支持多功能设备</li>
+</ul>
+<h2 id="Linux-USB-子系统"><a href="#Linux-USB-子系统" class="headerlink" title="Linux-USB 子系统"></a>Linux-USB 子系统</h2><p>下图是Linux-usb 子系统的架构：<br><img src="/./static/linux-usb%E5%AD%90%E7%B3%BB%E7%BB%9F.drawio.png"></p>
+<ul>
+<li>usb核心。由一些基础代码组成，包括结构体和函数定义，供给HCD和驱动程序使用。</li>
+<li>HCD（Host Controller Driver）主机控制器驱动。主要负责和主机控制器通信，控制usb总线上的外设。HCD驱动程序和usb核心之间通过usb_hcd结构体进行通信。</li>
+<li>hub启动和内核辅助线程khubd:当热插拔设备插入后，hub驱动程序会创建一个内核辅助线程khubd，用来处理hub的状态变化。</li>
+<li>usb文件系统。usb子系统提供了一些文件系统，用来管理usb设备。如usbfs，sysfs，debugfs。</li>
+<li>usb客户端驱动程序。usb设备的驱动程序，用来控制usb设备。usb客户端驱动程序和usb核心之间通过usb_driver结构体进行通信。<br>对于端到端的操作，需要USB子系统和许多其他内核层共同完成。比如要驱动usb蓝牙键盘，需要USB子系统、蓝牙层、输入子系统和tty层联合完成。</li>
+</ul>
+<h2 id="驱动程序的数据结构"><a href="#驱动程序的数据结构" class="headerlink" title="驱动程序的数据结构"></a>驱动程序的数据结构</h2><h3 id="usb-device-结构体"><a href="#usb-device-结构体" class="headerlink" title="usb_device 结构体"></a>usb_device 结构体</h3><p>每个设备驱动程序都有独特的device结构体，usb_device 在 include&#x2F;linux&#x2F;usb.h 文件中有定义，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">struct usb_device &#123;</span><br><span class="line">    /* ... */</span><br><span class="line">    enum usb_device_state state; /* device state */</span><br><span class="line">    enum usb_device_speed speed; /* device speed */</span><br><span class="line">    struct usb_device *parent; /* parent hub */</span><br><span class="line">    struct usb_device_descriptor descriptor; /* descriptor */</span><br><span class="line">    struct usb_host_config *config; /* the current configuration */</span><br><span class="line">    struct usb_host_config *actconfig; /* the active configuration */</span><br><span class="line">    int maxchild; /* max child devices if hub */</span><br><span class="line">    struct usb_devic *children[USB_MAXCHILDREN]; /* Child devices */</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="URB"><a href="#URB" class="headerlink" title="URB"></a>URB</h3><p>URB(USB Request Block,USB请求块)是USB数据传输使用的核心数据结构。类似于网络协议栈的sk_buff。定义如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct urb&#123;</span><br><span class="line">    struct kref kref; // 引用计数</span><br><span class="line">    struct usb_device *dev;</span><br><span class="line">    ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>URB的使用分三步：</p>
+<ol>
+<li>分配内存，usb_alloc_urb():分配内存并置零</li>
+<li>初始化，<code>usb_fill_[control|int|bulk]_urb</code>:适用于控制、中断和批量数据传输模式。</li>
+<li>提交,usb_submit_urb():异步提交，回调函数的地址作为参数传递给<code>usb_fill_[control|int|bulk]_urb</code>,回调函数完成检查提交状态，释放缓冲区等。<code>usb_[control|interrup|bulk]_msg</code>:同步提交。</li>
+</ol>
+<h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><p>管道包含以下几个部分：</p>
+<ul>
+<li>端点地址；</li>
+<li>数据传输方向（IN OUT）</li>
+<li>数据传输模式（控制模式、中断模式、批量模式和登时模式）</li>
+</ul>
+<p>管道是URB的重要成员，为USB传输提供地址信息。USB核心提供现成的宏来创建管道：<br><code>usb_[rcv|send][ctrl|int|bulk|isoc]pipe(struct usb_device *usb_dev, __u8 endpointAddress)</code><br>其中 usb_dev 是指向usb_dev 的指针，endpointAddress是端点地址（1-127）.<br>涉及到URB，通常和管道一起说，比如批量传输模式的就可以叫做：批量URB。</p>
+<h3 id="描述符结构"><a href="#描述符结构" class="headerlink" title="描述符结构"></a>描述符结构</h3><p>USB标准定义了一些描述符数据结构来保存设备的信息。linux-usb核心定义的描述符(include&#x2F;linux&#x2F;usb&#x2F;ch9.h)有以下四种：</p>
+<ul>
+<li>设备描述符：存放设备的基本信息. usb_device_descriptor.</li>
+<li>配置描述符：设备配置模式. usb_config_descriptor.</li>
+<li>接口描述符：使得USB设备能支持多种功能。usb_interface_descriptor.</li>
+<li>端点描述符：存放设备最终的端点信息。usb_endpoint_descriptor.</li>
+</ul>
+<h3 id="枚举"><a href="#枚举" class="headerlink" title="枚举"></a>枚举</h3><p>枚举是热插拔USB设备的起始步骤，在这个过程中主机控制器获得设备的相关信息并配置好设备。<br>在linux-usb子系统中，集线器驱动负责枚举过程。比如将usb笔驱动器插入后，枚举过程如下：</p>
+<ol>
+<li>集线器驱动检测到USB_PORT_STAT_C_CONNECTION,唤醒khubd线程</li>
+<li>khubd 识别出电流变化的那个端口</li>
+<li>khubd在1-127之间选一个数字分配给笔驱动器的批量端点；这是通过给控制端点0发送控制URB来实现的。</li>
+<li>khubd利用端口0使用控制URB来获取设备描述符，然后获得配置描述符。</li>
+<li>khubd 请求USB核心把对应的客户驱动程序和该usb设备挂钩<br>枚举完成后驱动和设备就绑定好了，khubd调用相关客户驱动程序的probe()函数。在这个例子中khubd调用的是storage_probe()(drivers&#x2F;usb&#x2F;storage&#x2F;usbc.c)</li>
+</ol>
+<h2 id="设备例子-遥测卡"><a href="#设备例子-遥测卡" class="headerlink" title="设备例子-遥测卡"></a>设备例子-遥测卡</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/usb%E9%A9%B1%E5%8A%A8/" data-id="cltvlnlm900139kqq4gj12wcb" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/精通linux设备驱动开发/串行设备驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/%E4%B8%B2%E8%A1%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:14.741Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="串行设备"><a href="#串行设备" class="headerlink" title="串行设备"></a>串行设备</h1><p>串行端口是被广泛使用的一种基本通信信道，UART(Universal Asynchronous Receiver Transmitter,通用异步收发器) 常用来实现串行通信。在PC上UART是Super IO 芯片组的一部分。<br>常用相关设备：</p>
+<ul>
+<li>RS-232串行终端</li>
+<li>拨号、蜂窝</li>
+<li>触摸控制卡、智能卡、蓝牙、红外</li>
+<li>usb-串口设备</li>
+<li>RS-485 通信，RS-485在RS-232基础上支持多个节点，距离更远，抗噪性能更强</li>
+</ul>
+<p>8250芯片、16550芯片（8250兼容）。</p>
+<h2 id="层次架构"><a href="#层次架构" class="headerlink" title="层次架构"></a>层次架构</h2><p>由于串行子系统用户的多种多样。串行驱动采用分层架构：</p>
+<ol>
+<li>关注UART或者其他底层串行硬件特征的底层驱动</li>
+<li>和底层驱动接口的TTY驱动程序层。 上层驱动和硬件隔离层</li>
+<li>用于和tty驱动交换数据的线路规程，来勾勒串口层的行为。（&#x2F;dev&#x2F;ttySX,&#x2F;dev&#x2F;ircommX,ppp0）</li>
+</ol>
+<h2 id="UART-驱动"><a href="#UART-驱动" class="headerlink" title="UART 驱动"></a>UART 驱动</h2><h2 id="TTY-驱动"><a href="#TTY-驱动" class="headerlink" title="TTY 驱动"></a>TTY 驱动</h2><h2 id="线路规程"><a href="#线路规程" class="headerlink" title="线路规程"></a>线路规程</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/%E4%B8%B2%E8%A1%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" data-id="cltvlnlma00149kqqc9688i4r" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/精通linux设备驱动开发/字符驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:14.737Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="字符设备驱动"><a href="#字符设备驱动" class="headerlink" title="字符设备驱动"></a>字符设备驱动</h1><p>字符设备驱动用于顺序访问设备的驱动，比如串口、并口、键盘、鼠标等。字符设备驱动的主要特点是以字节流的方式访问设备，设备中的数据是以字节流的形式存储的，因此字符设备驱动的数据传输速度比较慢，但是字符设备驱动的实现比较简单，因此字符设备驱动的开发比较容易。</p>
+<h1 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h1><p>字符设备驱动从程序结构的角度看包括以下内容：</p>
+<ul>
+<li>初始化例程init(),负责初始化设备并且将驱动和内核的其他部分通过注册函数实现无缝连接</li>
+<li>入口函数或方法集，如open()、read()、ioctl()、llseek()和write(),这些函数直接对应相应的IO系统调用，由用户应用程序通过对应的&#x2F;dev节点调用</li>
+<li>中断例程（也是顶半部例程，是实际响应中断的例程（request_irq 注册的那个例程））、底半部例程（是被顶半部调度，并在稍后更安全的时间内执行的函数）、定时器处理例程、内核辅助线程以及其他的组成部分。</li>
+</ul>
+<h1 id="关键数据结构"><a href="#关键数据结构" class="headerlink" title="关键数据结构"></a>关键数据结构</h1><p>从数据流的角度看，字符设备驱动程序包含以下关键的数据结构：</p>
+<ol>
+<li>特定设备相关的数据结构</li>
+<li>struct cdev，针对字符设备驱动程序的内核抽象</li>
+<li>struct file_operations,包括所有设备驱动程序入口函数的地址</li>
+<li>struct file,包括关联&#x2F;dev 节点的信息</li>
+</ol>
+<h1 id="实例：系统CMOS"><a href="#实例：系统CMOS" class="headerlink" title="实例：系统CMOS"></a>实例：系统CMOS</h1><p>CMOS<br>定义自己的数据结构 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">NUM_CMOS_BANKS = 2;</span><br><span class="line">cmos_dev&#123;</span><br><span class="line">    struct cdev cdev; // 关联的cdev</span><br><span class="line">    char name[10];</span><br><span class="line">    ....</span><br><span class="line">&#125; *cmos_devp[NUM_CMOS_BANKS]</span><br><span class="line"></span><br><span class="line">static struct file_operations cmos_fops = &#123; // 字符设备相关操作</span><br><span class="line">    .owner = THIS_MODULE,</span><br><span class="line">    .open = cmos_open,</span><br><span class="line">    .release = cmos_release,</span><br><span class="line">    .read = cmos_read,</span><br><span class="line">    .write = cmos_write,</span><br><span class="line">    .llseek = cmos_llseek,</span><br><span class="line">    .ioctl = cmos_ioctl,</span><br><span class="line">&#125;</span><br><span class="line">struct class *cmos_class</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>定义函数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">int __init cmos_init(void)&#123;</span><br><span class="line">    alloc_chrdev_region(&amp;cmos_dev_number,0,NUM_CMOS_BANKS,DEVICE_NAME) // 动态申请主设备号:params: cmos_dev_number:主设备号，0：起始次设备号，NUM_CMOS_BANKS：支持的次设备号数目，DEVICE_NAME：设备名称  。 执行后可以在/proc/devices|grep cmos 看到主设备号</span><br><span class="line">    cmos_class = class_create(THIS_MODULE,DEVICE_NAME) //构建/sys 入口点。 udevd监听uevent来创建设备节点。</span><br><span class="line">    kmalloc(sizeof(struct cmos_dev),GFP_KERNEL) // 申请cmos_dev 所需内存空间</span><br><span class="line">    request_region(addrports[i],2,cmos_devp[i]-&gt;name) // 申请总线上IO地址的使用权。parms: addrports[i]：IO端口的基地址，2：IO端口占用的范围，cmos_devp[i]-&gt;name：使用这段IO地址的设备名（申请后可以在/proc/ioports内看到）</span><br><span class="line"></span><br><span class="line">    cdev 相关操作 // cdev_init(&amp;cmos_devp[i]-&gt;cdev,&amp;cmos_fops)/cdev_alloc cdev_add 来注册字符设备</span><br><span class="line">    device_create(cmos_class,NULL,MKDEV(MAJOR(cmos_dev_number),i),&quot;cmos%d&quot;,i) // udev 注册，自动创建设备节点。</span><br><span class="line">&#125;</span><br><span class="line">void __exit cmos_cleanup(void)&#123;</span><br><span class="line">    unregister_chrdev_region //释放设备号</span><br><span class="line">    device_destory // 取消udev 注册</span><br><span class="line">    release_region // 释放IO资源</span><br><span class="line">    cdev_del  // 取消 cdev注册</span><br><span class="line">    kfree(cmos_devp[i]) // 释放内存</span><br><span class="line">    class_destory(cmos_class) // 释放cmos_class</span><br><span class="line">&#125;</span><br><span class="line">module_init(cmos_init)</span><br><span class="line">module_exit(cmos_cleanup)</span><br></pre></td></tr></table></figure>
+<p>定义操作函数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.open = cmos_open,       // open</span><br><span class="line">.release = cmos_release, // close</span><br><span class="line">.read = cmos_read,       // read</span><br><span class="line">.write = cmos_write,     // write</span><br><span class="line">.llseek = cmos_llseek,   // lseek 文件指针</span><br><span class="line">.ioctl = cmos_ioctl,     // ioctl IO控制 参数为cmd和参数</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8/" data-id="cltvlnlmb00159kqqftqa6w4j" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+  <nav id="page-nav">
+    <a class="extend prev" rel="prev" href="/page/3/">&laquo; __(&#39;prev&#39;)</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/5/">__(&#39;next&#39;) &raquo;</a>
+  </nav>
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/03/">三月 2024</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/1.%E6%9E%84%E5%BB%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/2.%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/helloworld%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/%E5%86%85%E6%A0%B8%E5%8D%87%E7%BA%A7/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2024 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

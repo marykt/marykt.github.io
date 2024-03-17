@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="导读linux 驱动主要分为  字符设备驱动 ：串口、watchdog、rtc等 块设备驱动：硬盘类型设备，分块读取 网络设备驱动：走的是协议栈内核，所以单独列出来。网卡和can驱动的静态加载和动态加载：      静态加载 动态加载    编译选项 Y M   存在位置 在内核中 文件系统   加载时机 内核启动 文件系统启动后,手动 mod   优势  热插拔、驱动调试、开机速度更快   字符">
+<meta property="og:type" content="article">
+<meta property="og:title" content="小边的博客">
+<meta property="og:url" content="http://yoursite.com/2024/03/17/linux/linux%20%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="导读linux 驱动主要分为  字符设备驱动 ：串口、watchdog、rtc等 块设备驱动：硬盘类型设备，分块读取 网络设备驱动：走的是协议栈内核，所以单独列出来。网卡和can驱动的静态加载和动态加载：      静态加载 动态加载    编译选项 Y M   存在位置 在内核中 文件系统   加载时机 内核启动 文件系统启动后,手动 mod   优势  热插拔、驱动调试、开机速度更快   字符">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-03-17T14:14:20.253Z">
+<meta property="article:modified_time" content="2022-04-10T13:37:14.000Z">
+<meta property="article:author" content="marykt">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/linux 字符设备驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/linux%20%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:20.253Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="导读"><a href="#导读" class="headerlink" title="导读"></a>导读</h1><p>linux 驱动主要分为</p>
+<ul>
+<li><code>字符设备驱动</code> ：串口、watchdog、rtc等</li>
+<li><code>块设备驱动</code>：硬盘类型设备，分块读取</li>
+<li><code>网络设备驱动</code>：走的是协议栈内核，所以单独列出来。网卡和can<br>驱动的静态加载和动态加载：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>静态加载</th>
+<th>动态加载</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>编译选项</td>
+<td>Y</td>
+<td>M</td>
+</tr>
+<tr>
+<td>存在位置</td>
+<td>在内核中</td>
+<td>文件系统</td>
+</tr>
+<tr>
+<td>加载时机</td>
+<td>内核启动</td>
+<td>文件系统启动后,手动 mod</td>
+</tr>
+<tr>
+<td>优势</td>
+<td></td>
+<td>热插拔、驱动调试、开机速度更快</td>
+</tr>
+</tbody></table>
+<h1 id="字符设备驱动相关概念和结构体"><a href="#字符设备驱动相关概念和结构体" class="headerlink" title="字符设备驱动相关概念和结构体"></a>字符设备驱动相关概念和结构体</h1><p>设备号、设备信息描述信息、行为描述（callback 函数）、相关注册函数。</p>
+<h2 id="设备号"><a href="#设备号" class="headerlink" title="设备号"></a>设备号</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;Kdev_t.h?</span><br><span class="line">dev=MKDEV(ma,mi)</span><br><span class="line">ma=MAJOR(dev)</span><br><span class="line">mi=MINOR(dev)</span><br><span class="line"></span><br><span class="line">unsigned int 32 位  高12为主设备号（设备类型） 低20位为次设备号（同一类别的不同设备）</span><br><span class="line">// 注册设备号: dev：设备号的开始位置,count:申请设备号的数量。name:设备名称</span><br><span class="line">int register_chrdev_region(dev_t from, unsigned count, const char *name)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="设备信息描述信息"><a href="#设备信息描述信息" class="headerlink" title="设备信息描述信息"></a>设备信息描述信息</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">struct cdev &#123;</span><br><span class="line">	struct kobject kobj; //设备管理 使用的</span><br><span class="line">	struct module *owner; // </span><br><span class="line">	const struct file_operations *ops; // 行为函数集合</span><br><span class="line">	struct list_head list; // </span><br><span class="line">	dev_t dev; // 设备号</span><br><span class="line">	unsigned int count;//</span><br><span class="line">&#125; __randomize_layout;</span><br></pre></td></tr></table></figure>
+<h2 id="行为描述（callback-函数）"><a href="#行为描述（callback-函数）" class="headerlink" title="行为描述（callback 函数）"></a>行为描述（callback 函数）</h2><p>实现这些函数来操作硬件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">struct file_operations &#123;</span><br><span class="line">	struct module *owner;</span><br><span class="line">	...</span><br><span class="line">	ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);</span><br><span class="line">	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);</span><br><span class="line">	int (*open) (struct inode *, struct file *);</span><br><span class="line">	int (*release) (struct inode *, struct file *);</span><br><span class="line">	...</span><br><span class="line">&#125; __randomize_layout;</span><br></pre></td></tr></table></figure>
+
+<h2 id="相关注册函数"><a href="#相关注册函数" class="headerlink" title="相关注册函数"></a>相关注册函数</h2><p>实现以上描述后 注册到内核，内核才能调用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">设备描述结构体、设备号、设备数量</span><br><span class="line">cdev_add(struct cdev *p,dev_t dev,unsigned count)</span><br></pre></td></tr></table></figure>
+
+<h1 id="驱动代码分析"><a href="#驱动代码分析" class="headerlink" title="驱动代码分析"></a>驱动代码分析</h1><ul>
+<li>驱动代码的入口</li>
+<li>驱动代码的生存周期：insmod 开始 rmmod 结束</li>
+<li>字符设备驱动的架构</li>
+</ul>
+<h2 id="module-init"><a href="#module-init" class="headerlink" title="module_init"></a>module_init</h2><p>驱动的入口函数声明，在insmod **.ko时被调用</p>
+<h2 id="module-exit"><a href="#module-exit" class="headerlink" title="module_exit"></a>module_exit</h2><p>驱动卸载函数声明，在rmmod **.ko时被调用</p>
+<h2 id="MODULE-LICENSE"><a href="#MODULE-LICENSE" class="headerlink" title="MODULE_LICENSE()"></a>MODULE_LICENSE()</h2><p>声明驱动的证书类型。</p>
+<h2 id="c开发"><a href="#c开发" class="headerlink" title="c开发"></a>c开发</h2><p>kzalloc: 申请内存，同时清零。2:申请内存的用途： GFP_KERNEL（内核） GFP_DMA（dma）等等<br>kmalloc：申请内存</p>
+<p>p4</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/linux%20%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" data-id="cltvlnllg00079kqqa12jclh6" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2024/03/17/linux/linux%20%E5%86%85%E6%A0%B8%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2024/03/17/linux/linux%20%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/03/">三月 2024</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/1.%E6%9E%84%E5%BB%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/2.%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/helloworld%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/%E5%86%85%E6%A0%B8%E5%8D%87%E7%BA%A7/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2024 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

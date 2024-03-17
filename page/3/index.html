@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="小边的博客">
+<meta property="og:url" content="http://yoursite.com/page/3/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="marykt">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-linux/book-深入理解linux内核/(四章)中断和异常-未完成" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.409Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="中断和异常"><a href="#中断和异常" class="headerlink" title="中断和异常"></a>中断和异常</h1><ul>
+<li>深入理解linux 内核： 第四章 中断和异常<br>keywords： 中断、异常</li>
+</ul>
+<h2 id="中断和异常-1"><a href="#中断和异常-1" class="headerlink" title="中断和异常"></a>中断和异常</h2><p>中断：</p>
+<ul>
+<li>可屏蔽中断（maskable interrupt）：IO设备发出的所有中断请求（IRQ）。可屏蔽中断可处于两种状态（屏蔽的（masked）或非屏蔽的（unmasked））</li>
+<li>非屏蔽中断(nonmaskable interrupt)：只有几个危急事件（如硬件故障）才引起非屏蔽中断。</li>
+</ul>
+<p>异常：</p>
+<ul>
+<li><p>处理器探测异常（processor-detected exception）</p>
+<ul>
+<li>故障（fault）:通常可以纠正，保存在eip中的值是引起故障的指令地址， 例如<code>缺页异常</code>.</li>
+<li>陷阱（trap）：在陷阱指令执行后立刻报告；保存在eip中的值是一个随后要执行的指令地址。陷阱的主要用途是为了<code>调试程序时下断点</code></li>
+<li>异常终止（abort）：发生一个严重错误；控制单元出问题，不能在eip寄存器中保存异常指令确切位置。如<code>硬件故障</code>或系<code>统表中无效的值或不一致的值</code>,控制权切换到异常终止处理程序，强制终止受影响的进程。</li>
+</ul>
+</li>
+<li><p>编程异常（programmed exception）：在编程者发出请求时发生。由int或int3 指令触发；当into（检查溢出）和bound（检查地址出界）指令检查的条件不为真时，也引发编程异常。控制单元把它当作<code>陷阱（trap）</code>处理。编程异常通常也叫做<code>软中断（software interrupt）</code>:用于执行<code>系统调用</code>以及给调试程序通报一个特定的事件</p>
+</li>
+</ul>
+<p>每个中断或异常是由0-255之间的一个数来标识。intel把这个8位的无符号证书叫做一个向量（vector）.非屏蔽中断的向量和异常的向量是固定的，而可屏蔽中断的向量可以通过对中断控制器进行编程来实现</p>
+<h3 id="IRQ和中断"><a href="#IRQ和中断" class="headerlink" title="IRQ和中断"></a>IRQ和中断</h3><p>IRQ(interrupt ReQuest)：能发出中断的设备对外提供IRQ线。所有的IRQ线都与一个名为可编程中断控制器（Programmable Interrpt Controuer,PIC）的硬件电路的输入引脚相连。可编程中断控制器执行下列动作：</p>
+<ol>
+<li>监视IRQ线，检查产生的信号（raised signal）. 如果同时有多条IRQ线上产生信号，就选择引脚编号较小的IRQ线(IRQ0 用于定时测量)</li>
+<li>如果一个引发信号出现在IRQ线上：<ol>
+<li>把收到的引发信号转成对应的向量</li>
+<li>把这个向量存放在中断控制器的一个I&#x2F;O端口，从而允许CPU通过数据总线读取此向量。</li>
+<li>把引发信号发送到处理器的INTR引脚，即产生一个中断。</li>
+<li>等待，直到CPU把这个中断信号写进可编程中断控制器的一个I&#x2F;O 端口来确认它被处理；这种情况发生时，清INTR线。</li>
+</ol>
+</li>
+<li>返回第一步</li>
+</ol>
+<p>第一条IRQ线通常表示成IRQ0。与IRQn关联的Intel的缺省向量是n+32。通过向中断控制器端口发布合适的指令，就可以修改IRQ和向量之间的映射。<br>禁止的中断是不会丢失的，一旦再被激活又会被发送到CPU，因此中断处理程序可以依赖此特性来依次处理多个中断。</p>
+<p>传统PIC由两片8259A风格的外部芯片“级联”的，每个芯片可以处理8个不同的IRQ输入线。因此可用IRQ线数量为15.</p>
+<h3 id="高级可编程中断控制器"><a href="#高级可编程中断控制器" class="headerlink" title="高级可编程中断控制器"></a>高级可编程中断控制器</h3><p>前面的可编程中断控制器是在单CPU情况下使用的，主PIC的输出直接连接到CPU的INTR引脚。如果系统中包含多个CPU，这种方法就不再有效，需要更复杂的PIC。</p>
+<p>高级可编程控制器（I&#x2F;O Advanced Programmable Interrupt Controller,I&#x2F;O APIC）用于替代老式的8259A可编程中断控制器。新主板为了兼容性都包含这两种芯片。另外8086处理器当前所有的CPU都含有一个本地APIC，每个本地APIC都有32位的寄存器、一个内部时钟、一个本地定时设备及为本地APIC中断保留的两条额外的IRQ线 LINT0 和 LINT1.所有本地APIC都连接到一个外部APIC，形成一个多APIC的系统。</p>
+<p><img src="/./static/%E5%A4%9AAPIC%E7%B3%BB%E7%BB%9F.png"></p>
+<p>I&#x2F;O APIC的组成为：</p>
+<ul>
+<li>一组24条IRQ线：中断优先级并不与引脚号相关联</li>
+<li>一张24项的中断重定向表（Interrupt Redirection Table）：中断重定向表中每一项都可以被单独编程以指明中断向量和优先级、目标处理器及选择处理器的方式</li>
+<li>可编程寄存器</li>
+<li>通过APIC总线发送和接受APIC信息的一个信息单元：重定向表中的信息用于把每个外部IRQ信号转换为一条消息，通过APIC总线把消息发送给一个或多个本地APIC单元。</li>
+</ul>
+<p>来自外部硬件设备的中断请求以两种方式在可用CPU之间分发：</p>
+<ul>
+<li>静态分发： 通过在中断重定向表中定义的方式进行静态分发。</li>
+<li>动态分发：通过判断多个CPU各自的可编程任务优先级寄存器（task priority register,TPR）来仲裁是由哪个CPU处理。通过动态调整仲裁优先级来实现中断的轮转分配。</li>
+</ul>
+<p>另外多APIC系统还允许CPU之间产生处理器间中断（interprocessor interrupt）。当需要发送时，CPU就在本地APIC的中断指令寄存器（Interrupt Command Register,ICR）中存放这个中断消息和目标本地APIC的标识符，也可以向自己发送。</p>
+<p>处理器间中断（简称IPI）是SMP体系结构至关重要的组成部分，并由linux有效地用来在CPU之间交换消息。</p>
+<p>目前大部分单处理器系统都包含一个IO APIC芯片，可以使用下面两种方式对这种芯片进行配置：</p>
+<ol>
+<li>作为8259A方式使用，本地APIC被禁止，LINT0和LINT1 本地IRQ被配置为INTR和NMI引脚</li>
+<li>作为标准外部IO APIC使用。本地APIC被激活，所有外部中断通过IO APIC接受。</li>
+</ol>
+<h3 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h3><p>8086处理器定义了大约20种不同的异常。内核必须为每一种异常提供一个专门的异常处理程序。</p>
+<p>编号20-31这些值由intel留作将来开发。下图中列出了用到的异常处理程序，它们通常把一个Unix信号发送到引起异常的进程。</p>
+<p><img src="/./static/%E7%94%B1%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E5%8F%91%E9%80%81%E7%9A%84%E4%BF%A1%E5%8F%B7.png"></p>
+<h3 id="中断描述符表"><a href="#中断描述符表" class="headerlink" title="中断描述符表"></a>中断描述符表</h3><p>中断描述符表（Interrupt Descriptor Table,IDT）是一个系统表，他和每一个中断或异常向量相联系，每一个向量在标准共有相应的中断或异常处理程序的入口地址。内核在允许中断前，必须适当地初始化IDT。</p>
+<p>IDT的格式和GDT、LDT非常相似，表中的每一项对应一个中断或异常向量,每个向量由8字节组成，因此最多需要256*8&#x3D;2048字节来存放IDT。</p>
+<p>idtr寄存器使得IDT可以位于内存的任何地方，它指定IDT的线性基地址及其限制。允许中断前必须使用lidt汇编指令初始化idtr。</p>
+<p>IDT包含三种类型的描述符，其中40-43位的Type字段的值表示每种描述符的类型。</p>
+<p><img src="/./static/%E9%97%A8%E6%8F%8F%E8%BF%B0%E7%9A%84%E6%A0%BC%E5%BC%8F.png"></p>
+<p>这些描述符是：</p>
+<ul>
+<li>任务门（task gate）：中断发生时，必须取代当前进程的那个进程的TSS选择符存放在任务门中。</li>
+<li>中断门（interrupt gate）:包含段选择符和中断或异常处理程序的段内偏移量。当控制权转移到一个适当的段时，处理器清IF标志，从而关闭将来会发生的可屏蔽中断。</li>
+<li>陷阱门（Trap gate）: 与中断门相似，只是控制权转移后,处理器不清理IF标志。</li>
+</ul>
+<p>linux 利用中断门处理中断，陷阱门处理异常。</p>
+<h3 id="中断和异常的硬件处理（保护模式）"><a href="#中断和异常的硬件处理（保护模式）" class="headerlink" title="中断和异常的硬件处理（保护模式）"></a>中断和异常的硬件处理（保护模式）</h3><p>执行了一条指令后，CS和eip这对寄存器包含下一条将要执行的指令的逻辑地址.在 处理那条指令之前，控制单元会检查在运行前一条指令时是否已经发生了一个中断或异常。如果发生了一个中断或异常，那么控制单元执行下列操作:<br>    1）确定与中断或异常关联的向量i (0 ≤ i ≤ 255)<br>    2） 读由idtr寄存器指向的IDT表中的第i项(在下面的描述中，我们假定IDT表项 中包含的是一个中断门或一个陷阱门)。<br>    3） 从gdtr寄存器获得GDT的基地址，并在GDT中查找，以读取IDT表项中的选 择符所标识的段描述符.这个描述符指定中断或异常处理程序所在段的基地址.<br>    4） 确信中断是由授权的(中断)发生源发出的。 首先将当前特权组CPL(存放在cs寄 存器的低两位)与段描述符(存放在GDT中)的描述符特权级DPL比较，如果CPL 小于DPL. 就产生一个”Generalprotection” 异常.因为中断处理程序的特权不能<br>低于引起中断的程序的特权.对于编程异常，则做进一步的安全检查:比较CPL与 处于IDT中的门描述符的DPL，如果DPL小于CPL，就产生一个”General protection” 异常。这最后一个检查可以避免用户应用程序访问特殊的陷阱门或中断门.<br>    5） 检查是否发生了特权级的变化，也就是说，CPL是否不同于所选择的段描述符的 DPL.  如果是，控制单元必须开始使用与新的特权级相关的栈。通过执行以下步骤 来做到这点:<br>          a.  读tr寄存器，以访问运行进程的TSS段.<br>          b.  用与新特权级相关的钱段和战指针的正确值装载ss和esp寄存器。这些值可 以在TSS中找到<br>          c.  在新的栈中保存ss和esp以前的值. 这些值定义了与旧特权级相关的梭的逻 辑地址.<br>    6） 如果故障已发生，用引起异常的指令地址装载cs和elp客存器，从而使得这条指令 能再次被执行。<br>    7） 在战中保存eflags、 cs及eip的内容.<br>    8） 如果异常产生了一个硬件出错码，则将它保存在战中.<br>    9） 装载cs和eip寄存器，其值分别是IDT表中第i项门描述符的段选择符和偏移量 字段.这些值给出了中断或者异常处理程序的第一条指令的逻辑地址。</p>
+<p>控制单元所执行的最后一步就是跳转到中断或者异常处理程序.换句话说.处理完中断<br>信号后.控制单元所执行的指令就是被选中处理程序的第一条指令.<br>中断或异常被处理完后，相应的处理程序必须产生一条iret指令，把控制权转交给被<br>中断的进程，这将迫使控制单元:<br>    l） 用保存在校中的值装载cs、 eip或eflags寄存器。如果一个硬件出错码曾被压入校 中，并且在eip内容的上面，那么，执行iret指令前必须先弹出这个硬件出错码.<br>    2）检查处理程序的CPL是否等于cs中最低两位的值(这意味着被中断的进程与处理 程序运行在同一特权级). 如果是，iret终止执行， 否则，转入下一步.<br>    3）从战中装载ss和esp寄存器，因此，返回到与旧特权级相关的钱。<br>    4）  检查ds、 es、 fs，&amp;gs段寄存器的内容，如果其中一个寄存器包含的选择符是一 个段描述符，并且其DPL值小子CPL，那么，清相应的段寄存器.控制单元这么做 是为了禁止用户态的程序(CPL&#x3D;3)利用内核以前所用的段客存器(DPL&#x3D;O).如果 不清这些寄存器，怀有恶意的用户态程序就可能利用它们采访问内核地址空间.</p>
+<h2 id="中断和异常处理的嵌套执行"><a href="#中断和异常处理的嵌套执行" class="headerlink" title="中断和异常处理的嵌套执行"></a>中断和异常处理的嵌套执行</h2><h2 id="初始化中断描述符表"><a href="#初始化中断描述符表" class="headerlink" title="初始化中断描述符表"></a>初始化中断描述符表</h2><h2 id="异常处理"><a href="#异常处理" class="headerlink" title="异常处理"></a>异常处理</h2><p>cpu产生的大部分异常都由linux解释为出错条件。当其中一个异常发生时，内核就向引起异常的进程发送一个信号向他通知一个反常条件。<br>例如除0错误，CPU就产生一个”Divide error”异常,并由对应的异常处理程序给当前进程发送一个SIGFPE信号，这个进程将使用默认或自定义的信号处理程序来恢复或终止执行。</p>
+<p>在两种情况下，linux利用异常更有效地管理硬件资源。：</p>
+<ul>
+<li>第一种情况在第三章”保存和加载FPU、MMX及XMM寄存器”一节描述过，“Device not availeble”异常与CR0寄存器的TS标志一起用来把新值装入浮点寄存器</li>
+<li>第二种就是“Page Fault” 缺页异常。相应的处理程序可能表示一个错误条件，也可能不是一个错误条件。</li>
+</ul>
+<h2 id="中断处理"><a href="#中断处理" class="headerlink" title="中断处理"></a>中断处理</h2><h2 id="软中断和tasklet"><a href="#软中断和tasklet" class="headerlink" title="软中断和tasklet"></a>软中断和tasklet</h2><h2 id="工作队列"><a href="#工作队列" class="headerlink" title="工作队列"></a>工作队列</h2><h2 id="从中断和异常中返回"><a href="#从中断和异常中返回" class="headerlink" title="从中断和异常中返回"></a>从中断和异常中返回</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/" data-id="cltvlnlm3000u9kqq5cp5gmfc" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux网络技术内幕/1.关键数据结构" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/1.%E5%85%B3%E9%94%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" class="article-date">
+  <time datetime="2024-03-17T14:14:23.697Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="通知链（notify-chain）"><a href="#通知链（notify-chain）" class="headerlink" title="通知链（notify chain）"></a>通知链（notify chain）</h1><p>发布-订阅模式的事件通知，在调用者的进程上下文执行回调函数。</p>
+<h2 id="链定义："><a href="#链定义：" class="headerlink" title="链定义："></a>链定义：</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">notifier_block &#123;</span><br><span class="line">    int (*notifier_call)(struct notifier_block *nb, unsigned long action, void *data);</span><br><span class="line">    struct notifier_block *next;</span><br><span class="line">    int priority;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>常用实例名： xxx_chain、xxx_notifier_chain、xxx_notifier_list。</p>
+<h2 id="链注册："><a href="#链注册：" class="headerlink" title="链注册："></a>链注册：</h2><ul>
+<li>使用 notifier_chain_register&#x2F;notifier_chain_unregister 来注册回调函数。数据按照注册时间在链表上排队。  </li>
+<li>通常链会提供一些封装函数，比如netdev_chain 会提供 register_netdevice_notifier 来注册，常见名称：[un]register_xxx_notifier、xxx_[un]register_notifier、xxx_[un]register.</li>
+</ul>
+<h2 id="链上通知："><a href="#链上通知：" class="headerlink" title="链上通知："></a>链上通知：</h2><p>使用notifier_call_chain来调用回调函数。按照链表顺序调用。</p>
+<h1 id="用户空间和内核的接口"><a href="#用户空间和内核的接口" class="headerlink" title="用户空间和内核的接口"></a>用户空间和内核的接口</h1><ul>
+<li>procfs: 挂载点：&#x2F;proc , 用于内核和用户空间的交互. 内核选项：CONFIG_PROC_FS, 配置菜单：File systems -&gt; Pseudo filesystems -&gt; &#x2F;proc file system support</li>
+<li>sysctl：挂载点：&#x2F;proc&#x2F;sys, 用于内核参数的配置. 内核选项：CONFIG_SYSCTL, 配置菜单：Kernel hacking -&gt; Kernel configuration via sysctl</li>
+<li>sysfs：挂载点：&#x2F;sys, 用于内核和用户空间的交互（干净且有组织地输出 kernel&gt;2.6）. 内核选项：CONFIG_SYSFS, 配置菜单：File systems -&gt; Pseudo filesystems -&gt; sysfs file system support</li>
+<li>debugfs：挂载点：&#x2F;sys&#x2F;kernel&#x2F;debug, 用于内核调试. 内核选项：CONFIG_DEBUG_FS, 配置菜单：File systems -&gt; Pseudo filesystems -&gt; Debug Filesystem</li>
+<li>ioctl：用于设备驱动程序和用户空间的交互（ifconfig等老式网络管理使用）, 通过ioctl函数调用. 内核选项：CONFIG_COMPAT, 配置菜单：Enable access to old, deprecated, crufty syscalls</li>
+<li>Netlink：网络应用程序和内核通信的首选机制（iprouter2:就是ip命令使用）. 内核选项：CONFIG_NETLINK, 配置菜单：Networking support -&gt; Networking options -&gt; Network packet filtering framework (Netfilter) -&gt; Netlink connection tracking support</li>
+</ul>
+<h2 id="procfs（通常只读）"><a href="#procfs（通常只读）" class="headerlink" title="procfs（通常只读）"></a>procfs（通常只读）</h2><p>profs 定义结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">proc_dir_entry</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> low_ino;</span><br><span class="line">    <span class="type">umode_t</span> mode;</span><br><span class="line">    <span class="type">nlink_t</span> nlink;</span><br><span class="line">    <span class="type">kuid_t</span> uid;</span><br><span class="line">    <span class="type">kgid_t</span> gid;</span><br><span class="line">    <span class="type">loff_t</span> size;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">inode_operations</span> *<span class="title">proc_iops</span>;</span></span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> *<span class="title">proc_fops</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc_dir_entry</span> *<span class="title">next</span>, *<span class="title">parent</span>, *<span class="title">subdir</span>;</span></span><br><span class="line">    <span class="type">void</span> *data;</span><br><span class="line">    <span class="type">atomic_t</span> count; <span class="comment">/* use count */</span></span><br><span class="line">    <span class="type">atomic_t</span> in_use; <span class="comment">/* number of callers into module in progress; */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">completion</span> *<span class="title">pde_unload_completion</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">pde_openers</span>;</span> <span class="comment">/* who did -&gt;open, but not -&gt;release */</span></span><br><span class="line">    <span class="type">spinlock_t</span> pde_unload_lock; <span class="comment">/* proc_fops checks and pde_users bumps */</span></span><br><span class="line">    u8 namelen;</span><br><span class="line">    <span class="type">char</span> name[];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>proc_mkdir 去创建目录，proc_create 去创建文件。</p>
+<h2 id="sysctl-定义值，通常可读可写"><a href="#sysctl-定义值，通常可读可写" class="headerlink" title="sysctl (定义值，通常可读可写)"></a>sysctl (定义值，通常可读可写)</h2><p>sysctl 定义结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ctl_table</span> &#123;</span></span><br><span class="line">    <span class="type">int</span> ctl_name;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *procname;</span><br><span class="line">    <span class="type">void</span> *data;</span><br><span class="line">    <span class="type">int</span> maxlen;</span><br><span class="line">    <span class="type">umode_t</span> mode;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ctl_table</span> *<span class="title">child</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ctl_table_header</span> *<span class="title">de</span>;</span></span><br><span class="line">    proc_handler *proc_handler;</span><br><span class="line">    strategy_handler *strategy;</span><br><span class="line">    ctl_table *de_strategy;</span><br><span class="line">    ctl_table *sysctl_next;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="sysfs-定义属性，通常可读可写"><a href="#sysfs-定义属性，通常可读可写" class="headerlink" title="sysfs (定义属性，通常可读可写)"></a>sysfs (定义属性，通常可读可写)</h2><p>sysfs 定义结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">device_attribute</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">attribute</span> <span class="title">attr</span>;</span></span><br><span class="line">    <span class="type">ssize_t</span> (*show)(<span class="keyword">struct</span> device *dev, <span class="keyword">struct</span> device_attribute *attr, <span class="type">char</span> *buf);</span><br><span class="line">    <span class="type">ssize_t</span> (*store)(<span class="keyword">struct</span> device *dev, <span class="keyword">struct</span> device_attribute *attr, <span class="type">const</span> <span class="type">char</span> *buf, <span class="type">size_t</span> count);</span><br><span class="line">    <span class="type">void</span> (*release)(<span class="keyword">struct</span> device *dev, <span class="keyword">struct</span> device_attribute *attr);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="ioctl"><a href="#ioctl" class="headerlink" title="ioctl"></a>ioctl</h2><p>ioctl 函数的作用是在用户空间和内核空间之间传递数据，通过设备文件的文件描述符来调用。在网络设备驱动程序中，ioctl 函数用于配置网络设备的参数，比如 ifconfig 命令就是通过 ioctl 函数来实现的。</p>
+<h2 id="Netlink"><a href="#Netlink" class="headerlink" title="Netlink"></a>Netlink</h2><p>Netlink 套接字在Rfc3549中描述得很清楚，代表用户空间与内核的IP网络配置之间的首选接口。也可作为内核内部以及多个用户空间进程之间的消息传输系统。</p>
+<p>Netlink 是 Linux 内核中用于内核和用户空间通信的一种机制，它是一种可扩展的消息传递机制，可以用于内核和用户空间之间的双向通信。Netlink 通信的协议族为 NETLINK_ROUTE，它是一种可靠的、面向连接的协议，它的通信方式是基于消息的，每个消息都有一个消息头，消息头中包含了消息的类型、长度等信息。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/1.%E5%85%B3%E9%94%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" data-id="cltvlnlm4000v9kqq7jl01bnb" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux网络技术内幕/e1000e驱动程序解析" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/e1000e%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F%E8%A7%A3%E6%9E%90/" class="article-date">
+  <time datetime="2024-03-17T14:14:23.697Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="E1000e网卡"><a href="#E1000e网卡" class="headerlink" title="E1000e网卡"></a>E1000e网卡</h1><h1 id="1-网卡介绍"><a href="#1-网卡介绍" class="headerlink" title="1. 网卡介绍"></a>1. 网卡介绍</h1><h2 id="1-1-网卡的分类"><a href="#1-1-网卡的分类" class="headerlink" title="1.1 网卡的分类"></a>1.1 网卡的分类</h2><p>网卡的分类主要有两种，一种是以太网网卡，另一种是无线网卡。以太网网卡是指通过以太网协议进行通信的网卡，无线网卡是指通过无线协议进行通信的网卡。以太网网卡的通信速率一般为10Mbps、100Mbps、1000Mbps，无线网卡的通信速率一般为54Mbps、300Mbps、600Mbps、900Mbps、1200Mbps、1300Mbps、1500Mbps、1733Mbps、1900Mbps、2600Mbps、2700Mbps、3000Mbps、3200Mbps、3300Mbps、3500Mbps、3700Mbps、4000Mbps、4500Mbps、4800Mbps、5000Mbps、5300Mbps、5500Mbps、6000Mbps、6500Mbps、7000Mbps、7500Mbps、8000Mbps、8500Mbps、9000Mbps、9500Mbps、10000Mbps等。</p>
+<h2 id="1-2-网卡的工作模式"><a href="#1-2-网卡的工作模式" class="headerlink" title="1.2 网卡的工作模式"></a>1.2 网卡的工作模式</h2><p>网卡的工作模式主要有两种，一种是半双工模式，另一种是全双工模式。半双工模式是指网卡只能在发送数据和接收数据之间切换，不能同时进行发送和接收数据。全双工模式是指网卡可以同时进行发送和接收数据。</p>
+<h2 id="1-3-网卡的工作原理"><a href="#1-3-网卡的工作原理" class="headerlink" title="1.3 网卡的工作原理"></a>1.3 网卡的工作原理</h2><p>网卡的工作原理主要有两种，一种是基于CSMA&#x2F;CD协议的工作原理，另一种是基于CSMA&#x2F;CA协议的工作原理。基于CSMA&#x2F;CD协议的工作原理是指网卡在发送数据之前，先检测总线上是否有数据在发送，如果有数据在发送，则等待一段时间后再发送数据，如果没有数据在发送，则发送数据。基于CSMA&#x2F;CA协议的工作原理是指网卡在发送数据之前，先检测总线上是否有数据在发送，如果有数据在发送，则等待一段时间后再发送数据，如果没有数据在发送，则发送数据。</p>
+<h1 id="E1000e网卡-1"><a href="#E1000e网卡-1" class="headerlink" title="E1000e网卡"></a>E1000e网卡</h1><h2 id="硬件介绍"><a href="#硬件介绍" class="headerlink" title="硬件介绍"></a>硬件介绍</h2><p>E1000e 包含了 Intel 82571、82572、82573、82574、82583、80003、80003ES2、I350、I354、I210、I211、I218、I219、I354、I354-BM、I354-BM2、I210-AT、I210-AT2、I210-AM、I210-AM2、I210-T、I210-T2、I210-BM、I210-BM2、I211-AT、I211-AT2、I211-AM、I211-AM2、I211-T、I211-T2、I211-BM、I211-BM2、I218-V、I218-LM、I218-V2、I218-LM2、I218-V2、I218-LM2、I219-V、I219-LM、I219-V2 以及 I219-LM2 等网卡芯片。</p>
+<ul>
+<li>PCIE的配置空间初始化：PCIE卡都有一个配置空间，这个配置空间是用来配置PCIE卡的，比如设置中断号、设置内存空间、设置IO空间等等。这个配置空间是通过PCI配置空间来访问的，所以在初始化PCIE卡的时候，首先要初始化PCI配置空间，然后再初始化PCIE配置空间。</li>
+<li>msix机制的初始化：msix中断是一种特殊的中断, 不需要中断线, 但需要PCIE具备msix能力, 主机也必须支持apic才可. 当系统初始化时, 同时初始化主机上2个特殊硬件, IOAPIC和LocalAPIC, 在内存虚拟地址中开辟一段内存, 给每个cpu分配中断向量. 后面只要往这个内存上写触发设备信息, 那么就会被内存控制器劫持, 内存控制立即明白这是有外设触发了中断, 通知ioapic发送广播, 当对应的cpu判断对应的向量, 知道这个是要被自己处理, 就会处理这个中断。</li>
+<li>napi机制：napi是一种中断处理机制，NAPI是linux新的网卡数据处理API，用于提高网络处理效率，解决频繁中断导致性能下降问题。</li>
+<li>dma机制：DMA是一种数据传输方式，DMA是一种数据传输方式，它是一种将数据从一个地方传输到另一个地方的方式，而不是通过CPU。<br>下面进行源码的分析：</li>
+</ul>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>1、注册网卡驱动：<br>2、网卡up过程<br>调用e1000_open函数：<br>2、申请msix中断和常规中断</p>
+<h2 id="收包和发包"><a href="#收包和发包" class="headerlink" title="收包和发包"></a>收包和发包</h2><p>1、收包的大致流程：<br>    申请skb, 把skb映射到dma, 开启dma收包；<br>    dma收包后发起中断, 调用, 清理dma映射区, 申请同等数量的skb, 把这些skb重新映射到dma, 相当于把空闲的dma补上；<br>    把收到的报文, 丢给系统内核协议栈解析；<br>    并根据流量大小, 看是否开启传统中断(传统中断的处理上面有描述)；<br>    循环；<br>    e1000_intr_msix_rx　-&gt; e1000_clean -&gt; e1000_clean_rx_irq -&gt; e1000_receive_skb</p>
+<p>2、发包的大致流程：<br>    send发送到skb；<br>    调用底层驱动e1000_xmit_frame发送skb；<br>    申请dma映射到dma发送队列, 准备发送；<br>    发送完成,发送中断, 调用e1000_intr_msix_tx, 解除skb的dma映射；<br>    循环；<br>    e1000_xmit_frame-&gt; e1000_tx_map -&gt; e1000_tx_queue -&gt; e1000_intr_msix_tx -&gt; e1000_clean_tx_irq -&gt; (skb_dma_unmap, dev_kfree_skb_any)</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/e1000e%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F%E8%A7%A3%E6%9E%90/" data-id="cltvlnlm4000w9kqqgwjcglze" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux网络技术内幕/tmp" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/tmp/" class="article-date">
+  <time datetime="2024-03-17T14:14:23.697Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h2><ul>
+<li>模块选项（module_param系列的宏）：模块加载时可选项。当内核启动时，无法在引导期间提供。可以在&#x2F;sys 目录中修改。</li>
+<li>引导期间内核选项 （__setup 系列的宏）：引导期间可选项，主要由用户可内建在内核的模块和不能编译成模块的内核组件使用。</li>
+</ul>
+<p>&#x2F;drivers&#x2F;block&#x2F;loop.c 中有使用以上两种方法的示例</p>
+<h3 id="模块选项"><a href="#模块选项" class="headerlink" title="模块选项"></a>模块选项</h3><p>采用module_param宏</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/tmp/" data-id="cltvlnlm5000x9kqq5xgv1ryl" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux网络技术内幕/设备初始化" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/%E8%AE%BE%E5%A4%87%E5%88%9D%E5%A7%8B%E5%8C%96/" class="article-date">
+  <time datetime="2024-03-17T14:14:23.697Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="网络设备初始化"><a href="#网络设备初始化" class="headerlink" title="网络设备初始化"></a>网络设备初始化</h1><p>本章包含以下内容：</p>
+<ul>
+<li>一段网络内核代码初始化</li>
+<li>NIC初始化</li>
+<li>NIC中断初始化和使用</li>
+<li>用户如何给以模块方式加载的驱动程序传递参数</li>
+<li>设备初始化和配置期间，用户空间和内核空间之的交互</li>
+<li>就配置以及和内核交互方面，虚拟设备和真实设备的区别</li>
+</ul>
+<h2 id="系统初始化"><a href="#系统初始化" class="headerlink" title="系统初始化"></a>系统初始化</h2><p>系统初始化的过程是一个复杂的过程，它涉及到内核的初始化，以及内核中的各个子系统的初始化。在这个过程中，内核会初始化各种设备，包括网络设备。<br>内核启动过程代码过程如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// init/main.c</span></span><br><span class="line"><span class="type">void</span> __init <span class="title function_">start_kernel</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    kernel_init_freeable();</span><br><span class="line">    ...</span><br><span class="line">    kernel_init();</span><br><span class="line">    ...</span><br><span class="line">    rest_init(); --&gt; kernel_thread(kernel_init, <span class="literal">NULL</span>, CLONE_FS | CLONE_FILES); <span class="comment">// 创建一个内核线程，执行kernel_init函数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>kernel_init函数内容如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// init/main.c</span></span><br><span class="line">...</span><br><span class="line">do_basic_setup();</span><br><span class="line">...</span><br><span class="line">free_init_mem();</span><br><span class="line">...</span><br><span class="line">run_init_process(init_filename);</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>do_basic_setup函数内容如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// init/main.c</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __init <span class="title function_">do_basic_setup</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">   </span><br><span class="line">    do_initcalls(); <span class="comment">// 初始化各个子系统 --&gt;fn_i (net_dev_init:net/core/dev.c)</span></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们主要关注的过程如下：</p>
+<ol>
+<li>引导期间选项：调用了两次parse_args函数，第一次是在<code>setup_arch</code>函数中，第二次是在<code>do_basic_setup</code>函数中。</li>
+<li>中断和定时器：硬中断和软中断分别由<code>init_IRQ</code>和<code>init_timers</code>函数初始化。定时器在引导过程中被初始化，硬中断在内核初始化过程中被初始化。</li>
+<li>初始化函数：内核子系统和内建的设备驱动由do_initcalls函数初始化。free_initmem函数释放了内核初始化期间使用的内存。</li>
+</ol>
+<h2 id="设备注册和初始化"><a href="#设备注册和初始化" class="headerlink" title="设备注册和初始化"></a>设备注册和初始化</h2><p>一个网络设备初始化分为几个阶段：</p>
+<ol>
+<li>硬件初始化:由设备驱动程序和通用总线层（例如，PCI和USB）合作完成，这类活动更接近设备驱动程序。</li>
+<li>软件初始化：在设备能使用之前，依赖开启和配置的网络协议而定，用户需要提供一些配置参数，如IP地址等。</li>
+<li>功能初始化：Linux内核有很多网络选项。有些选项需要对每个设备进行配置，设备初始化引导程序必须负责这些选项。比如Qos，可以决定封包加入及退出设备出口队列的方式</li>
+</ol>
+<h2 id="NIC初始化的目标"><a href="#NIC初始化的目标" class="headerlink" title="NIC初始化的目标"></a>NIC初始化的目标</h2><ol>
+<li>正确处理参数</li>
+<li>向内核声明 net_device 数据结构。</li>
+<li>申请所需资源：IRQ线用于中断，NIC必须分派一个IRQ，虚拟设备则不需要。I&#x2F;O端口和内存注册（request_region 和 release_region注册及释放）。</li>
+</ol>
+<h3 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h3><ul>
+<li>模块选项（module_param系列的宏）：模块加载时可选项。当内核启动时，无法在引导期间提供。可以在&#x2F;sys 目录中修改。</li>
+<li>引导期间内核选项 （__setup 系列的宏）：引导期间可选项，主要由用户可内建在内核的模块和不能编译成模块的内核组件使用。</li>
+</ul>
+<p>&#x2F;drivers&#x2F;block&#x2F;loop.c 中有使用以上两种方法的示例</p>
+<h4 id="模块选项"><a href="#模块选项" class="headerlink" title="模块选项"></a>模块选项</h4><p>内核模块是使用module_param宏的方式定义其参数，参见<code>/include/linux/moduleparam.h</code>文件中的列表。module_param需要三个参数，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">module_param(max_interrupt_work, <span class="type">int</span>, <span class="number">0444</span>);</span><br></pre></td></tr></table></figure>
+<p>第一个参数是给用户使用的参数名称；第二个是参数类型（例如：整形）；第三个参数表示参数作为文件输出到&#x2F;sys时，分配给该文件的权限。</p>
+<p>每个模块都在&#x2F;sys&#x2F;modules中被分配一个目录。param_name参数对应文件为：&#x2F;sys&#x2F;modules&#x2F;{module}&#x2F;paramenters&#x2F;{param_name}。<br>如果需要可以修改此参数，模块应当有一种机制可以监测修改，或者能处理修改。</p>
+<h3 id="IRQ"><a href="#IRQ" class="headerlink" title="IRQ"></a>IRQ</h3><h4 id="常用中断"><a href="#常用中断" class="headerlink" title="常用中断"></a>常用中断</h4><ul>
+<li>接收一帧。</li>
+<li>传输失败：二进制指数后退功能失败时产生。驱动程序不会转发此失败，通过其他方式通知这种失败（定时器到期、拒绝接受的ack等等）</li>
+<li>DMA传输已经完成。</li>
+<li>设备有足够的内存处理新传输：当队列出口没有足够空间保存一个最大尺寸帧的情况下，NIC设备会停止出口队列从而停止传输。中断到来时重新启动。</li>
+</ul>
+<h4 id="中断共享"><a href="#中断共享" class="headerlink" title="中断共享"></a>中断共享</h4><p>IRQ是有限的资源，增加系统支持的设备数量的简单方式就是允许多个设备共享中断资源。申请IRQ时需要指定是否允许其他设备共享IRQ。<br>IRQ的处理例程存储在一个表向量中，当多个设备共享同一个IRQ时，一个列表中才会有一个以上的元素。IRQ的数量根据具体的体系结构不同可以从15（x86）到200以上。</p>
+<h2 id="设备处理层初始化：net-dev-init"><a href="#设备处理层初始化：net-dev-init" class="headerlink" title="设备处理层初始化：net_dev_init"></a>设备处理层初始化：net_dev_init</h2><p>p104</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/%E8%AE%BE%E5%A4%87%E5%88%9D%E5%A7%8B%E5%8C%96/" data-id="cltvlnlm6000y9kqqg3nf8mk8" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/dtb文件" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/dtb%E6%96%87%E4%BB%B6/" class="article-date">
+  <time datetime="2024-03-17T14:14:22.309Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="https://blog.csdn.net/u014426028/article/details/109802120?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-1-109802120-blog-51782449.pc_relevant_default&spm=1001.2101.3001.4242.2&utm_relevant_index=4">https://blog.csdn.net/u014426028/article/details/109802120?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-1-109802120-blog-51782449.pc_relevant_default&amp;spm=1001.2101.3001.4242.2&amp;utm_relevant_index=4</a></p>
+<p> 是不是这样就感觉跟Linux内核一样Niubility了？没错！要的就是这种感觉。综合上面的需求，u-boot推出了全新的image格式—-FIT uImage，其中FIT是flattened image tree的简称。它利用了Device Tree Source files（DTS）的语法，生成的image文件也和dtb文件类似（称作itb），下面是我们项目中的示例代码。：</p>
+<p>FIT Image<br>既然是全新的东西，u-boot默认并不一定支持。如果要U-boot支持FIT Image启动的话，我们还得在u-boot的配置文件中添加它的支持，即加上 CONFIG_FIT 宏定义即可：</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/dtb%E6%96%87%E4%BB%B6/" data-id="cltvlnlld00049kqq9tlrc1y0" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/kernel文档和邮件列表" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/kernel%E6%96%87%E6%A1%A3%E5%92%8C%E9%82%AE%E4%BB%B6%E5%88%97%E8%A1%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:21.629Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>子系统邮件列表  <a href="https://lore.kernel.org/">https://lore.kernel.org/</a></p>
+<p>提交patch <a href="https://zhuanlan.zhihu.com/p/476648206">https://zhuanlan.zhihu.com/p/476648206</a></p>
+<p>Introduction<br>Development<br>    <a href="https://www.kernel.org/doc/">https://www.kernel.org/doc/</a><br>    核心 API &#x2F; Core API Documentation  <a href="https://www.kernel.org/doc/html/latest/core-api/index.html">https://www.kernel.org/doc/html/latest/core-api/index.html</a><br>    如何向内核提交补丁  <a href="https://www.kernel.org/doc/html/latest/translations/zh_CN/process/howto.html">https://www.kernel.org/doc/html/latest/translations/zh_CN/process/howto.html</a><br>    内核开发过程指南 <a href="https://www.kernel.org/doc/html/latest/translations/zh_CN/process/development-process.html">https://www.kernel.org/doc/html/latest/translations/zh_CN/process/development-process.html</a><br>    内核启动参数 <a href="https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html">https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html</a></p>
+<p>Build<br>Testing</p>
+<pre><code>内核测试指南  https://www.kernel.org/doc/html/latest/translations/zh_CN/dev-tools/testing-overview.html
+在Linux内核里使用gcov做代码覆盖率检查 https://www.kernel.org/doc/html/latest/translations/zh_CN/dev-tools/gcov.html
+内核地址消毒剂(KASAN) https://www.kernel.org/doc/html/latest/translations/zh_CN/dev-tools/kasan.html
+</code></pre>
+<p>Debug</p>
+<p><a href="https://kernelnewbies.org/KernelHacking">https://kernelnewbies.org/KernelHacking</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/kernel%E6%96%87%E6%A1%A3%E5%92%8C%E9%82%AE%E4%BB%B6%E5%88%97%E8%A1%A8/" data-id="cltvlnlle00059kqqatnmg3j7" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/linux 内核开发笔记" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/linux%20%E5%86%85%E6%A0%B8%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/" class="article-date">
+  <time datetime="2024-03-17T14:14:20.957Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h1><h2 id="路径和命名规范"><a href="#路径和命名规范" class="headerlink" title="路径和命名规范"></a>路径和命名规范</h2><ul>
+<li>文件分为 架构有关、架构无关代码。放到各个目录中，由makefile选择性编译。</li>
+</ul>
+<h1 id="makefile-关系"><a href="#makefile-关系" class="headerlink" title="makefile 关系"></a>makefile 关系</h1><h2 id="主目录makefile"><a href="#主目录makefile" class="headerlink" title="主目录makefile"></a>主目录makefile</h2><ul>
+<li>通过配置的参数决定整体如何编译</li>
+</ul>
+<h2 id="arch-目录makefile"><a href="#arch-目录makefile" class="headerlink" title="arch 目录makefile"></a>arch 目录makefile</h2><ul>
+<li>被主目录makfile引用 来选择使用哪个</li>
+</ul>
+<h2 id="子目录makefile"><a href="#子目录makefile" class="headerlink" title="子目录makefile"></a>子目录makefile</h2><ul>
+<li>obj-y:编译进内核</li>
+<li>obj- :不编译进内核</li>
+<li>obj-m:以模块方式编译</li>
+</ul>
+<h1 id="内核移植"><a href="#内核移植" class="headerlink" title="内核移植"></a>内核移植</h1><h2 id="架构设置"><a href="#架构设置" class="headerlink" title="架构设置"></a>架构设置</h2><pre><code>SUB-ARCH  内核默认x86
+</code></pre>
+<h2 id="交叉编译"><a href="#交叉编译" class="headerlink" title="交叉编译"></a>交叉编译</h2><pre><code>CROSS_COMPILE
+</code></pre>
+<h2 id="选择文件编译"><a href="#选择文件编译" class="headerlink" title="选择文件编译"></a>选择文件编译</h2><ul>
+<li>CONFIG_XXX 选择编译的参数</li>
+<li>提供配置单：一般开发板厂商会提供 linux 内核的在arch&#x2F;{arch}&#x2F;configs 目录下的xxx_defconfig</li>
+</ul>
+<h2 id="内核配置和编译"><a href="#内核配置和编译" class="headerlink" title="内核配置和编译"></a>内核配置和编译</h2><h3 id="内核配置"><a href="#内核配置" class="headerlink" title="内核配置"></a>内核配置</h3><ul>
+<li>配置仓库</li>
+<li>交叉编译–  修改主目录makefile 选择交叉编译器 CROSS_COMPILE</li>
+<li>选择体系结构 – 修改主目录makefile 选择架构设置 ARCH</li>
+<li>复制xxx_defconfig 到主目录的.config ,按照需求（或图形配置：make menuconfig，默认加载当前目录的.config）修改.</li>
+</ul>
+<h4 id="主要参数"><a href="#主要参数" class="headerlink" title="主要参数"></a>主要参数</h4><ul>
+<li>system type –&gt; system type (xxx) 和开发板</li>
+</ul>
+<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><p>原理： Kconfig(提供配置选项) –&gt; make menuconfig(根据配置选项生成config文件) –&gt; .config(config文件,为makefile提供参数) –&gt; Makefile(编译过程)  </p>
+<ul>
+<li>make help 查看可用的编译参数。（make -j7 多线程编译）</li>
+<li>make Image (内核映像文件) &#x2F;make zImage (压缩后内核映像文件)&#x2F; make uImage(zImage+64字节头，使用mkimage工具生成，for uboot)  –编译内核</li>
+<li>make modules – 编译模块<br>内核结果文件：vmlinux(os elf file) –objcopy–&gt; Image zImage uImage  (zImage还是bzImage，他们的实模式代码部分都被装入0x9000:0000(物理地址 0x90000) ，zimage 装载保护模式代码在(物理地址 0x10000-0x90000)，bzimage 保护模式代码在(物理地址0x100000）以上 所以大小理论上是没有限制的)<br>p08 <a href="https://www.bilibili.com/video/BV1XY411g72Y?p=8&spm_id_from=pageDriver">https://www.bilibili.com/video/BV1XY411g72Y?p=8&amp;spm_id_from=pageDriver</a></li>
+</ul>
+<h4 id="编译-x86"><a href="#编译-x86" class="headerlink" title="编译 x86"></a>编译 x86</h4><ul>
+<li>apt install build-essential libncurses-dev  flex  bison libssl-dev bc libelf-dev dwarves</li>
+<li>CONFIG_SYSTEM_TRUSTED_KEYS&#x3D;”debian&#x2F;certs&#x2F;debian-uefi-certs.pem” 错误 ？ 删掉数据</li>
+<li>.tmp_vmlinux.btf: pahole (pahole) is not available？apt install dwarves</li>
+</ul>
+<h4 id="编译arm"><a href="#编译arm" class="headerlink" title="编译arm"></a>编译arm</h4><h2 id="安装和测试"><a href="#安装和测试" class="headerlink" title="安装和测试"></a>安装和测试</h2><ul>
+<li>bootloader: uboot sd卡<ul>
+<li>uImage </li>
+<li>fs: ramdis&#x2F;nfs<br>开发板启动uboot后 从tftp 服务器取uImage文件 放到启动位置<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tftp 地址 initrd.img.gz：内核所需的驱动、模块、脚本 等</span><br><span class="line">tftp 地址 内核</span><br><span class="line">bootm </span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<h2 id="kconfig-语法"><a href="#kconfig-语法" class="headerlink" title="kconfig 语法"></a>kconfig 语法</h2><ul>
+<li>source 包含</li>
+<li>menu endmunu ： 可深入菜单</li>
+<li>config ：单个选择项</li>
+<li>config 属性：<br>  config NAME：定义 CONFIG_NAME 变量<br>  bool “ ”：定义 CONFIG_NAME&#x3D;y 或者 # CONFIG_NAME（注释掉的参数），显示效果为 [*] 或 [ ]<br>  tristate “ ”: 支持编译为模块。显示效果为&lt;&gt;<br>  depends on xxx: 只有其他被选中才显示<br>  help ： 帮助信息  menuconfig 按h 即可展示</li>
+</ul>
+<h2 id="驱动和内核"><a href="#驱动和内核" class="headerlink" title="驱动和内核"></a>驱动和内核</h2><p>类型：char 或 其他</p>
+<ol>
+<li>拷贝驱动文件(mydrivce.c)到  drivers&#x2F;{类型} 目录下 或 drivers&#x2F;{类型}&#x2F;device_name 目录下</li>
+<li>添加目录下的makefile文件 或修改已有makefile（子目录中的makefile 要在父目录makefile中声明）：</li>
+</ol>
+<ul>
+<li>添加编译目标：obj-${CONFIG_MYDRIVCE} +&#x3D; mydrivce.o</li>
+<li>添加目录：obj-${CONFIG_DEVICE_NAME} +&#x3D; device_name&#x2F;</li>
+</ul>
+<ol start="3">
+<li>修改或添加Kconfig （可以参考 char&#x2F;pcmcia&#x2F;Kconfig）</li>
+</ol>
+<ul>
+<li>添加编译目标： config MYDRIVCE  等等  </li>
+<li>添加目录：source “drivers&#x2F;char&#x2F;device_name&#x2F;Kconfig”</li>
+</ul>
+<ol start="4">
+<li>加载内核后：</li>
+</ol>
+<ul>
+<li>内核是否运行了驱动：cat &#x2F;proc&#x2F;devices</li>
+<li>创建led驱动程序和应用程序 中间的设备节点 :mknod 设备节点名 b&#x2F;c&#x2F;u&#x2F;p 主设备号（cat &#x2F;proc&#x2F;devices） 次设备号（0,1,2…）</li>
+<li>将测试文件挂载到待测设备上(nfs 等服务)</li>
+<li>编译测试文件 arm-linux-gcc -o mydrivcetest mydrivcetest.c</li>
+<li>在待测设备上执行</li>
+</ul>
+<h1 id="nfs"><a href="#nfs" class="headerlink" title="nfs"></a>nfs</h1><h2 id="nfs-server"><a href="#nfs-server" class="headerlink" title="nfs server"></a>nfs server</h2><p>查看服务状态：netstat -tua |grep nfs<br>查看开放目录: exportfs</p>
+<h2 id="nfs-client"><a href="#nfs-client" class="headerlink" title="nfs client"></a>nfs client</h2><p>设置ip：ifconfig eth0 192.168.10.33<br>挂载nfs：mount -t nfs -o nolock 192.168.10.110:&#x2F;path&#x2F;to&#x2F;shar &#x2F;mnt </p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/linux%20%E5%86%85%E6%A0%B8%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/" data-id="cltvlnllf00069kqq9okn4kzk" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/linux 字符设备驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/linux%20%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:20.253Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="导读"><a href="#导读" class="headerlink" title="导读"></a>导读</h1><p>linux 驱动主要分为</p>
+<ul>
+<li><code>字符设备驱动</code> ：串口、watchdog、rtc等</li>
+<li><code>块设备驱动</code>：硬盘类型设备，分块读取</li>
+<li><code>网络设备驱动</code>：走的是协议栈内核，所以单独列出来。网卡和can<br>驱动的静态加载和动态加载：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>静态加载</th>
+<th>动态加载</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>编译选项</td>
+<td>Y</td>
+<td>M</td>
+</tr>
+<tr>
+<td>存在位置</td>
+<td>在内核中</td>
+<td>文件系统</td>
+</tr>
+<tr>
+<td>加载时机</td>
+<td>内核启动</td>
+<td>文件系统启动后,手动 mod</td>
+</tr>
+<tr>
+<td>优势</td>
+<td></td>
+<td>热插拔、驱动调试、开机速度更快</td>
+</tr>
+</tbody></table>
+<h1 id="字符设备驱动相关概念和结构体"><a href="#字符设备驱动相关概念和结构体" class="headerlink" title="字符设备驱动相关概念和结构体"></a>字符设备驱动相关概念和结构体</h1><p>设备号、设备信息描述信息、行为描述（callback 函数）、相关注册函数。</p>
+<h2 id="设备号"><a href="#设备号" class="headerlink" title="设备号"></a>设备号</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;Kdev_t.h?</span><br><span class="line">dev=MKDEV(ma,mi)</span><br><span class="line">ma=MAJOR(dev)</span><br><span class="line">mi=MINOR(dev)</span><br><span class="line"></span><br><span class="line">unsigned int 32 位  高12为主设备号（设备类型） 低20位为次设备号（同一类别的不同设备）</span><br><span class="line">// 注册设备号: dev：设备号的开始位置,count:申请设备号的数量。name:设备名称</span><br><span class="line">int register_chrdev_region(dev_t from, unsigned count, const char *name)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="设备信息描述信息"><a href="#设备信息描述信息" class="headerlink" title="设备信息描述信息"></a>设备信息描述信息</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">struct cdev &#123;</span><br><span class="line">	struct kobject kobj; //设备管理 使用的</span><br><span class="line">	struct module *owner; // </span><br><span class="line">	const struct file_operations *ops; // 行为函数集合</span><br><span class="line">	struct list_head list; // </span><br><span class="line">	dev_t dev; // 设备号</span><br><span class="line">	unsigned int count;//</span><br><span class="line">&#125; __randomize_layout;</span><br></pre></td></tr></table></figure>
+<h2 id="行为描述（callback-函数）"><a href="#行为描述（callback-函数）" class="headerlink" title="行为描述（callback 函数）"></a>行为描述（callback 函数）</h2><p>实现这些函数来操作硬件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">struct file_operations &#123;</span><br><span class="line">	struct module *owner;</span><br><span class="line">	...</span><br><span class="line">	ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);</span><br><span class="line">	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);</span><br><span class="line">	int (*open) (struct inode *, struct file *);</span><br><span class="line">	int (*release) (struct inode *, struct file *);</span><br><span class="line">	...</span><br><span class="line">&#125; __randomize_layout;</span><br></pre></td></tr></table></figure>
+
+<h2 id="相关注册函数"><a href="#相关注册函数" class="headerlink" title="相关注册函数"></a>相关注册函数</h2><p>实现以上描述后 注册到内核，内核才能调用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">设备描述结构体、设备号、设备数量</span><br><span class="line">cdev_add(struct cdev *p,dev_t dev,unsigned count)</span><br></pre></td></tr></table></figure>
+
+<h1 id="驱动代码分析"><a href="#驱动代码分析" class="headerlink" title="驱动代码分析"></a>驱动代码分析</h1><ul>
+<li>驱动代码的入口</li>
+<li>驱动代码的生存周期：insmod 开始 rmmod 结束</li>
+<li>字符设备驱动的架构</li>
+</ul>
+<h2 id="module-init"><a href="#module-init" class="headerlink" title="module_init"></a>module_init</h2><p>驱动的入口函数声明，在insmod **.ko时被调用</p>
+<h2 id="module-exit"><a href="#module-exit" class="headerlink" title="module_exit"></a>module_exit</h2><p>驱动卸载函数声明，在rmmod **.ko时被调用</p>
+<h2 id="MODULE-LICENSE"><a href="#MODULE-LICENSE" class="headerlink" title="MODULE_LICENSE()"></a>MODULE_LICENSE()</h2><p>声明驱动的证书类型。</p>
+<h2 id="c开发"><a href="#c开发" class="headerlink" title="c开发"></a>c开发</h2><p>kzalloc: 申请内存，同时清零。2:申请内存的用途： GFP_KERNEL（内核） GFP_DMA（dma）等等<br>kmalloc：申请内存</p>
+<p>p4</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/linux%20%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" data-id="cltvlnllg00079kqqa12jclh6" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/linux 操作系统启动过程" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/linux%20%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" class="article-date">
+  <time datetime="2024-03-17T14:14:19.577Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="bios启动阶段"><a href="#bios启动阶段" class="headerlink" title="bios启动阶段"></a>bios启动阶段</h1><ul>
+<li>传统bios固件首先读取磁盘中第一个分区上的启动配置文件boot.cfg</li>
+<li>UEFI 标准固件，首先读取磁盘中第一个分区上的启动配置文件grub.cfg<br>两种格式的配置文件内容大同小异。都是包含多个启动项。<br>每个启动项会指定一个内核文件的路径名（vmlinux 或 vmlinuz（压缩））一个可选的初始化内存盘的路径名（initrd（旧） 或initramfs（新））和其他的启动参数。</li>
+</ul>
+<h1 id="linux-启动阶段"><a href="#linux-启动阶段" class="headerlink" title="linux 启动阶段"></a>linux 启动阶段</h1><ol>
+<li>首先启动linux内核（0号进程）</li>
+<li>根据是否指定初始化内存盘来决定启动根文件系统的init程序还是启动内存盘里的init程序。</li>
+<li>linux 内核将控制权转交为init进程（1号进程）<br>init进程有多种实现：SysVinit(传统)、Upstart、OpenRC、Systemd（新）。</li>
+<li>init进程首先拉起多个系统服务。</li>
+<li>init进程根据不同的操作模式来启动不同的登录管理服务。<br>sysVint里面操作模式分为RunLevel 1：单用户命令模式 2：无网络多用户模式 3：有网络多用户命令模式 5：有网络多用户图形模式。systemd里面称为Target，emergency.target 紧急模式、multi-user.target 多用户命令模式&#x3D;RunLevel3 graphical.target&#x3D;RunLevel5<br>命令模式下的登录管理服务：getty。显示命令行让用户登录。成功后启动shell（bash、csh、ksh、zsh等）<br>图形模式下的也叫显示管理器（Display Manager,DM）常见的显示管理器有 XDM、KDM、GDM、SDDM和LightDM。显示登录界面让用户登录。成功后启动桌面环境（KDE、GNOME、Mate、XFACE、LXDE、DDE等）</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/linux%20%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" data-id="cltvlnllh00089kqqdz9zbi6f" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+  <nav id="page-nav">
+    <a class="extend prev" rel="prev" href="/page/2/">&laquo; __(&#39;prev&#39;)</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/4/">__(&#39;next&#39;) &raquo;</a>
+  </nav>
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/03/">三月 2024</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/1.%E6%9E%84%E5%BB%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/2.%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/helloworld%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/%E5%86%85%E6%A0%B8%E5%8D%87%E7%BA%A7/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2024 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

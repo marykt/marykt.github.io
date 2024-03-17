@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="小边的博客">
+<meta property="og:url" content="http://yoursite.com/page/2/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="marykt">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-linux/book-深入理解linux内核/(二章)内存寻址" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.417Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内存寻址"><a href="#内存寻址" class="headerlink" title="内存寻址"></a>内存寻址</h1><ul>
+<li>深入理解linux 内核： 第二章 内存寻址<br>keywords： 内存、MMU、寻址、物理地址、线性地址、逻辑地址<br><a href="https://linux-mm.org/">https://linux-mm.org/</a></li>
+</ul>
+<h1 id="内存地址"><a href="#内存地址" class="headerlink" title="内存地址"></a>内存地址</h1><ul>
+<li>逻辑地址 （logical address）<br>  在机器语言指令中用来指定操作数或一条指令的地址，例如在汇编中，程序有若干段，每一个逻辑地址由段（segment）+偏移量(offset或displacement)组成。</li>
+<li>线性地址 (linear address) &#x2F;虚拟地址（vartual address）<br>  是一个32位无符号整数，可以用来表达4GB的地址，线性地址通常用十六进制数字表示，范围从<code>0x00000000</code> 到 <code>0xffffffff</code>。代表程序能够使用的地址范围。</li>
+<li>物理地址 (physical address)<br>  用于内存芯片级内存单元寻址，与CPU的引脚发送到内存总线上的信号相对应。物理地址由32位或36位无符号整数表示。</li>
+</ul>
+<p>内存控制单元（MMU）通过一种称为分段单元的硬件电路把逻辑地址转换为线性地址；接着第二个称为分页单元的硬件电路把线性地址转成物理地址。<br><img src="/./static/%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80-%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png"><br>在多处理器或单处理器+DMA的结构中存在一个内存仲裁器的结构（memory arbiter）。此结构用于处理同时多个内存请求的问题，对于操作系统来说，此结构是透明的。</p>
+<h1 id="硬件中的分段"><a href="#硬件中的分段" class="headerlink" title="硬件中的分段"></a>硬件中的分段</h1><pre><code>  INTEL 1982年推出80286芯片，该芯片相比8086和8088有了飞跃式发展，虽然它仍是16位结构，但在CPU内部含有13.4万个晶体管，时钟频率由最初6MHz逐步提高到20MHz。内部和外部数据总线皆为16位，地址总线24位，可寻址16MB内存。80286兼容了8086所有功能，并且是8086的向上兼容的微处理器，使8086的汇编语言程序可以不做任何修改地在80286上运行。同时80286的推出也是实模式和保护模式CPU的分水岭。80286微处理器内部有4个功能部件，即地址部件AU，指令部件IU，执行部件EU和总线部件BU。这四个部件的并行操作，提高了吞吐率，加快了处理速度
+  
+  计算机必须具备自举能力将自己所与的元件激活，以便能完成加载操作系统这一目的，然后再由操作系统承担起那些单靠自举代码无法完成的更复杂的任务。自举只有两个功能：加电自检和磁盘引导。
+</code></pre>
+<p>从80286开始，intel CPU 使用两种不同的方式执行地址转换，这两种方式分为称为实模式(real mode)和保护模式（protected mode）。实模式存在主要是为了维持处理器与早期模型兼容，并让操作系统自举。</p>
+<h2 id="段选择符和段寄存器"><a href="#段选择符和段寄存器" class="headerlink" title="段选择符和段寄存器"></a>段选择符和段寄存器</h2><p>一个逻辑地址由两部分组成：段标识符（也叫选择符 Segment Setlector）+ 段内偏移地址。段标识符是一个16位字段。如下图所示。偏移量则是一个32位长的字段。<br><img src="/./static/%E6%AE%B5%E5%AF%84%E5%AD%98%E5%99%A8%E5%86%85%E5%AE%B9.png"><br>为了快速找到段选择符，处理器提供段寄存器，段寄存器存在的唯一目的是存放段选择符。这些段寄存器被称为cs,ss,ds,es,fs,和gs。尽管只有6个段寄存器，但是程序可以把一个段寄存器用于不同目的，可以将其值先保存在内存中，用完再恢复。<br>其中三个段寄存器有专门用途：</p>
+<ul>
+<li>cs 代码段寄存器，程序指令段。</li>
+<li>ss 栈寄存器，程序栈段</li>
+<li>ds 数据段寄存器，静态数据或全局数据。</li>
+</ul>
+<p>其他三个可以指向任意数据段。</p>
+<h3 id="段选择索引号（选择子）"><a href="#段选择索引号（选择子）" class="headerlink" title="段选择索引号（选择子）"></a>段选择索引号（选择子）</h3><p>表示段的地址处在段描述符表中的序号。</p>
+<h3 id="TI-表指示器"><a href="#TI-表指示器" class="headerlink" title="TI 表指示器"></a>TI 表指示器</h3><p>表指示器(在IDT位为0时才有意义?)</p>
+<ol>
+<li>1,段选择子的索引部分指向LDT（对应ldtr控制寄存器声明的段描述符表）</li>
+<li>0,段选择子的索引部分指向GDT（对应gdtr控制寄存器声明的段描述符表）</li>
+</ol>
+<h3 id="CPL、DPL、RPL："><a href="#CPL、DPL、RPL：" class="headerlink" title="CPL、DPL、RPL："></a>CPL、DPL、RPL：</h3><p>CPL是当前执行的程序或任务的特权级。它被存储在CS和SS的第0位和第1位上。通常情况下，CPL代表代码所在的段的特权级。当程序转移到不同特权级的代码段时，处理器将改变CPL。linux系统中只有0和3两个值，分别表示用户态和内核态。</p>
+<p>DPL表示段或门的特权级。它被存储在段描述符或者门描述符的DPL字段中（《操作系统篇-分段机制与GDT|LDT》中有提到），当当前代码段试图访问一个段或者门（这里大家先把门看成跟段一样，下面我们会介绍），DPL将会和CPL以及段或者门选择子的RPL相比较，根据段或者门类型的不同，DPL将会区别对待。</p>
+<p>RPL是通过段选择子的第0和第1位表现出来的。RPL是代码中根据不同段跳转而确定，以动态刷新CS里的CPL，在代码段选择符中。而且RPL对每个段来说不是固定的，两次访问同一段时的RPL可以不同。操作系统往往用RPL来避免低特权级应用程序访问高特权级段内的数据，即便提出访问请求的段有足够的特权级，如果RPL不够也是不行的，当RPL的值比CPL大的时候，RPL将起决定性作用。也就是说，RPL相当于附加的一个权限控制，只有当RPL&gt;DPL的时候，才起到实际的限制作用。</p>
+<h2 id="段描述符"><a href="#段描述符" class="headerlink" title="段描述符"></a>段描述符</h2><p>每个段由一个8字节（64位）的段描述符表示，它描述了段特征。其存放于全局描述符表（GDT）或局部描述符表（LDT）中。<br>当进程除了GDT中的段还需要创建其他段时，就可以有自己的LDT。<br><img src="/./static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br>有几种不同类型的段以及和他们对应的段描述符。下面列出了linux中被广泛采用的类型：</p>
+<ul>
+<li>代码段描述符<br>代表代码段，可以放在GDT或LDT中。该描述符S标志为1（非系统段）。</li>
+<li>数据段描述符<br>代表数据段，可以放在GDT或LDT中。该描述符S标志为1（非系统段）。</li>
+<li>任务状态段描述符（TSSD）<br>代表任务状态段（Task State Segment,TSS），也就是说这个段用于保存处理器寄存器的内容，只能出现在GDT中。根据相应的进程是否在CPU上运行，其type字段的值分别为11或9。该描述符S标志为0。</li>
+<li>局部描述符表描述符（LDTD）<br>代表一个包含LDT的段，只能出现在GDT中。其type字段的值为2,该描述符S标志为0。</li>
+</ul>
+<p><img src="/./static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E6%A0%BC%E5%BC%8F.png"></p>
+<h2 id="快速访问段描述符"><a href="#快速访问段描述符" class="headerlink" title="快速访问段描述符"></a>快速访问段描述符</h2><p>逻辑地址由16位段选择符+32位偏移量组成，段寄存器仅仅存放段选择符。<br>为了加速从逻辑地址到线性地址的转换，80x86处理器提供了一种附加的非编程的寄存器，供6个可编程的段寄存器使用。当段选择符被装入段寄存器时，相应的段描述符就由内存装入到对应的非编程CPU寄存器，从这时起针对这个段的访问就可以不访问主存中的GDT或LDT，处理器直接使用此非编程寄存器即可。仅当段寄存器内容改变时，才有必要访问GDT和LDT。</p>
+<ul>
+<li>段选择符和段描述符：<br><img src="/./static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%92%8C%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6.png"></li>
+<li>段选择符字段：<br><img src="/./static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%AD%97%E6%AE%B5.png"></li>
+</ul>
+<h2 id="分段单元"><a href="#分段单元" class="headerlink" title="分段单元"></a>分段单元</h2><p>分段单元（segmentation unit ）主要执行以下动作：</p>
+<ul>
+<li>检查TI字段判断是哪个描述符表，GDT：从gdtr找到gdt的线性基地址，LDT：从ldtr中找到线性基地址。</li>
+<li>段选择符的index字段计算偏移地址</li>
+<li>描述符表的线性基地址+计算出的偏移地址&#x3D;最终的段描述符线性地址。<br><img src="/./static/%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png"></li>
+</ul>
+<h1 id="linux-中的分段"><a href="#linux-中的分段" class="headerlink" title="linux 中的分段"></a>linux 中的分段</h1><p>8086堆分段的支持是希望程序员把程序划分为逻辑上相关的实体，例如子程序或全局与局部数据区。。linux以非常有限的方式使用分段，实际上分段和分页的作用非常相似。linux更喜欢使用分页方式，原因如下：</p>
+<ul>
+<li>所有进程使用相同的段寄存器值时，内存管理变得更简单，也就是说它们能共享同样一组线性地址。</li>
+<li>linux为了适配多种不同架构(risc体系结构对分段支持很有限)</li>
+</ul>
+<p>2.6版本linux只在8086结构下才需要使用分段<br>运行在用户态的所有linux进程都使用一对相同的段来对指令和数据寻址，这两个段就是所谓的用户代码段和用户数据段。类似的，运行在内核态的所有linux进程都使用一对相同的段对质量和数据寻址，分别叫内核代码段和内核数据段。</p>
+<p><img src="/./static/%E5%9B%9B%E4%B8%AA%E4%B8%BB%E8%A6%81%E7%9A%84linux%E6%AE%B5%E7%9A%84%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5%E5%80%BC.png"></p>
+<p>相应的段选择符由__USER_CS,__USER_DS,__KERNEL_CS,__KERNEL_DS分别定义，例如为了对内核代码段进行寻址，只需要把__KERNEL_CS宏产生的值装入cs段寄存器就可以。<br>从上图中可知 四个段的起始位置均为0x00000000 且可以达到2^23-1的寻址限长，可知linux下逻辑分段的逻辑地址和线性地址是相等的。偏移量字段就对应着实际内存位置。<br>CPU的当前特权级（CPL）反应了进程是在用户态还是内核态，并由CS寄存器中的RPL字段指定，只要当前特权级被改变，一些段寄存器必须相应的更新。例如CPL&#x3D;3（用户态）时，DS寄存器必须含有用户数据段的段选择符，例如CPL&#x3D;0（内核态）时，DS寄存器必须含有内核数据段的段选择符。 类似的还有SS寄存器。<br>当对指向指令或者数据结构的指针进行保存时，内核根本不需要为其设置逻辑地址的段选择符，因为CS寄存器已经包含了，且在内核态的执行的段仅有一种，所以只要cpu在切换到内核态时把__KERNEL_CS装入CS就可以了。指向内核数据结构的指针隐含的使用ds寄存器，指向用户数据结构的指针显式地使用es寄存器。<br>除了那四个段，内核还有其他几个专门的段。在下面说明linux GDT时介绍。</p>
+<h2 id="linux-GDT"><a href="#linux-GDT" class="headerlink" title="linux GDT"></a>linux GDT</h2><p>在单处理系统中只有一个GDT，而在多处理器系统中每个CPU都对应一个GDT。所有的GDT都存放在cpu_gdt_table 数组中，而所有GDT的地址和他们的大小（初始化gdtr寄存器时使用）被存放在cpu_gdt_descr数组中。这些符号都在文件arch&#x2F;i386&#x2F;kernel&#x2F;head.S 中被定义。  </p>
+<p>每个GDT包含18个段描述符和14个空的，未使用的，或保留的项。插入未使用项的目的时为了使经常一起访问的描述符能够处于同一个32字节的硬件高速缓存中。</p>
+<p>每一个GDT中包含的18个段描述符指向下面的段：</p>
+<ul>
+<li>用户态和内核态下的代码段和数据段 共4个</li>
+<li>任务状态段（TSS），每个处理器一个。</li>
+<li>1个包括缺省布局描述符的段，通常为共享</li>
+<li>3个局部线程存储（Thread-Local Storage,TLS）段。</li>
+<li>与高级电源管理（AMP）相关的3个段</li>
+<li>与支持即插即用（PnP）功能的bios服务程序相关的5个段</li>
+<li>被内核用来处理<code>双重错误</code>异常的特殊TSS段。</li>
+</ul>
+<p>系统中每个处理器都有一个GDT副本。除了少数几种情况，所有GDT副本都存放相同的表项。首先TSS段是每个处理器自己的。其次GDT中只有少数项依赖于CPU正在执行的进程（LDT和TLS段描述符）。最后 某些情况处理器可能临时修改GDT中某个项目，例如调用APM的BIOS例程时可能发生这种情况。</p>
+<h2 id="linux-LDT"><a href="#linux-LDT" class="headerlink" title="linux LDT"></a>linux LDT</h2><p>大多数用户态下的linux程序不使用局部描述符表，内核定义了一个缺省的LDT供大多数进程共享。缺省的局部描述符表存放在default_ldt数组中。它包含5个项，内核仅有效地使用了其中两个：用于ibcs执行文件的调用门和solaris&#x2F;x86可执行文件的调用门（<code>执行域</code>相关内容）调用门是8086提供的一种机制，用于在调用预定义函数时改变cpu的特权级。</p>
+<p>某些情况进程需要创建自己的LDT。比如wine那样的程序，它们执行面向段的windows应用程序。modify_ldt()系统调用用来创建进程自己的ldt。</p>
+<h1 id="硬件中的分页"><a href="#硬件中的分页" class="headerlink" title="硬件中的分页"></a>硬件中的分页</h1><p>分页单元(paging unit)把线性地址转换成物理地址。<br>为了效率，线性地址被分成以固定长度为单位的组，称为页，页内部连续的线性地址被映射到连续的物理地址中，这样内核可以以页为单位管理其权限。<br>分页单元把所有的RAM分为固定长度的页框（page frame）(有时也叫物理页)。页：只是一个数据块，可以存放在任何页框或磁盘中。<br>线性地址到物理地址的数据结构称为页表（page table）。页表存放在主存中，在启用分页之前必须由内核对页表进行初始化。<br>从80386开始 所有的8086处理器就支持分页，设置cr0寄存器的PG标志启用，当PG&#x3D;0时，线性地址就被解释成物理地址。<br>        CR0<br>        是系统内的控制寄存器之一。控制寄存器是一些特殊的寄存器，它们可以控制CPU的一些重要特性。<br>        0位是保护允许位PE(Protedted Enable)，用于启动保护模式，如果PE位置1，则保护模式启动，如果PE&#x3D;0，则在实模式下运行。<br>        1 位是监控协处理位MP(Moniter coprocessor)，它与第3位一起决定：当TS&#x3D;1时操作码WAIT是否产生一个“协处理器不能使用”的出错信号。第3位是任务转换位(Task Switch)，当一个任务转换完成之后，自动将它置1。随着TS&#x3D;1，就不能使用协处理器。<br>        CR0的第2位是模拟协处理器位 EM (Emulate coprocessor)，如果EM&#x3D;1，则不能使用协处理器，如果EM&#x3D;0，则允许使用协处理器。<br>        第4位是微处理器的扩展类型位 ET(Processor Extension Type)，其内保存着处理器扩展类型的信息，如果ET&#x3D;0，则标识系统使用的是287协处理器，如果 ET&#x3D;1，则表示系统使用的是387浮点协处理器。<br>        CR0的第31位是分页允许位(Paging Enable)，它表示芯片上的分页部件是否允许工作。<br>        CR0的第16位是写保护未即WP位(486系列之后)，只要将这一位置0就可以禁用写保护，置1则可将其恢复。</p>
+<h2 id="常规分页"><a href="#常规分页" class="headerlink" title="常规分页"></a>常规分页</h2><p>8086开始，intel处理器的分页单元处理4KB的页。<br>32位线性地址被分为三个域：</p>
+<ul>
+<li>Directory(目录) 高10位，第一转换表(页目录表),页目录表的物理地址存放在控制寄存器cr3。</li>
+<li>Table(页表) 中间10位，第二转换表（页表） 一个页表项代表4k。页目录的物理地址存放在页目录表。</li>
+<li>Offset(偏移量) 最低12位 2^12&#x3D;4k （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p>每个活动进程必须有一个分配给它的页目录，页表按需分配。</p>
+<p><img src="/./static/8086%E5%A4%84%E7%90%86%E5%99%A8%E7%9A%84%E5%88%86%E9%A1%B5.png"></p>
+<p>页目录项和页表项具有相同的结构，每项都含有以下字段：</p>
+<ol>
+<li>Present标志：页是否在主存中</li>
+<li>包含页框物理地址最高20位的字段 （因为每个页狂有4k容量。4k对齐，后12位内容可以忽略。）</li>
+<li>Accessed标志：寻址时标志，由操作系统设置</li>
+<li>Dirty标志：写操作标记，由操作系统设置</li>
+<li>read&#x2F;write标志： 权限标记</li>
+<li>PCD和PWT标志：控制硬件高速缓存处理页或页表的方式</li>
+<li><code>Page size 标志</code>： 只用于页目录项，&#x3D;1时，页目录项指的是2MB或4MB的页框</li>
+<li>Global 标志：只用于页表项，此标志在Pentium Pro 中引入，防止常用页被高速缓存刷新出去，cr4 PGE标志控制是否启用</li>
+</ol>
+<h2 id="扩展分页"><a href="#扩展分页" class="headerlink" title="扩展分页"></a>扩展分页</h2><p>Pentium模型开始 8086引入扩展分页，允许页框大小为4MB。在这些情况下内核可以不使用中间页进行地址转换。从而节省内存并保留TLB（转换后援缓冲器）项。<br>32位线性地址被分为二个域：</p>
+<ul>
+<li>Directory(目录) 高10位，第一转换表(页目录表),页目录表的物理地址存放在控制寄存器cr3。</li>
+<li>Offset(偏移量) 其余22位 2^22&#x3D;4M （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p><img src="/./static/%E6%89%A9%E5%B1%95%E5%88%86%E9%A1%B5.png"></p>
+<ul>
+<li><code>Page size 标志</code>必须设置</li>
+<li>rc4 处理器寄存器的PSE标志能使扩展分页和常规分页共存。</li>
+</ul>
+<h2 id="硬件保护方案"><a href="#硬件保护方案" class="headerlink" title="硬件保护方案"></a>硬件保护方案</h2><p>页的存取权限只有两种 read&#x2F;write标志:<code>只读</code>或者<code>可读写</code></p>
+<h2 id="物理地址扩展（PAE）分页地址"><a href="#物理地址扩展（PAE）分页地址" class="headerlink" title="物理地址扩展（PAE）分页地址"></a>物理地址扩展（PAE）分页地址</h2><p>处理器支持的RAM容量受到连接到地址总线上的地址管脚数量限制，早期8086到pentium使用32位物理地址，共4GB RAM。但是对服务器来说不够，所以从Pentium  Pro 开始，intel处理器寻址能力达到2^36&#x3D;64GB。不过需要新的分页机制来把32位线性地址转成36位物理地址。<br>设置cr4控制寄存器的物理地址扩展（PAE）标志以启用。页目录项中的页大小标志PS启动大尺寸页（PAE启动时为2MB）<br>intel为支持PAE改变分页机制：</p>
+<ul>
+<li>64GB RAM 被分为2^24个页框，页表项的物理地址字段由20位扩展到24位</li>
+<li>PDPT页表，新级别，由4个64位表项组成。存放在前4GB中，32（2^5）字节对齐的起始位置。</li>
+<li>CR3包含27位PDPT基地址字段。</li>
+</ul>
+<p>4K常规分页，32位线性地址按照下列方式解释：</p>
+<ul>
+<li>cr3 指向一个PDPT。</li>
+<li>31-30 指向PDPT 4个项中的一个</li>
+<li>29-21 页目录项索引 （2^9&#x3D;512）</li>
+<li>20-12 页表项索引 （2^9&#x3D;512）</li>
+<li>11-0  Offset(偏移量) 最低12位 2^12&#x3D;4k （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p>2MB扩展分页，32位线性地址按照下列方式解释：</p>
+<ul>
+<li>cr3 指向一个PDPT。</li>
+<li>31-30 指向PDPT 4个项中的一个</li>
+<li>29-21 页目录项索引 （2^9&#x3D;512）</li>
+<li>20-0  Offset(偏移量) 最低21位 2^21&#x3D;2M</li>
+</ul>
+<p>实际线性地址仍然是32位长，如果希望对更多RAM寻址，必须在cr3中放置一个新值，或改变PDPT的内容。只有内核能够改变进程的页表，所以在用户态下运行的进程不能使用大于4GB的物理地址空间。PAE允许内核使用，从而显著增加了系统中的进程数量。</p>
+<h2 id="64位系统分页"><a href="#64位系统分页" class="headerlink" title="64位系统分页"></a>64位系统分页</h2><p>普遍用于32位系统的两级分页机制对64位系统不适用，寻址项数量太多。<br>所有64位处理器的硬件分页系统都使用了额外的分页级别，使用的级别数量取决于处理器的类型。下表为一些linux所支持的64位平台使用的硬件分页系统的主要特征。</p>
+<p><img src="/./static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png"></p>
+<p>linux提供了一种通用分页模型，它适合绝大多数所支持的硬件分页系统。</p>
+<h2 id="硬件高速缓存"><a href="#硬件高速缓存" class="headerlink" title="硬件高速缓存"></a>硬件高速缓存</h2><p>为了缩小cpu和ram之间的速度不匹配，引入了硬件高速缓存。即cpu的L1,L2,L3缓存。8086开始引进了一个叫行（line）的新单位。行由几十个连续的字节组成，它们以脉冲突发模式（burst mode）在慢速DRAM和快速的用来实现高速缓存的片上静态RAM（SRAM）之间传送，以实现高速缓存。</p>
+<p>理论上，在一个极端情况下，高速缓存是可以直接映射的，这时主存中的一个行总是存放在高速缓存完全相同的位置。在另一个极端情况下，主存中的一个行可以放到高速缓存的任意位置。大多数高速缓存在某种程度上是N路组关联的（N-way set associative）,如下图所示：<br><img src="/./static/%E7%BB%84%E7%9B%B8%E8%81%94%E6%98%A0%E5%B0%84.png"><br>在n路组相联映像方式中，高速缓存（Cache）被分为若干组，每一组的块数是n（路）。主存中一个区的大小&#x3D;Cache的组数，主存中第0块对应第0组的任意一块，主存的地址结构为区-块-块内地址</p>
+<p>高速缓存单元插在分页单元和主内存之间。它包含一个硬件高速缓存内存（hardware cache memory）和一个高速缓存控制器（cache controller）。高速缓存内存存放内存中真正的行。高速缓存控制器中存放一个表数组项，每个表项对应高速缓存内存中的一个行。每个表项有一个标签（tag）和描述高速缓存行状态的几个标志（flag）。这个标签由一些位组成，这些位让高速缓存控制器能够辨别由这个行当前所映射的内存单元。<br>这种内存物理地址通常分为三组：</p>
+<ul>
+<li>最高几位对应标签</li>
+<li>中间几位对应高速缓存控制器的子集索引</li>
+<li>最低几位对应行内偏移量</li>
+</ul>
+<p><img src="/./static/%E5%A4%84%E7%90%86%E5%99%A8%E7%A1%AC%E4%BB%B6%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png"></p>
+<ul>
+<li>命中判断： 当访问一个RAM单元时，cpu从物理地址中提取子集的索引号（对应上图的组编号），并把子集中所有行的标签与这个物理地址的高位进行比较（对应上图中的cache标记） ，如果某个相同则命中，否则不命中</li>
+<li>更新机制：通写（write-through）+回写(write-back)，取决于存取类型。</li>
+</ul>
+<p>没有命中时高速缓存行被写回到内存，有必要的话会添加到缓存项中。</p>
+<p>多处理器的情况下，每个cpu都有一个单独的硬件高速缓存，因此需要额外硬件在多个高速缓存间同步数据。需要的情况下会通知其他cpu更新其缓存。这种活动叫高速缓存侦听（cache snooping）。这种行为会在硬件级处理，内核无需关心。</p>
+<p><img src="/./static/%E5%8F%8C%E5%A4%84%E7%90%86%E5%99%A8%E4%B8%AD%E7%9A%84%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png"></p>
+<p>多级高速缓存（L1-cache L2-cache等）主要是硬件实现，不需要软件管理。被内核视为一个单独的高速缓存。<br>处理器cr0寄存器的CD标志位用来启用或禁用高速缓存电路，NW标志为指明是使用通写还是回写策略。<br>linux 对于所有页框都启用高速缓存，对于写操作总是采用写回策略。</p>
+<h2 id="转换后援缓冲器（TLB）"><a href="#转换后援缓冲器（TLB）" class="headerlink" title="转换后援缓冲器（TLB）"></a>转换后援缓冲器（TLB）</h2><p>除了通用硬件高速缓存用于加快内存块的访问速度以外，8086处理器还包含了另一个称为转换后援缓冲器（Translation Lookaside Buffer）的高速缓存用于加快线性地址转化。</p>
+<p>当一个线性地址第一次使用时，慢速访问Ram中的页表计算出相应的物理地址。同时物理地址被放在一个TLB表项中。以便以后对同一个线性地址的引用可以快速转换。</p>
+<p>多处理器情况下，每个cpu都有自己的TLB，这叫cpu的本地TLB。TLB无需同步，因为运行在现有cpu上的进程可以使用同一线性地址与不同的物理地址发生联系，</p>
+<p>当CPU的cr3控制寄存器被修改时，硬件自动使得本地TLB的所有表项无效，这是因为新的页表被启用而TLB指向的是旧数据。</p>
+<h2 id="缓冲器和进程切换"><a href="#缓冲器和进程切换" class="headerlink" title="缓冲器和进程切换"></a>缓冲器和进程切换</h2><p>前提条件：</p>
+<ul>
+<li>对于多核CPU，每个processor core都有自己的TLB。</li>
+<li>对于进程来说，地址空间包含共享的内核地址空间和自己的用户地址空间。<br><img src="/./static/%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%92%8C%E7%BC%93%E5%AD%98.png"><br>因此，在进程切换的时候，需要有tlb的操作，以便清除旧进程的影响，具体怎样做呢？</li>
+</ul>
+<h3 id="直接清除或清除部分"><a href="#直接清除或清除部分" class="headerlink" title="直接清除或清除部分"></a>直接清除或清除部分</h3><p>当系统发生进程切换，从进程A切换到进程B，从而导致地址空间也从A切换到B，这时候，我们可以认为在A进程执行过程中，所有TLB和Cache的数据都是for A进程的，一旦切换到B，整个地址空间都不一样了，因此需要全部flush掉。</p>
+<p>这种方案当然没有问题，当进程B被切入执行的时候，其面对的CPU是一个干干净净，从头开始的硬件环境，TLB和Cache中不会有任何的残留的A进程的数据来影响当前B进程的执行。当然，稍微有一点遗憾的就是在B进程开始执行的时候，TLB和Cache都是冰冷的（空空如也），因此，B进程刚开始执行的时候，TLB miss和Cache miss都非常严重，从而导致了性能的下降。我们管这种空TLB叫做cold TLB，它需要随着进程的运行warm up起来才能慢慢发挥起来效果，而在这个时候有可能又会有新的进程被调度了，而造成TLB的颠簸效应。</p>
+<p>地址翻译有global（各个进程共享）和local（进程特定的）的概念，因而tlb entry也有global和local的区分。如果不区分这两个概念，那么进程切换的时候，直接flush该cpu上的所有残余。这样，当进程A切出的时候，留给下一个进程B一个清爽的tlb，而当进程A在其他cpu上再次调度的时候，它面临的也是一个全空的TLB（其他cpu的tlb不会影响）。当然，如果区分global 和local，那么tlb操作也基本类似，只不过进程切换的时候，不是flush该cpu上的所有tlb entry，而是flush所有的tlb local entry就OK了。</p>
+<h3 id="PCID机制"><a href="#PCID机制" class="headerlink" title="PCID机制"></a>PCID机制</h3><p>PCID（进程上下文标识符）是在Westmere架构引入的新特性。简单来说，在此之前，TLB是单纯的VA到PA的转换表，进程1和进程2的VA对应的PA不同，不能放在一起。加上PCID后，转换变成VA + 进程上下文ID到PA的转换表，放在一起完全没有问题了。这样进程1和进程2的页表可以和谐的在TLB中共处，进程在它们之前切换完全不需要预热了！<br>所以新的加载cr3的过程变成了：如果CR4的PCID&#x3D;1，加载CR3就不需要Flush TLB。</p>
+<h1 id="linux-中的分页"><a href="#linux-中的分页" class="headerlink" title="linux 中的分页"></a>linux 中的分页</h1><p>linux采用了一种同时适用于32位和64位的普通分页模型。直到2.6.10版本，linux采用了三级分页模型。从2.6.11版本开始，采用了4级分页模型。<br>图中展示的4中页表分别称为：</p>
+<ul>
+<li>页全局目录(Page Global Directory)</li>
+<li>页上级目录(Page Upper Directory)</li>
+<li>页中间目录(Page middle Directory)</li>
+<li>页表(Page Table)<br>每一部分的大小与具体的计算机体系结构有关。对于没有启用物理地址扩展的32位系统，两级页表就够用，这时linux使页上级目录和页中间目录flag都为0，从根本上取消页上级目录和页中间目录字段。这是通过把对应目录项数设置为1，并把这两个目录项映射到页全局目录的一个适当的目录项实现的。</li>
+</ul>
+<p><img src="/./static/linux%E5%88%86%E9%A1%B5%E6%A8%A1%E5%BC%8F.png"><br>对于启用物理地址扩展的32位系统，linux 的全局目录对应8086的页目录指针表（PDPT），取消页上级目录，页中间目录对应8086的页目录，页表对应8086的页表</p>
+<p>对于64位系统使用三级还是四级取决于硬件对线性地址的划分。如图：<br><img src="/./static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png"></p>
+<p>linux的进程处理很大程度上依赖于分页机制。事实上线性地址到物理地址的自动转换使得下面的设计变得可行。</p>
+<ul>
+<li>每个进程分配一块不同的物理地址空间，这确保了可以有效地防止寻址错误。</li>
+<li>区别页（一组数据）和页框（主存中的物理地址）之不同。这就允许存放在某个页框中一个页可以保存到磁盘上，然后后面重新装入。这就是虚拟内存机制的基本要素。</li>
+</ul>
+<p>每个进程有它自己的页全局目录和自己的页表集。进程切换时，linux把cr3控制寄存器的内容保存在前一个执行进程的描述符中，然后把要执行进程的描述符中的值装入cr3中。</p>
+<h2 id="物理内存布局"><a href="#物理内存布局" class="headerlink" title="物理内存布局"></a>物理内存布局</h2><p> 在初始化阶段，内核必须建立一个物理地址映射来指定哪些物理地址范围对内核可用而哪些不可用（或者是用于映射硬件设备I&#x2F;O的共享内存，或者相应的页框包含BIOS数据）</p>
+<p> 内核将下列页框标记为保留：</p>
+<ul>
+<li>在不可用物理地址范围内的页框</li>
+<li>含有内核代码和已初始化的数据结构的页框</li>
+</ul>
+<p>保留页框中的数据不会被动态分配或交换到磁盘上</p>
+<p>一般来说，linux安装在RAM中从内存物理地址0x00100000（1MB）开始的地方，所需的页框总数依赖于内核的配置方案：典型配置可以被安装在小于3M的ram中。</p>
+<p>最开始的地方被保留的原因：</p>
+<ul>
+<li>页框0由bios使用，存放加电自检找到的系统硬件配置</li>
+<li>物理地址0x000a0000-0x000fffff范围通常留给BOIS例程，并映射ISA图形卡上的内部内存。这个区域就是所有IBM兼容PC上从640KB到1MB之间著名的洞：物理地址存在但被保留，对应的页框不能被操作系统使用</li>
+<li>第一个1MB内的其他页框可能由特定的计算机模型保留，例如，IBM Thinkpnd 把0xa0页框映射到0x9f页框。</li>
+</ul>
+<p>在启动的开始阶段，内核会询问bios并了解物理内存的大小。在新近计算机中，内核也调用bios过程建立一组物理地址范围和其对应的内存类型</p>
+<p>随后，内核执行machine_specific_memory_setup()函数，该函数建立物理地址映射。如果此表可以从bios获取到，内核就基于bios构建；如果不能获取内核按照保守的缺省设置进行构建：从0x9f(LOWMEMSIZE())到0x100(HIGH_MEMORY)号的所有页框都标记为保留。<br><img src="/./static/bios%E6%8F%90%E4%BE%9B%E7%9A%84%E7%89%A9%E7%90%86%E5%9C%B0%E5%9D%80%E6%98%A0%E5%B0%84%E4%B8%BE%E4%BE%8B.png"></p>
+<p>上图中显示了128MB RAM计算机的典型配置。从0x07ff3000到0x07ffffff的物理地址范围被标记为保留，因为它被硬件映射到BIOS的ROM芯片。</p>
+<p>为了避免把内核装入一组不连续的页框里，linux更愿意跳过RAM的第一个RAM。明确的说，linux用PC体系结构未保留的页框来动态存放所分配的页。<br><img src="/./static/linux2.6%E7%9A%84%E5%89%8D768%E4%B8%AA%E9%A1%B5%E6%A1%86%EF%BC%883MB%EF%BC%89.png"><br>图中出现的符号并没有在linux源码中定义，它们是编译内核时产生的（见System.map）。符号_text 对应于物理地址0x00100000,表示内核代码第一个字节的地址。内核代码的结束位置由_etext表示。</p>
+<h2 id="进程页表"><a href="#进程页表" class="headerlink" title="进程页表"></a>进程页表</h2><ul>
+<li>从0x00000000到0xbfffffff的线性地址，无论进程运行在用户态还是内核态都可以寻址 （进程自己的空间）</li>
+<li>从0xc0000000(PAGE_OFFSET)到0xffffffff的线性地址，只有内核态的进程才可以寻址。（共享内核空间）<br>页全局目录的第一部分表项映射的线性地址小于0xc0000000(PAE未启用为前768项，启用后为前三项–1&#x2F;4) 第二部分对所有进程来说应该是相同的，它等于内核页全局目录的对应表项</li>
+</ul>
+<h2 id="内核页表"><a href="#内核页表" class="headerlink" title="内核页表"></a>内核页表</h2><p>内核维护着一组自己使用的页表，驻留在所谓的主内核页全局目录（master kernel Page Global Directory）中。系统初始化后，这组页表还从未被任何进程或任何内核线程直接使用；<code>主内核页全局目录的最高目录项作为参考模型，为系统中每个普通进程对应的也全局目录提供参考模型</code><br>内核如何初始化自己的页表： 这个过程分两个阶段：（内核刚装入内存，CPU处于实模式）</p>
+<ol>
+<li>内核创造一个有限的地址空间，包括内核的代码段和数据段、初始页表和用于存放动态数据结构的128K大小的空间。这个最小限度的地址空间仅能够将内核装入RAM和对其初始化核心的数据结构。</li>
+<li>内核重新利用剩余的RAM并适当地建立分页表。</li>
+</ol>
+<h3 id="临时内核页表"><a href="#临时内核页表" class="headerlink" title="临时内核页表"></a>临时内核页表</h3><p>临时页全局目录表是在内核编译过程静态初始化的，临时页表是由arch&#x2F;i386&#x2F;kernel&#x2F;head.S–&gt;<code>startup_32()</code>汇编语言函数初始化的。（这里页上级目录和页中间目录项都相当于页全局目录项）。</p>
+<p>临时页全局目录放在<code>swapper_pg_dir</code>变量中。临时页表在pg0变量出开始存放。紧接在内核未初始化的数据段后面。</p>
+<p>假设：内核使用的段、临时页表和128K的内存范围能容纳于RAM前8M空间里，为了映射前8M空间，需要用到两个页表。</p>
+<p>分页的第一个阶段目标是允许实模式和保护模式下都能很容易地对这8M寻址。因此内核必须创建一个映射，把0x00000000到0x007fffff的线性地址（<code>实模式支持</code>）和0xc0000000到0xc07fffff的线性地址（<code>保护模式支持</code>）映射到从0x00000000到0x007fffff的物理地址。</p>
+<p>内核通过把<code>swapper_pg_dir</code>所有项都填充为0来创建期望的映射，0、1、0x300(十进制768)、0x301(十进制769)这四项除外，这四项初始化方式如下：</p>
+<ul>
+<li>0项和0x300的地址字段设置为pg0的物理地址，1项和0x301项设置为紧随pg0后页框的物理地址。</li>
+<li>把这四个项中的 Present、Read&#x2F;Write和User&#x2F;Supervisor标志置位。</li>
+<li>把这四个项中的Accessed、Dirty、PCD、PWD和Page Size 标志清零。</li>
+</ul>
+<p>startup_up() 也启用分页单元，通过向cr3控制寄存器装入  <code>swapper_pg_dir</code>的地址及设置cr0控制寄存器的PG标志来达到这个目的。(__PAGE_OFFSET &#x3D; Oxc0000000)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line"> * Enable paging</span><br><span class="line"> */</span><br><span class="line">	movl $swapper_pg_dir-__PAGE_OFFSET,%eax</span><br><span class="line">	movl %eax,%cr3		/* set the page table pointer.. */</span><br><span class="line">	movl %cr0,%eax</span><br><span class="line">	orl $0x80000000,%eax</span><br><span class="line">	movl %eax,%cr0		/* ..and set paging (PG) bit */</span><br><span class="line">	ljmp $__BOOT_CS,$1f	/* Clear prefetch and normalize %eip */</span><br><span class="line">1:</span><br><span class="line">	/* Set up the stack pointer */</span><br><span class="line">	lss stack_start,%esp</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="当RAM小于896MB时的最终内核页表"><a href="#当RAM小于896MB时的最终内核页表" class="headerlink" title="当RAM小于896MB时的最终内核页表"></a>当RAM小于896MB时的最终内核页表</h2><p>由内核页表所提供的最终映射必须把从0xc0000000开始的线性地址转换为从0开始的物理地址</p>
+<p>宏__pa 用于把从PAGE_OFFSET开始的线性地址转为相应的物理地址而宏__va做相反的转化。</p>
+<p>主内核页全局目录仍然保存在swaper_pg_dir变量中。它由<code>paging_init()</code> 函数初始化。该函数进行如下操作：</p>
+<ol>
+<li>调用pagetable_init()适当地建立页表项。</li>
+<li>把swapper_pg_dir的物理地址写入cr3控制寄存器中</li>
+<li>如果CPU支持PAE并且编译时内核支持PAE，则将cr4寄存器的PAE标志位置位</li>
+<li>调用__flush_tlb_all() 使TLB的所有项无效</li>
+</ol>
+<p>小于896MB时32位物理地址足够对所有可用RAM进行寻址，没必要激活PAE机制。<br>swaper_pg_dir 初始化如下：<br><img src="/./static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-1.png"><br>假定CPU支持4MB页和“全局（global）”TLB表项的8086处理器。如果全局目录项对应的是0xc000000之上的线性地址，则把所有这些项的User&#x2F;Supervisor标志清0，以拒绝用户态进程访问内核地址空间。还要注意Page Size被置位使得内核可以通过大型页来对RAM进行寻址（扩展分页）</p>
+<p>starup_32()函数创建的物理内存前8MB的恒等映射用来完成内核的初始化。映射不需要时，内核调用zap_low_mappings()函数清除对应的页表项。后面<code>固定映射的线性地址</code>一节会详细说明内核如何调整</p>
+<h2 id="当RAM在896MB和8096MB之间时的最终内核页表"><a href="#当RAM在896MB和8096MB之间时的最终内核页表" class="headerlink" title="当RAM在896MB和8096MB之间时的最终内核页表"></a>当RAM在896MB和8096MB之间时的最终内核页表</h2><p>这种情况下，并不把RAM全部映射到内核地址空间。<br>内核使用前一种情况初始化</p>
+<p>线性地址的最高128M留给几种映射（固定映射的线性地址、非连续内存区的线性地址）去用。因此映射RAM所剩空间为1GB-128MB&#x3D;896MB</p>
+<h2 id="当RAM大于8096MB时的最终内核页表"><a href="#当RAM大于8096MB时的最终内核页表" class="headerlink" title="当RAM大于8096MB时的最终内核页表"></a>当RAM大于8096MB时的最终内核页表</h2><p>以下情况出现时采用此情况进行初始化：</p>
+<ul>
+<li>CPU模型支持物理地址扩展（PAE）</li>
+<li>RAM容量大于4GB</li>
+<li>内核以PAE支持来编译</li>
+</ul>
+<p>与前一种情况的主要差异是使用了三级分页模型。<br><img src="/./static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-2.png"><br>页全局目录中的前三项与用户线性地址空间相对应，内核用一个空页（empty_zero_page）的地址对这三项进行初始化。第四项用页中间目录（pmd）的地址初始化，该页中间目录是通过调用<code>alloc_bootmem_low_pages()</code>分配的。页中间目录的前448项（共512项，后64留给非连续内存分配;在第8章）用RAM前896MB的物理地址填充。</p>
+<p>注意：支持PAE的CPU也支持大型2MB页和全局页。只要可能，linux使用大型页来减少页表数。</p>
+<p>然后页全局目录的第四项被拷贝到第一项，这样好为线性地址空间的前896MB中的低物理内存映射作镜像。为了完成对SMP系统的初始化，此映射是必须的；当这个映射不再需要时，内核调用zap_low_mappings()函数清除对应的页表项，和前面一样。</p>
+<h2 id="固定映射的线性地址"><a href="#固定映射的线性地址" class="headerlink" title="固定映射的线性地址"></a>固定映射的线性地址</h2><p>在前面写过，内核线性地址的第四个GB（0xc0000000）的初始部分映射的是系统的物理内存。另外，至少128MB的线性地址总是留作他用，因为内核使用这些线性地址实现非连续内存分配和固定映射的线性地址。</p>
+<p>非连续内存分配是动态分配和释放内存页的一种特殊方式，在第八章（非连续内存区的线性地址）进行说明。</p>
+<p>固定映射的线性地址（fix-mapped linear address）基本上是一种类似于0xffffc000这样的常量线性地址，其对应的物理地址不必等于线性地址减去0xc000000，而是可以以任意方式建立。每个固定映射的线性地址都映射一个物理内存的页框。内核使用固定映射的线性地址来代替指针变量，因为这些指针变量的值从不改变。<br><img src="/./static/%E5%86%85%E6%A0%B8%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83.png"><br>每个固定映射的线性地址都存放在线性地址第四个GB的末端。</p>
+<h2 id="硬件高速缓存和TLB"><a href="#硬件高速缓存和TLB" class="headerlink" title="硬件高速缓存和TLB"></a>硬件高速缓存和TLB</h2><p>为了使得 硬件高速缓存和TLB的效果最大化。内核在下列决策中考虑体系结构：</p>
+<ul>
+<li>数据结构中最常使用的字段放在该数据结构的低偏移部分，以便它们能够处于高速缓存的同一行中。</li>
+<li>当为一大组数据结构分配空间时，内核试图把它们都存放在内存中，以便所有高速缓存行按照同一方式使用。</li>
+</ul>
+<h3 id="处理TLB"><a href="#处理TLB" class="headerlink" title="处理TLB"></a>处理TLB</h3><p>处理器不能自动同步它们自己的TLB高速缓存，因为决定线性地址和物理地址之间映射何时有效的是内核， 而不是硬件。<br>linux 提供了几种在合适时机刷新TLB的方法。</p>
+<p>一般来说，任何进程切换都会暗示着更换活动页表集合。相对于过期页表，本地TLB表项必须刷新；在这个过程中是把新的页全局目录地址写入cr3寄存器时自动完成的。不过内核在特殊情况会避免刷新。</p>
+<ul>
+<li>共享相同页表集的普通进程之间</li>
+<li>普通进程和内核线程之间<br>原因：内核线程并不拥有自己的页表集，它使用的是一个普通进程的页表集。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/" data-id="cltvlnllv000k9kqq6ecc715o" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(五章)内核同步" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.417Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内核同步"><a href="#内核同步" class="headerlink" title="内核同步"></a>内核同步</h1><ul>
+<li>深入理解linux 内核： 第五章 内核同步<br>keywords： 内核同步</li>
+</ul>
+<ul>
+<li>CPU上的进程或中断会随时对内核发起请求</li>
+<li>内核以交错方式执行，处理这些请求</li>
+<li>内核需要处理好内核抢占和临界区问题。</li>
+</ul>
+<h2 id="内核抢占"><a href="#内核抢占" class="headerlink" title="内核抢占"></a>内核抢占</h2><p>抢占内核的主要特点：一个在内核态运行的进程，可能在执行内核函数期间被另外一个进程取代。<br>linux内核在以下情况时禁止内核抢占（标志为current_thread_info()-&gt;erempt_count&gt;0）：</p>
+<ol>
+<li>内核正在执行中断服务例程。</li>
+<li>可延迟函数被禁止（当内核正在执行软中断或tasklet时经常如此）</li>
+<li>通过把抢占计数器设置为正数显式禁用内核抢占。</li>
+</ol>
+<p>下面一些宏用于处理抢占计数器子字段：</p>
+<table>
+<thead>
+<tr>
+<th align="left">宏</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">preempt_count</td>
+<td align="left">在thread_info描述符中选择preempt_count字段</td>
+</tr>
+<tr>
+<td align="left">preempt_disable</td>
+<td align="left">preempt_count+1</td>
+</tr>
+<tr>
+<td align="left">preempt_enable_no_resched</td>
+<td align="left">preempt_count-1</td>
+</tr>
+<tr>
+<td align="left">preempt_enable</td>
+<td align="left">preempt_count-1并在thread_info中TIF_NEED_RESCHED标志为1的情况下调用preempt_schedule</td>
+</tr>
+<tr>
+<td align="left">get_cpu</td>
+<td align="left">&#x3D;preempt_disable 并返回本地CPU数量</td>
+</tr>
+<tr>
+<td align="left">put_cpu</td>
+<td align="left">&#x3D;preempt_enable</td>
+</tr>
+<tr>
+<td align="left">put_cpu_no_resched</td>
+<td align="left">&#x3D;preempt_enable_no_resched</td>
+</tr>
+</tbody></table>
+<p>preempt_schedule的作用是检查是否允许本地中断和preempt_count是否为0 如果都为真则调用schedule() 来选择另一个进程执行。</p>
+<p>linux 内核允许在编译时开启或禁用内核抢占。</p>
+<h2 id="同步"><a href="#同步" class="headerlink" title="同步"></a>同步</h2><ul>
+<li>中断处理程序和tasklet不必编写成可重入的函数</li>
+<li>仅被软中断和tasklet访问的每CPU变量不需要同步。</li>
+<li>仅被一种tasklet访问的数据结构不需要同步</li>
+</ul>
+<h2 id="同步原语"><a href="#同步原语" class="headerlink" title="同步原语"></a>同步原语</h2><p><img src="/./static/%E5%86%85%E6%A0%B8%E4%BD%BF%E7%94%A8%E7%9A%84%E5%90%84%E7%A7%8D%E5%90%8C%E6%AD%A5%E6%8A%80%E6%9C%AF.png"></p>
+<p>每CPU变量（pre_cpu）：内核抢占可能使它产生竞争条件，应在禁用内核抢占的情况下访问。<br>原子操作（lock&#x2F;atomic&#x2F;test_and）:对值的操作是原子操作。<br>内存屏障(mb)：保证在原语之后的操作执行之前，原语之前的操作已经完成。主要防止编译器优化。<br>自旋锁（spinlock）：获取锁之前一直循环，spin_lock相关的宏基于原子操作进行，用于保护锁。<br>顺序锁（seqlock）: 写者不受读者限制。即使有读者也不限制写入。读者有时必须读取多次以获取有效的值。<br>读-拷贝-更新（RCU）：RCU只保护被动态分配并通过指针引用的数据结构，在被RCU保护的临界区中，任何内核控制路径都不能睡眠。写入时对指针指向的数据进行拷贝，然后通过原子操作执行指针值替换。只有在旧副本的所有读者都读完后才能释放旧副本。（在linux2.6中主要用在网络层和虚拟文件系统中）<br>信号量（IPC信号量或内核信号量，mutex）：一个加锁的原语，和自旋锁不一样，等待信号量时进程挂起。<br>禁止本地中断（local_irq_disable）:单处理器可保护数据，多处理器情况下常配合自旋锁一起。<br>禁止和激活可延迟函数（local_bh_disable）:当内核只禁止可延迟函数而不禁止中断时使用。</p>
+<h2 id="对内核数据结构的同步访问"><a href="#对内核数据结构的同步访问" class="headerlink" title="对内核数据结构的同步访问"></a>对内核数据结构的同步访问</h2><p>选择同步原语的的原则：把系统的并发度保持在尽可能高的程度。</p>
+<p>系统中的并发度又取决于两个主要因素：</p>
+<ul>
+<li>同时运转的I&#x2F;O设备数</li>
+<li>进行有效工作的CPU数</li>
+</ul>
+<p><img src="/./static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4.png"><br><img src="/./static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4-2.png"></p>
+<p>一个中断独占的数据结构可以通过关中断进行保护，在多个中断访问同一个数据结构的情况下需要使用中断+自旋锁。</p>
+<p>使用中断+自旋锁是在多处理器情况下保护数据的常用方法：<br><img src="/./static/%E4%B8%8E%E4%B8%AD%E6%96%AD%E7%9B%B8%E5%85%B3%E7%9A%84%E8%87%AA%E6%97%8B%E9%94%81%E5%AE%8F.png"></p>
+<p>下面仅考虑多处理器系统：</p>
+<table>
+<thead>
+<tr>
+<th align="left">访问方式</th>
+<th align="left">一种类型访问</th>
+<th align="left">多种访问同一数据结构</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">异常</td>
+<td align="left">信号量</td>
+<td align="left">…</td>
+</tr>
+<tr>
+<td align="left">异常-&gt;每CPU变量</td>
+<td align="left">信号量+禁用内核抢占</td>
+<td align="left">…</td>
+</tr>
+<tr>
+<td align="left">中断</td>
+<td align="left">无需同步原语，禁止中断即可</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+<tr>
+<td align="left">可延迟函数-软中断</td>
+<td align="left">自旋锁</td>
+<td align="left">自旋锁</td>
+</tr>
+<tr>
+<td align="left">可延迟函数-tasklet</td>
+<td align="left">无</td>
+<td align="left">自旋锁</td>
+</tr>
+<tr>
+<td align="left">异常+中断</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁&#x2F;信号量</td>
+</tr>
+<tr>
+<td align="left">异常+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+<tr>
+<td align="left">中断+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁，可延迟函数执行时关中断，中断处理程序随意访问 多处理器+自旋锁</td>
+</tr>
+<tr>
+<td align="left">中断+异常+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+</tbody></table>
+<h2 id="避免竞争的例子"><a href="#避免竞争的例子" class="headerlink" title="避免竞争的例子"></a>避免竞争的例子</h2><h3 id="引用计数器"><a href="#引用计数器" class="headerlink" title="引用计数器"></a>引用计数器</h3><p>广泛地应用来避免资源的并发分配和释放产生的竞争条件。引用计数器是一个atomic_t 计数器，与特定的资源，如内存、页、模块或文件相关。使用时减少计数器的值，使用完就增加计数器的值。当计数器为0时，说明资源未被使用，必要时释放。</p>
+<h3 id="大内核锁"><a href="#大内核锁" class="headerlink" title="大内核锁"></a>大内核锁</h3><p>在早期linux版本中是一个粗粒度的自旋锁。</p>
+<ul>
+<li>2.0中是用来确保每次只有一个进程运行在内核态，后面改用许多自旋锁来保护大量内核数据结构。</li>
+<li>2.6版本的内核中用于保护旧的代码。</li>
+<li>2.6.11版本开始，使用 kernel_sm 信号量用来实现大内核锁。</li>
+</ul>
+<p>每个进程描述符都含有lock_depth 字段，这个字段允许同一个进程多次获取大内核锁。如果未获得过 字段为-1，否则+1.</p>
+<h3 id="内存描述符-读-写信号量"><a href="#内存描述符-读-写信号量" class="headerlink" title="内存描述符 读&#x2F;写信号量"></a>内存描述符 读&#x2F;写信号量</h3><p>mm_struct 类型的内存描述符在mmap_sem 字段中都包含了自己的信号量，由于几个轻量级进程之间可以共享一个内存描述符，因此信号量保护这个描述符来避免可能的竞争条件。</p>
+<p>这个信号量是作为读&#x2F;写信号量实现的，因为一些内核函数，如缺页异常处理程序只需要扫描内存描述符。</p>
+<h3 id="slab-高速缓存链表的信号量"><a href="#slab-高速缓存链表的信号量" class="headerlink" title="slab 高速缓存链表的信号量"></a>slab 高速缓存链表的信号量</h3><p>slab 高速缓存链表是通过cache_chain_sem信号量保护的，这个信号量允许互斥地访问和修改该量表。</p>
+<h3 id="索引节点inode的信号量"><a href="#索引节点inode的信号量" class="headerlink" title="索引节点inode的信号量"></a>索引节点inode的信号量</h3><p>inode中的i_sem信号量，用于防止文件操作的竞争条件。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/" data-id="cltvlnllw000l9kqqhn9uan25" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(八章)内存管理" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AB%E7%AB%A0)%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.417Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h1><ul>
+<li>深入理解linux 内核： 第八章 内存管理<br>keywords： 内存管理、内核映射、伙伴系统、slab高速缓存</li>
+</ul>
+<p>RAM的某些地址永久分配给内核，用来存放内核代码和静态内核数据结构，其余部分称为动态内存：<br><img src="/./static/%E5%8A%A8%E6%80%81%E5%86%85%E5%AD%98.png"></p>
+<h2 id="页框管理（固定大小页框）"><a href="#页框管理（固定大小页框）" class="headerlink" title="页框管理（固定大小页框）"></a>页框管理（固定大小页框）</h2><p>linux 采用4KB页框大小作为标准的内存分配单元。</p>
+<h3 id="页描述符"><a href="#页描述符" class="headerlink" title="页描述符"></a>页描述符</h3><p>内核必须区分哪些页框是属于进程的页，哪些页框包含的是内核代码或内核数据。那些空闲那些不空闲。<br>内核使用页描述符（page）来描述页框，所有的页描述符存放在mem_map数组中。每个描述符长度为32字节，32&#x2F;4k&#x3D;0.0078125 所以mem_map所需要空间小于整个RAM的1%。<br>virt_to_page(addr)宏产生线性地址addr对应的页描述符地址。pfn_to_page(pfn)宏产生与页框号pfn对应的页描述符地址。<br><img src="/./static/%E9%A1%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br>其中 _count字段： 如果为-1 则页框空闲。大于或等于零时，说明分配给了一个或多个进程。page_count 返回 _count+1&#x3D; 使用者的数目。<br>flags: 包含32个用来描述页框状态的标志。如下图：<br><img src="/./static/%E6%8F%8F%E8%BF%B0%E9%A1%B5%E6%A1%86%E7%8A%B6%E6%80%81%E7%9A%84%E6%A0%87%E5%BF%97.png"></p>
+<h3 id="非一致内存访问（NUMA）"><a href="#非一致内存访问（NUMA）" class="headerlink" title="非一致内存访问（NUMA）"></a>非一致内存访问（NUMA）</h3><p>在非一致内存访问情况下，给定CPU对不同内存单元的访问时间可能不一样。</p>
+<p>每个节点中的物理内存又可以划分为几个管理区（Eone）每个节点都有一个类型为pg_data_t的描述符。所有的节点描述符存放在一个单向链表中，它的第一个元素由pgdat_list变量指向。</p>
+<p><img src="/./static/%E8%8A%82%E7%82%B9%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"></p>
+<p>当NUMA编译不选择时，linux使用单独一个节点，包含所有物理内存。内核假定所有体系结构中物理内存都被划分为一个或多个节点。</p>
+<h3 id="内存管理区"><a href="#内存管理区" class="headerlink" title="内存管理区"></a>内存管理区</h3><p>在实际的计算机系统中，页框的使用是有硬件的制约。在8086体系中的两种硬件约束：</p>
+<ul>
+<li>ISA总线的直接内存存取（DMA）处理器有一个严格的限制：只能对RAM的前16MB寻址。</li>
+<li>在具有大容量RAM的现代32位计算机中，CPU不能直接访问所有的物理内存，因为线性地址空间太小。</li>
+</ul>
+<p>为了处理上面的情况，linux2.6把每个内存节点的物理内存划分为三个管理区（zone）。在8086 UMA体系结构中的管理区为：</p>
+<ul>
+<li>ZONE_DMA: 包含低于16MB的内存页框</li>
+<li>ZONE_NORMAL: 包含高于16MB且低于896MB的内存页框</li>
+<li>ZONE_HIGHMEM: 包含从896MB开始高于896MB的内存页框，在64位系统上 总是为空。</li>
+</ul>
+<p>每个内存管理区都有自己的描述符，字段如下图：<br><img src="/./static/%E7%AE%A1%E7%90%86%E5%8C%BA%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br><img src="/./static/%E7%AE%A1%E7%90%86%E5%8C%BA%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B52.png"></p>
+<ul>
+<li>管理区中许多字段用于回收页框（十七章）。</li>
+<li>每个页框描述符都有到内存界面和内存节点管理区的链接。</li>
+<li>当内核调用一个内存分配函数时，必须指明请求页框所在的管理区。</li>
+</ul>
+<h3 id="保留的页框池"><a href="#保留的页框池" class="headerlink" title="保留的页框池"></a>保留的页框池</h3><p>为了减少内核申请内存失败的几率，内核为原子分配请求保留了一个页框池，只有在内存不足时使用。<br>保留内存的数量（kb）存放在min_free_kbytes变量中。其大小取决于ZONE_DMA和ZONE_NORMAL内存管理区的页框数目，且大于等于128小于等于65536。</p>
+<h3 id="分区页框分配器"><a href="#分区页框分配器" class="headerlink" title="分区页框分配器"></a>分区页框分配器</h3><p>分区页框分配器（zoned page frame allocator）子系统用于处理对连续页框组的内存分配请求。</p>
+<p><img src="/./static/%E5%88%86%E5%8C%BA%E9%A1%B5%E6%A1%86%E5%88%86%E9%85%8D%E5%99%A8%E7%9A%84%E7%BB%84%E6%88%90.png"></p>
+<p>为了更好的系统性能，一小部分页框保留在高速缓存中用于快速地满足对单个页框的分配请求。</p>
+<h3 id="高端内存页框的内核映射"><a href="#高端内存页框的内核映射" class="headerlink" title="高端内存页框的内核映射"></a>高端内存页框的内核映射</h3><p>在32位系统上，为了兼容PAE机制，896MB边界以上的页框并不映射在内核线性地址空间的第4个GB，因此内核不能直接访问他们。所以：</p>
+<ul>
+<li>高端内存页框分配只能使用allco_pages() 和 它的快捷函数 alloc_page() 这样返回第一个分配页框的页描述符的线性地址。因为页框的线性地址根本不存在。</li>
+<li>内核线性地址空间中的后128MB中的一部分专门用于映射高端内存页框。使用方式是重复临时使用，这样整个高端内存可以在不同时间被访问。</li>
+</ul>
+<p>内核可以采用三种机制将页框映射到高端内存：</p>
+<ol>
+<li>永久内核映射：不能用于中断处理程序和可延迟函数，阻塞。建立高端内核页框到内核地址空间的长期映射。</li>
+<li>临时内核映射：可用于中断处理程序和可延迟函数，使用此必须保证没有其他的内核控制路径使用同样的映射，不阻塞。</li>
+<li>非连续内存分配：见 非连续内存管理区 一节</li>
+</ol>
+<h3 id="伙伴系统算法"><a href="#伙伴系统算法" class="headerlink" title="伙伴系统算法"></a>伙伴系统算法</h3><p>解决频繁申请和释放大小不同的一组连续页框，解决存在的<code>页框碎片</code>问题（<code>外碎片</code> <code>external fragmentation</code>）。防止剩余空间总量够但是无法申请大块连续页框的问题。<br>理论上解决方案有两个：</p>
+<ol>
+<li>利用分页单元把一组非连续的空闲页框映射到连续的内存空间（见 非连续内存区管理 一节）</li>
+<li>使用一种适当的方法记录现存的空闲连续页框块的情况，避免为满足小块请求而分割大的空闲块（本章节）<br>基于下面三种原因，内核首选第二种方法：</li>
+<li>连续的页框确实是必要的，比如DMA传送几个磁盘扇区的数据时。</li>
+<li>修改页表会导致平均访问内存次数的增加，CPU会频繁刷新转换后援缓冲器TLB</li>
+<li>内核通过4MB的页可以访问大块连续的物理内存。</li>
+</ol>
+<p>linux采用伙伴系统（buddy system）算法来解决外碎片问题。</p>
+<ul>
+<li>把所有的空闲页框分为11个链表，每块链表分别包含大小为1,2,4,8…1024个连续的页框，对1024个页框的请求对应着4MB大小的连续的RAM块。每个块的第一个页框的物理地址是该块大小的整数倍（按块大小对齐）</li>
+<li>获取时，对应长度获取不到就拆分更大长度的。</li>
+<li>释放时，尝试将连续的且符合对齐条件的合并为更大的。</li>
+</ul>
+<h3 id="每CPU页框高速缓存"><a href="#每CPU页框高速缓存" class="headerlink" title="每CPU页框高速缓存"></a>每CPU页框高速缓存</h3><p>高速缓存分为以下两种：<br>热高速缓存：位于硬件高速缓存中，适合获取后写入的操作。<br>冷高速缓存：不涉及写入，适用于DMA外设访问。</p>
+<p>实现CPU页框高速缓存的主要数据结构是：内存管理区描述符的pageset 字段中的一个per_cpu_pageset数组数据结构。其中每个元素由两个（热、冷）per_cpu_pages描述符组成。<br>per_cpu_pages描述符字段如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">类型</th>
+<th align="left">名称</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">int</td>
+<td align="left">count</td>
+<td align="left">高速缓存中的页框个数</td>
+</tr>
+<tr>
+<td align="left">int</td>
+<td align="left">low</td>
+<td align="left">下界，表示高速缓存需要补充</td>
+</tr>
+<tr>
+<td align="left">int</td>
+<td align="left">high</td>
+<td align="left">上界，表示高速缓存用尽</td>
+</tr>
+<tr>
+<td align="left">int</td>
+<td align="left">batch</td>
+<td align="left">在高速缓存中将要添加或被删去的页框个数</td>
+</tr>
+<tr>
+<td align="left">struct list_head</td>
+<td align="left">list</td>
+<td align="left">页框描述符表</td>
+</tr>
+</tbody></table>
+<ul>
+<li>如果页框个数低于下界low，内核通过伙伴系统中分配batch个单一页框来补充对应的高速缓存</li>
+<li>如果页框个数超过high，内核从高速缓存中释放batch个页框到伙伴系统</li>
+</ul>
+<p>buffered_rmqueue()函数在指定的内存管理区中分配页框。它使用页框高速缓存来处理单一页框请求。根据参数判断取冷还是热缓存。<br>free_hot_page() free_cold_page() free_hot_cold_page() 用来释放高速缓存。</p>
+<h3 id="管理区分配器"><a href="#管理区分配器" class="headerlink" title="管理区分配器"></a>管理区分配器</h3><p>管理区分配器是内核页框分配器的前端。其必须满足几个目标：</p>
+<ol>
+<li>保护保留的页框池</li>
+<li>内存不足且允许阻塞当前进程时，应当触发页框回收算法；一旦某些页框被释放，管理区分配器将再次尝试分配</li>
+<li>如果可能，应当保存小而珍贵的zone_dma内存管理区。比如对其他内存区的请求，尽量不分配zone_dam 管理区中的页框</li>
+</ol>
+<h2 id="内存区管理（连续物理地址、任意长度内存）"><a href="#内存区管理（连续物理地址、任意长度内存）" class="headerlink" title="内存区管理（连续物理地址、任意长度内存）"></a>内存区管理（连续物理地址、任意长度内存）</h2><p>本节关注内存区（memory area），也就是说具有连续的物理地址和任意长度的内存单元序列。</p>
+<p>伙伴系统算法采用页框作为基本内存区，这适合对大块内存的请求，那怎么处理小块内存的请求呢?</p>
+<p>为了存放很少的字节而分配整个页框，是没有效率的做法。正确的方式是引入一种新的数据结构来描述在统一页框中如何分配小内存区，但这样会引出一个新问题，即<code>内碎片</code> (<code>internal fragmentation</code>).</p>
+<p>一个典型的方法是早期linux使用的：</p>
+<ul>
+<li>提供按几何分布的内存区大小：内存区大小取决于2的幂而不是所存放数据的大小。</li>
+<li>可保证内碎片小于50%</li>
+<li>内核建立13个按照几何分布的空闲内存区链表，从32字节 到131072字节。</li>
+</ul>
+<h3 id="slab分配器"><a href="#slab分配器" class="headerlink" title="slab分配器"></a>slab分配器</h3><p>在伙伴算法之上运行内存区分配算法没有显著的效率。一种更好的算法来自slab分配器模式，算法基于下列前提：</p>
+<ul>
+<li>存放数据的类型可以影响内存区的分配方式。slab把内存区看作对象（object），对象由一组数据结构和几个构造或析构函数组成。为了避免重复初始化对象，slab分配器并不丢弃已分配的对象，而是释放但把它们保存在内存中。</li>
+<li>内核倾向于反复请求同一类型的内存区。例如进程创建，就需要创建一些固定大小的表。反复的进程创建和删除时，slab分配器可以把回收的页框保存在高速缓存中，并很快地重新使用它。</li>
+<li>对于内存区的请求可以根据它们发生的频率来分类。对于预期频繁请求特定大小的内存区，可以创建一组具有适当大小的专用对象来高效处理。</li>
+<li>在引入对象的大小不是几何分布的情况下，利用处理器硬件高速缓存可以达到更好的性能。</li>
+<li>使用伙伴系统分配器会导致处理器硬件高速缓存的效果下降。</li>
+</ul>
+<p>slab把对象分组放进高速缓存。每个高速缓存都是同种类型对象的一种储备。</p>
+<p>包含高速缓存的主内存其被划分为多个slab，每个slab由一个或多个连续的页框组成，这些页框既包含已分配的对象，也包含空闲的对象。</p>
+<p><img src="/./static/slab%E5%88%86%E9%85%8D%E5%99%A8%E7%9A%84%E7%BB%84%E6%88%90.png"></p>
+<p>内核周期性地扫描高速缓存并释放空slab对应的页框。</p>
+<h4 id="高速缓存描述符"><a href="#高速缓存描述符" class="headerlink" title="高速缓存描述符"></a>高速缓存描述符</h4><p>每个高速缓存是由 kmem_cache_t (等于 struct kmem_cache_s 类型)类型的数据结构来描述的。<br><img src="/./static/kmem_cache_t%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%9A%84%E5%AD%97%E6%AE%B5.png"><br><img src="/./static/kmem_list3%E7%BB%93%E6%9E%84.png"></p>
+<h4 id="slab描述符"><a href="#slab描述符" class="headerlink" title="slab描述符"></a>slab描述符</h4><p>高速缓存中的每个slab都有自己的类型为slab的描述符。<br><img src="/./static/slab%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%9A%84%E5%AD%97%E6%AE%B5.png"></p>
+<p>这里不详细分析slab分配器细节，原文讲了很多。</p>
+<h2 id="非连续内存区管理"><a href="#非连续内存区管理" class="headerlink" title="非连续内存区管理"></a>非连续内存区管理</h2><p>如果对内存区的请求不是很频繁，内核也支持通过连续的线性地址来访问非连续的页框。这个模式的主要优点是避免了外碎片，缺点是必须打乱内核页表。<br>linux在几个方面使用非连续内存区：</p>
+<ul>
+<li>为活动的交换区分配数据结构（第十七章）</li>
+<li>为模块分配空间（附录2）</li>
+<li>给某些IO驱动程序分配缓冲区</li>
+</ul>
+<h3 id="非连续内存区的线性地址"><a href="#非连续内存区的线性地址" class="headerlink" title="非连续内存区的线性地址"></a>非连续内存区的线性地址</h3><p><img src="/./static/%E4%BB%8EPAGE_OFFSET%E5%BC%80%E5%A7%8B%E7%9A%84%E7%BA%BF%E6%80%A7%E5%9C%B0%E5%9D%80%E5%8C%BA%E9%97%B4.png"></p>
+<p>为非连续内存区保留的线性地址空间的起始地址由VMALLOC_SATART宏定义，而末尾地址由VMALLOC_END定义。</p>
+<h3 id="非连续内存区的描述符"><a href="#非连续内存区的描述符" class="headerlink" title="非连续内存区的描述符"></a>非连续内存区的描述符</h3><p>每个非连续内存区都对应着一个类型为vm_struct 的描述符，下表列出了它的字段：</p>
+<p><img src="/./static/vm_struct%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%9A%84%E5%AD%97%E6%AE%B5.png"></p>
+<ul>
+<li>size（可用空间）+4096（内存区之间的安全区间大小）是实际使用的空间</li>
+<li>flags表示类型，VM_ALLOC表示使用vmalloc得到的页，VM_MAP是使用vmap 已分配的页，VM_IOREMAP 表示使用ioremap映射的硬件设备的板上内存。<br>通过next字段，这些描述符被插入到一个简单链表中，链表第一个元素地址在vmlist变量中。对vmlist 的访问靠vmlist_lock 读&#x2F;写自旋锁保护.</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AB%E7%AB%A0)%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" data-id="cltvlnllw000m9kqq5awv5vr5" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(六章)定时测量" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.417Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="定时测量"><a href="#定时测量" class="headerlink" title="定时测量"></a>定时测量</h1><ul>
+<li>深入理解linux 内核： 第六章 定时测量<br>keywords： 定时器、时钟</li>
+</ul>
+<p>linux内核必须完成两种主要的定时测量：</p>
+<ul>
+<li>保存当前的时间和日期，可以通过time() ftime()和gettimeofday()系统调用把它们返回给用户程序。</li>
+<li>维持定时器，这种机制能告诉内核或用户程序，某一时间间隔过去了。</li>
+</ul>
+<h2 id="时钟和定时器电路"><a href="#时钟和定时器电路" class="headerlink" title="时钟和定时器电路"></a>时钟和定时器电路</h2><h3 id="定时时钟（RTC）"><a href="#定时时钟（RTC）" class="headerlink" title="定时时钟（RTC）"></a>定时时钟（RTC）</h3><p>所有PC都包含一个叫实时时钟（Real Time Clock RTC）的时钟，它独立于CPU和其他芯片。PC电源即使被切断，它仍在依靠电池运行。</p>
+<p>RTC能在IRQ8上发出周期性的中断，频率在2-8192Hz 之间。也可以对RTC进行编程以作为闹钟使用。</p>
+<p>Linux只用RTC来获取日期和时间，可以通过&#x2F;dev&#x2F;rtc 设备文件进行操作，也允许进程对RTC编程。内核通过0x70和0x71 I&#x2F;O 端口访问RTC。系统管理员通过Unix时钟程序可以设置时钟（通过0x70和0x71 I&#x2F;O 端口）。</p>
+<h3 id="时间戳计数器（TSC）"><a href="#时间戳计数器（TSC）" class="headerlink" title="时间戳计数器（TSC）"></a>时间戳计数器（TSC）</h3><p>所有的8086处理器都包含一条CLK输入引线，它接受外部震荡时钟信号。8086处理器内部包含一个64位计数器（Time Stamp Counter TSC），时钟到来计数器就+1。与RTC相比，Linux利用这个寄存器可以获得更精确的时间测量。linux会在初始化的时候确定此时钟信号的频率。</p>
+<p>calibrate_tsc()通过计算一个大约在5ms的事件间隔所产生的TSC信号个数来计算CPU的实际频率。</p>
+<h3 id="可编程间隔定时器（PIT）"><a href="#可编程间隔定时器（PIT）" class="headerlink" title="可编程间隔定时器（PIT）"></a>可编程间隔定时器（PIT）</h3><p>可编程间隔定时器（Programmable Interval Timer PIT），作用类似微波炉的闹钟，设备到时间会发出一个特殊的中断，叫做时钟中断（timer interrupt）来通知内核一个时间间隔过去了。PIT永远以内核确定的固定的时间频率不停地发出中断信号。</p>
+<p>每个IBM兼容CPU至少包含一个PIT，PIT通常是使用0x40-0x43 I&#x2F;O 端口的一个8254 CMOS芯片。</p>
+<p>Linux给PC的第一个PIT进行编程，使他以大约1000Hz的频率向IRQ0发送时钟中断，也就是每1ms产生一次中断，也叫此时间间隔为一个节拍（tick）。它的长度以纳秒为单位存放在 tick_nsec变量中，通常为999848ns(时钟信号频率为1000.15hz)。</p>
+<p>时钟中断频率取决于硬件体系结构，慢的机器节拍大约为10ms（每秒100次），较快的约为1ms（每秒产生1000或1024次）。</p>
+<p>Linux代码中，有几个宏产生决定时钟中断频率的常量：</p>
+<ul>
+<li>HZ产生每秒时钟中断的近似个数，也就是时钟中断的频率。IBM PC上 值为1000</li>
+<li>CLOCK_TICK_RATE 产生的值为 1193182 这个值是8254芯片内部的振荡器频率</li>
+<li>LATCH 产生CLOCK_TICK_RATE和HZ的比值再四舍五入后的整数，这个值用来对PIT进行编程</li>
+</ul>
+<h3 id="CPU本地定时器"><a href="#CPU本地定时器" class="headerlink" title="CPU本地定时器"></a>CPU本地定时器</h3><p>最新8086的本地APIC（第四章 中断和异常一节中）中，还提供了另一种定时测量设备：CPU本地定时器。</p>
+<p>CPU本地定时器是一种能够单步中断或周期性中断的设备，它类似于PIT，但是还有一些区别：</p>
+<ul>
+<li>APIC计数器是32位，PIC计数器是16位；因此可以对本地定时器编程来产生频率很低的中断（计数器中存放的是中断发生前必须经过的节拍数）</li>
+<li>本地APIC定时器把中断只发送给自己的处理器，而PIT产生一个全局中断，系统中任一CPU都可以对其进行处理。</li>
+<li>APIC定时器是基于总线时钟信号的。每隔1,2,4,8,16,32,64或128总线时钟信号到来时对该定时器递减可以实现对其编程的目的。相反PIT有自己的内部时钟振荡器，可以更灵活的编程。</li>
+</ul>
+<h3 id="高精度事件定时器（HPET）"><a href="#高精度事件定时器（HPET）" class="headerlink" title="高精度事件定时器（HPET）"></a>高精度事件定时器（HPET）</h3><p>下一代PIT，未来可期。</p>
+<h3 id="ACPI-电源管理定时器"><a href="#ACPI-电源管理定时器" class="headerlink" title="ACPI 电源管理定时器"></a>ACPI 电源管理定时器</h3><p>ACPI电源管理定时器或ACPI PMT 是另一种时钟设备，包含在几乎所有基于ACPI的主板上。时钟信号大约 3.58MHz 固定频率。该设备是一个简单的计数器，每个时钟节拍到来增加一次。为了读取计数器的当前值内核需要访问某个IO端口，端口地址由BIOS确定。</p>
+<p>在支持动态CPU频率的设备上，ACPI比TSC更稳定。TSC计数器的高频率非常便于测量特别小的时间间隔。</p>
+<p>如果系统中存在HPET，内核优先使用HPET。</p>
+<h2 id="linux-计时体系结构"><a href="#linux-计时体系结构" class="headerlink" title="linux 计时体系结构"></a>linux 计时体系结构</h2><p>linux 执行与定时相关的操作。例如，内核周期性地：</p>
+<ul>
+<li>更新自系统启动以来所经过的事件</li>
+<li>更新事件和日期</li>
+<li>确定当前进程在每个CPU上已经运行了多长时间，如果已经超过了分配给它的事件，则抢占他。（时间片轮转）</li>
+<li>更新资源使用统计数</li>
+<li>检查每个软定时器的事件间隔是否已到</li>
+</ul>
+<p>linux的计时体系结构（timekeeping architecture）是一组与时间流相关的内核数据结构和函数。8086和单处理器机器稍有不同：</p>
+<ul>
+<li>在单处理器系统上，所有的计时活动都是由全局定时器（可以是可编程间隔定时器PIT或高精度事件定时器HPET）产生的中断触发的。</li>
+<li>在多处理器系统上，所有的普通的活动（像软定时器的处理）都是由全局定时器产生的中断触发的。而具体的CPU的活动（比如监控当前进程的执行时间）是由本地APIC定时器产生的中断触发的。</li>
+</ul>
+<p>以上两种情况的区别比较模糊。一些情况使用的计时方式比较特殊。为了简化，我们考虑两种“纯”的计时体系结构</p>
+<p>linux2.6 的计时体系结构使用了大量的数据结构。</p>
+<ol>
+<li>定时器对象：用于处理定时器资源。包含定时器名称和四个标准方法组成。<br><img src="/./static/timer_opts%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E5%AD%97%E6%AE%B5.png"></li>
+</ol>
+<p>其中 mark_offset 和 get_offset 被时钟中断处理程序用于精确计算定时器时间。内核能够以比节拍周期更高的精度来测定当前的时间（定时插补time interpolation）<br>2. cur_timer 变量：存放当前最好的定时器对象的地址。<br><img src="/./static/%E5%AE%9A%E6%97%B6%E5%99%A8%E4%BC%98%E5%85%88%E6%8E%92%E5%BA%8F.png"><br>3. jiffies变量：用于存放系统启动以来产生的节拍总数。时钟中断发生时（每个节拍）它就会+1。32位的变量。每隔大约50天就会回绕一次。内核使用time_after,time_after_eq,time_before和time_before_eq四个宏来处理溢出。且初始化值为0xfffb6c20会在5分钟内溢出，以在开发阶段排查出不对溢出作处理的代码。<br>4. jiffies_64变量：存储系统启动以来总的节拍数目。以1ms一个节拍的情况下，需要数10亿年才会溢出。（此数据低32位就是jiffies变量）<br>5. xtime 变量：存放当前时间和日期；每个节拍更新一次。由x_time_lock顺序锁保护，用户程序和内核经常使用它。它是一个timespec 类型的数据结构，他有两个字段：</p>
+<ul>
+<li>tv_sec: 存放UTC 0 以来经过的秒数</li>
+<li>tv_nsec： 存放自上一秒开始经过的纳秒数（0-999999999）</li>
+</ul>
+<h3 id="单处理器上的计时体系结构"><a href="#单处理器上的计时体系结构" class="headerlink" title="单处理器上的计时体系结构"></a>单处理器上的计时体系结构</h3><p>单处理系统上，所有与定时有关的活动都是由IRQ线0上的可编程间隔定时器产生的中断触发的。<br>初始化阶段：</p>
+<p>time_init() 函数用于建立计时体系结构：</p>
+<ol>
+<li>初始化xtime变量：利用get_cmos_time()函数从实时时钟上读取从UTC0开始的秒数。设置xtime的tv_nsec字段。</li>
+<li>初始化wall_to_monotonic变量。这个变量和xtime一样是timespec类型只不过存放的是将要加到xtime上的秒数和纳秒数，是一个单向递增的时间流。xtime则可能因为事件同步的原因导致时间跳跃。</li>
+<li>如果内核支持HPET 则使用hpet_enable() 设置其中断频率和中断位置为IRQ0。否则使用PIT</li>
+<li>调用select_timer() 挑选合适的定时器以设置cur_timer 指向它。</li>
+<li>调用set_irq(0,&amp;irq0)来创建与IRQ0相应的中断门。struct irqaction irq0&#x3D;(timer_interrupt,SA_INTERRUPT,0,”timer”,NULL,NULL)，从这时起 timer_interrupt()函数将在每个节拍到来时被调用，而中断被禁止（IRQ0 主描述符中SA_INTERRUPT标志被置位）。</li>
+</ol>
+<p>时钟中断处理程序：</p>
+<p>timer_interrupt()函数是PIT或HPET的中断服务例程（ISR）,它执行以下步骤：</p>
+<ol>
+<li>在x_time_lock顺序锁上产生一个write_seqlock()来保护与定时相关的内核变量。</li>
+<li>执行cur_timer 定时器对象的mark_offset 方法。</li>
+<li>调用do_timer_interrupt() 函数，修改jiffies_64，调用update_times() update_process_times() profile_tick() 检查是否需要使用外部时钟来同步时间。</li>
+<li>释放锁</li>
+<li>返回1，表明中断已经处理</li>
+</ol>
+<h3 id="多处理器上的计时体系结构"><a href="#多处理器上的计时体系结构" class="headerlink" title="多处理器上的计时体系结构"></a>多处理器上的计时体系结构</h3><p>初始化阶段：</p>
+<p>全局时钟和单处理器一致<br>linux内核为本地时钟保留239号（0xep）中断向量。在内核初始化阶段，函数apic_intr_init() 根据第239号向量和低级中断处理程序apic_timer_interrupt() 的地址设置IDT的中断门。函数calibrate_APIC_clock()通过正在启动的CPU的本地APIC来计算一个节拍对应多少总线时钟信号，来确定如何对APIC编程。这是由setup_APIC_timer()函数完成。该函数每个CPU都执行一次。</p>
+<p>所有本地APIC定时器都是同步的，因为他们都基于公共总线时钟信号。这意味引导CPU计算出的APIC参数对所有CPU有效。</p>
+<p>全局时钟中断处理程序：</p>
+<p>SMP版本的timer_interrupt()处理程序与UP版本的该处理程序在几个地方有差异：</p>
+<ul>
+<li>timer_interrupt()调用函数 do_timer_interrupt() 向IO APIC芯片的一个端口写入，以应答定时器的中断请求？</li>
+<li>update_process_times 函数不被调用，因为与特定cpu相关</li>
+<li>profile_tick() 不被调用，因为与特定cpu相关</li>
+</ul>
+<p>本地时钟中断处理程序：</p>
+<p>该处理程序执行系统中与特定CPU相关的计时互动，即监管内核代码并检测当前进程在特定CPU上已经运行了多长时间。smp_apic_timer_interrupt()的高级中断处理函数执行如下步骤：</p>
+<ol>
+<li>获得CPU逻辑号N</li>
+<li>使用irq_stat数组中第N项的apic_timer_irqs()字段+1</li>
+<li>应答本地APIC上的中断</li>
+<li>调用irq_enter()函数</li>
+<li>调用smp_local_timer_interrupt()函数</li>
+<li>调用irq_exit()函数</li>
+</ol>
+<p>smp_local_timer_interrupt() 函数执行每个CPU的计时活动，其中调用profile_tick和update_process_times()函数</p>
+<p>系统管理员可以通过写入&#x2F;etc&#x2F;profile文件可以修改内核代码监管器的抽样频率。为实现修改，内核改变本地时钟中断频率。smp_local_timer_interrupt()函数保证每个节拍精确调用update_process_times()函数一次。</p>
+<h2 id="更新事件和日期"><a href="#更新事件和日期" class="headerlink" title="更新事件和日期"></a>更新事件和日期</h2><p>用户程序从xtime变量获取当前日期和时间，内核必须周期性地更新该变量，才能使它的值保持精确。<br>全局中断处理沉痼调用 update_times() 函数更新xtime的值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">void update_times(void)</span><br><span class="line">&#123;</span><br><span class="line">    unsigned long ticks;</span><br><span class="line">    ticks = jiffies - wall_jiffies;</span><br><span class="line">    if (ticks)&#123;</span><br><span class="line">        wall_jiffies += ticks;</span><br><span class="line">        update_wall_time(ticks);</span><br><span class="line">    &#125;</span><br><span class="line">    calc_load(ticks);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>wall_jiffies变量存放xtime变量最后更新的时间，当中断被禁止很长时间时，内核不必每个时钟更新xtime 变量。 </p>
+<p>update_wall_time 更新xtime.tv_nsec 共ticks次，每次+1000000，如果需要更新xtime.tv_nec则会更新它。</p>
+<h2 id="更新系统统计数"><a href="#更新系统统计数" class="headerlink" title="更新系统统计数"></a>更新系统统计数</h2><p>内核在与定时相关的其他任务中必须周期性地收集若数据用于：</p>
+<ul>
+<li>检查进行进程的CPU资源限制 (通过 signal-&gt;rlim[RLIMIT_CPU].rlim_cur 控制的，达到限制则向进程发送SIGXCPU和SIGKILL信号。)</li>
+<li>更新与本地CPU工作负载有关的统计数 （process.utime process.stime）</li>
+<li>计算平均系统负载（calc_load() 函数用于计算处于TASK_RUNNING 或 TASK_UNINTERRUPTIBLE状态的进程数，更新统计出的平均负载）</li>
+<li>监管内核代码（profile_tick()函数为代码监管起采集数据。）</li>
+</ul>
+<p>linux内核包含一个叫做 readprofiler 的最低要求的代码监管器，linux开发者用其发现内核在内核态的什么地方花费事件。监管器确定内核的“热点”，用于指出需要优化的内核函数。</p>
+<p>为了激活代码监管器，linux内核启动时必须传字符串参数“profile&#x3D;N” 这里2^N表示要监管的代码段的大小。采集的数据可以从&#x2F;proc&#x2F;profile文件中读取。</p>
+<p>linux2.6包含另一个监管器，叫做oprofile。profile_tick() 调用timer_notify()函数用于收集这个监管器使用的数据。</p>
+<h2 id="软定时器和延迟函数"><a href="#软定时器和延迟函数" class="headerlink" title="软定时器和延迟函数"></a>软定时器和延迟函数</h2><p>定时器是一种软件功能，允许将来的某个时刻，函数在给定的事件间隔用完时被调用。超时表示与定时器相关的时间间隔已经用完的那个时刻。</p>
+<p>内核和进程广泛使用定时器。Linux考虑两种类型的定时器，即动态定时器（dynamic timer）和间隔定时器（interval timer）。第一种由内核使用，间隔定时器可以由进程在用户态创建。</p>
+<p>动态定时器应用之一：nanosleep()系统调用</p>
+<p>延迟函数：当内核需要等待一个较短的时间间隔，比如不超过几毫秒时，就无需使用软定时器：内核使用udelay()和ndelay()函数。</p>
+<h2 id="与定时测量相关的系统调用"><a href="#与定时测量相关的系统调用" class="headerlink" title="与定时测量相关的系统调用"></a>与定时测量相关的系统调用</h2><p>有几个调用允许用户态下的进程读取及修改时间和日期，以及创建定时器。<br>time()         获取utc0开始的秒数<br>gettimeofday() 获取utc0开始的秒数和微秒数<br>adjtimex()     用于调整时间，for NTP<br>setitimer()    激活间隔定时器，第一个参数为： ITIMER_REAL 真正过去的时间+SIGALRM信号，ITIMER_VIRTUAL 用户态时间+SIGALRM信号，ITIMER_PROF 用户态+内核态时间+SIGPROF信号。其他参数再说<br>alarm()        会在一个指定的时间间隔用完时向调用的进程发送一个SIGALRM信号。</p>
+<p>POSIX 1003.1b标准为用户态程序引入了一种新型软定时器，被称为POSIX定时器。<br><img src="/./static/%E4%B8%8EPOSIX%E5%AE%9A%E6%97%B6%E5%99%A8%E5%92%8C%E6%97%B6%E9%92%9F%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"><br>POSIX定时器比传统间隔定时器更灵活、更可靠。他们之间的区别：</p>
+<ul>
+<li>传统定时器到期时吗，内核发送SIGALRM信号给进程来激活定时器。POSIX定时器到期时内核可以发送多种信号给整个多线程应用程序，也可以发送给单个指定的线程。</li>
+<li>传统定时器到期很多次时，用户态程序不接受信号时，只有第一个信号被接受，其他都被丢弃。POSIX则可以通过timer_getoverrun()系统调用来获取第一次以来到期的次数。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/" data-id="cltvlnllx000n9kqqgwt24zpx" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十一章)信号" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.417Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>信号是一个很短的消息，可以发送给一个进程或一组进程。发送给进程的唯一信息通常是一个数，以此来标识信号。标准信号中，只关注此数字。<br>信号的目的：</p>
+<ul>
+<li>让进程知道已经发生了一个特定的事件。</li>
+<li>强迫进程执行它自己代码中的信号处理程序。<br>linux 1-31 为常规信号（regular signal）: 多次发送信号，进程只会收到一个。<br>linux 32-64为实时信号（real-time signal）: 多次发送信号，信号进行排队。</li>
+</ul>
+<p>信号传递分为两个阶段：</p>
+<ul>
+<li>信号产生<br>内核更新目标进程的数据结构以表示一个新信号已被发送。</li>
+<li>信号传递<br>内核强迫目标进程通过以下方式对信号做出反应：或改变目标进程的执行状态，或开始特定的信号处理程序，或者两者都是。</li>
+</ul>
+<p>每个信号至多被传递一次。信号是可消费资源；一旦被传递，数据结构中的对应信号信息就会被取消。 已经产生但是还没有传递的信号被称为挂起信号，被挂起的常规信号只能同时存在一个，实时信号可以有多个。</p>
+<p>信号可能会被挂起，考虑以下因素：</p>
+<ul>
+<li>信号通常只被当前正在运行的进程传递（current进程）</li>
+<li>信号可以由进程选择性地阻塞（blocked）</li>
+<li>进程信号处理过程中会自动阻塞对应信号直到处理程序结束。正在处理的信号的又一次出现不会中断当前的这个处理程序。</li>
+</ul>
+<p>POSIX信号和多线程<br>POSIX 1003.1 标准对多线程应用的信号处理有一些严格要求：</p>
+<ul>
+<li>信号处理程序必须再多线程应用的所有线程间共享；不过，每个线程必须有自己的挂起掩码信号和阻塞信号</li>
+<li>POSIX库函数kill()和sigqueue()必须向所有的多线程应用而不是某个特殊线程发送信号。所有由内核产生的信号同样如此</li>
+<li>每个发送给多线程应用的信号仅仅传送给一个线程，此线程由内核在不阻塞该信号的线程中随意挑选的。</li>
+<li>如果向多线程应用发送了一个致命信号，内核将杀死该应用的所有线程，而不是仅仅杀死接受信号的那个线程。</li>
+</ul>
+<p><code>线程组</code> 这里指的是任意一种线程组，包含单进程线程组。当kill时</p>
+<p><code>最初版本linux 不支持多线程程序，只支持多进程。linux 为了支持多线程程序，提供了轻量级进程方案，轻量级进程=课本上的线程。组成的线程组=进程。轻量级进程也是基本的调度单位，同一线程组可以共享一部分资源：打开的文件、地址空间等。</code></p>
+<p>(例外：不可能给0号进程（swapper）发送信号。发送给1 （init）的总是被丢弃。)</p>
+<h1 id="信号相关数据结构"><a href="#信号相关数据结构" class="headerlink" title="信号相关数据结构"></a>信号相关数据结构</h1><p><img src="/./static/%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86%E7%9B%B8%E5%85%B3%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/" data-id="cltvlnlly000o9kqqeufae2p0" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十三章)IO体系结构和设备驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.413Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="IO体系结构和设备驱动"><a href="#IO体系结构和设备驱动" class="headerlink" title="IO体系结构和设备驱动"></a>IO体系结构和设备驱动</h1><ul>
+<li>深入理解linux 内核： 第十三章 IO体系结构和设备驱动<br>keywords： 驱动、设备驱动、IO</li>
+</ul>
+<h1 id="kobject、kset、subsystem"><a href="#kobject、kset、subsystem" class="headerlink" title="kobject、kset、subsystem"></a>kobject、kset、subsystem</h1><p>sysfs文件系统是一种特殊的文件系统，其 sysfs 树用于保存各种已注册kobject之间和各种容器对象之间的层级关系和设备驱动程序所占io端口的范围。<br>通常sysfs文件系统的上层目录肯定是已注册的subsystem。</p>
+<h1 id="sysfs层级关系图"><a href="#sysfs层级关系图" class="headerlink" title="sysfs层级关系图"></a>sysfs层级关系图</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class subsystem &#123;</span><br><span class="line">    子系统数据结构  </span><br><span class="line">    struct kset kset 嵌入的kset结构</span><br><span class="line">    rwsem 读写信号量</span><br><span class="line">&#125;</span><br><span class="line">class kset&#123;</span><br><span class="line">    设备驱动程序set</span><br><span class="line">    struct subsystem* subsys 指向subsystem描述符</span><br><span class="line">    struct kobj_type* ktype 指向kset的kobject类型描述符</span><br><span class="line">    struct list_head list 包含在此kset中的kobject链表的首部</span><br><span class="line">    struct kobject kobj 嵌入的kobject结构</span><br><span class="line">    struct kset_hotplug_ops* hotplug_ops 指向用于处理kobject结构的过滤和热插拔操作的回调函数表</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class kobject&#123;</span><br><span class="line">    设备驱动程序</span><br><span class="line">    char* k_name 含有容器名称的字符串</span><br><span class="line">    char[] name 含有容器名称的字符串如果不超过20字节</span><br><span class="line">    struct kref 容器的引用计数器</span><br><span class="line">    struct list_head entry 用于kobject所插入的链表的指针</span><br><span class="line">    struct kobject* parent 指向父kobject(如果存在)</span><br><span class="line">    struct ket* kset       指向包含此kobject的kset</span><br><span class="line">    struct kobj_type* ktype 指向kobject 的类型描述符</span><br><span class="line">    struct dentry* dentry  指向kobject相对应的sysfs文件的dentry数据结构 （对应/sys目录下文件）</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">subsystem &lt;|-- subsystem</span><br><span class="line">subsystem &lt;|-- kset</span><br><span class="line"></span><br><span class="line">kset  &lt;|-- kset</span><br><span class="line">kset  &lt;|-- kobject</span><br><span class="line">kobject  &lt;|-- kobject</span><br><span class="line">kobject  &lt;|-- attribute</span><br></pre></td></tr></table></figure>
+<h1 id="设备驱动程序模型"><a href="#设备驱动程序模型" class="headerlink" title="设备驱动程序模型"></a>设备驱动程序模型</h1><p>模型包含几个基本数据结构之上：这些结构描述了总线、设备、设备驱动器等</p>
+<h2 id="结构图"><a href="#结构图" class="headerlink" title="结构图"></a>结构图</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class device &#123;</span><br><span class="line">    设备，对应一个设备  (/sys/devices)</span><br><span class="line">&#125;</span><br><span class="line">class device_driver &#123;</span><br><span class="line">    设备驱动程序  </span><br><span class="line">&#125;</span><br><span class="line">class bus_type &#123;</span><br><span class="line">    总线  (/sys/bus)</span><br><span class="line">&#125;</span><br><span class="line">class `class` &#123;</span><br><span class="line">    类(/sys/class)</span><br><span class="line">&#125;</span><br><span class="line">device_driver  &lt;|-- device</span><br><span class="line">bus_type  &lt;|-- device_driver</span><br><span class="line">bus_type  &lt;|-- device</span><br></pre></td></tr></table></figure>
+<h1 id="设备文件"><a href="#设备文件" class="headerlink" title="设备文件"></a>设备文件</h1><p>io设备是可以当作普通文件的，按照类型分主要分为块设备和字符设备。</p>
+<ul>
+<li>块设备：可以随机访问，比如硬盘、dvd等</li>
+<li>字符设备：可以或不可以随机访问（声卡），访问开销取决于硬件（磁带机）。<br>网卡是例外，网卡不直接与设备文件对应。<br>块设备和字符设备的主次设备号互相独立。（Linux2.6之前设备号为8+8,之后为12+20 合并为dev_t,可以使用MAJOR、MINOR、MKDEV进行拆分和合并）</li>
+</ul>
+<h2 id="动态创建设备号"><a href="#动态创建设备号" class="headerlink" title="动态创建设备号"></a>动态创建设备号</h2><ul>
+<li>驱动程序可以申请系统中的空闲设备号<br>设备文件在驱动程序初始化主次设备号时进行创建，主次设备号存放在&#x2F;sys&#x2F;class子目录下的dev属性中。</li>
+</ul>
+<h2 id="动态创建设备文件"><a href="#动态创建设备文件" class="headerlink" title="动态创建设备文件"></a>动态创建设备文件</h2><ul>
+<li>使用udev工具集的用户态程序。系统启动时&#x2F;dev目录是空的，udev扫描&#x2F;sys&#x2F;class目录来寻找dev文件，对于每一个dev文件udev会在&#x2F;dev目录下创建一个相应的设备文件。udev会根据配置分配文件名和创建符号链接，最后dev目录只存放了内核所支持的所有设备的设备文件。</li>
+<li>通常系统初始化后才会创建设备文件，驱动程序加载或热插设备加入系统时udev可以自动创建对应设备文件（支持热插拔的的驱动在发现新设备后会调用脚本<code>/sbin/hotplug</code>，参数作为环境变量传给此脚本）。</li>
+</ul>
+<h2 id="设备文件的VFS处理"><a href="#设备文件的VFS处理" class="headerlink" title="设备文件的VFS处理"></a>设备文件的VFS处理</h2><ul>
+<li>VFS模型中open调用，调用到ext2&#x2F;3_read_inode时。此函数判断索引节点和设备文件对应时调用init_special_inode()，该函数把索引节点对象的i_rdev字段初始化为设备文件的主次设备号，把i_fop字段设备def_blk_fops或者def_chr_fops 文件操作表的地址（根据设备文件类型）。基于这两个表，对设备文件的系统调用会激活设备驱动程序的函数，而不是基本文件系统的函数。</li>
+</ul>
+<h1 id="设备驱动程序"><a href="#设备驱动程序" class="headerlink" title="设备驱动程序"></a>设备驱动程序</h1><p>驱动程序是内核例程的集合，它使得硬件设备响应控制设备的编程接口，因此该接口是一组规范的VFS函数集（open、read、lseek、ioctl等等）。<br>除了标准VFS函数集合以外仍有很多地方需要考虑： </p>
+<h2 id="驱动程序注册"><a href="#驱动程序注册" class="headerlink" title="驱动程序注册"></a>驱动程序注册</h2><p>注册设备驱动程序意味着分配一个新的device_driver描述符，并将其插入到设备驱动程序模型的数据结构中，并把它与对应的设备文件连接起来。<br>如果设备文件对应的驱动程序未被注册，则堆设备文件的访问会返回-ENODEV</p>
+<ul>
+<li>静态编译的驱动程序，注册在内核初始化阶段进行</li>
+<li>内核模块形式的驱动程序，注册在模块装入时进行。模块卸载时注销。</li>
+</ul>
+<p>例如，对一个pci设备。驱动程序初始化一个pci_driver类型的描述符，调用pci_register_driver()-&gt;<code>driver_register()</code>进行注册。注册时内核会寻找可能由此驱动支持的硬件设备（内核依靠相关的总线类型描述符bus_type 的match方法，以及device_driver对象的probe方法。如果探测到，内核会分配一个设备对象，然后调用<code>device_register()</code>函数把设备插入设备驱动程序的模型中）。</p>
+<h2 id="初始化设备驱动程序"><a href="#初始化设备驱动程序" class="headerlink" title="初始化设备驱动程序"></a>初始化设备驱动程序</h2><p>初始化设备驱动程序意味着分配系统资源。<br>例如设备需要使用IRQ，多个设备可能共享同一个IRQ线。其他的还有用于DMA传送缓冲区的页框和DMA通道本身。<br>为了确保资源在需要时能够获得，获得后不用再次请求，设备驱动程序通常采用以下模式：</p>
+<ul>
+<li>引用计数器计算当前访问设备文件的进程数，open时增加，release时减少。</li>
+<li>open时判断计数器大小，如果为0则申请资源（中断、DMA等）</li>
+<li>release减少计数器后，如果为0则释放资源（中断、DMA等）</li>
+</ul>
+<h2 id="监控I-O-操作"><a href="#监控I-O-操作" class="headerlink" title="监控I&#x2F;O 操作"></a>监控I&#x2F;O 操作</h2><p>I&#x2F;O操作的耗时是不固定的，所以需要监控I&#x2F;O操作的状态。通常使用轮询模式和中断模式</p>
+<h3 id="轮询模式"><a href="#轮询模式" class="headerlink" title="轮询模式"></a>轮询模式</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">for(;;)&#123;</span><br><span class="line">    ... //使用计数或节拍计数器，并判断退出条件</span><br><span class="line">    ...// 可选的释放cpu。</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="中断模式"><a href="#中断模式" class="headerlink" title="中断模式"></a>中断模式</h3><p>如果I&#x2F;O 控制器能够通过IRQ线发出I&#x2F;O结束的信号，那么中断模式才能被使用。<br>一般使用中断+定时器来进行控制。</p>
+<h2 id="访问I-O-共享存储器"><a href="#访问I-O-共享存储器" class="headerlink" title="访问I/O 共享存储器"></a><code>访问I/O 共享存储器</code></h2><p>根据设备和总线的类型，I&#x2F;O 共享存储器可以被映射到不同的物理地址范围。</p>
+<h2 id="直接内存访问（DMA）"><a href="#直接内存访问（DMA）" class="headerlink" title="直接内存访问（DMA）"></a>直接内存访问（DMA）</h2><ul>
+<li>DMA使用可以采用同步或异步方式，第一种方式数据传送是由进程触发的（如声卡，用户态程序写入到dsp设备文件中，驱动程序会把数据从内核缓冲区拷贝到预先定时的DSP中，声卡传送完后引发中断，驱动程序会检查内核缓冲区是否还有要播放的样本。如果没有驱动程序再启动一次DMA传送），第二种是由硬件设备触发的（如网卡，可以从LAN中接受帧，网卡把接受的帧存储到自己的I&#x2F;O 共享存储器中，然后引发中断驱动程序确认中断后，命令网卡将帧从I&#x2F;O 共享存储器拷贝到内核缓冲区。传送完成后再引发新中断，驱动程序将新帧通知上层）。</li>
+</ul>
+<h2 id="内核支持的级别"><a href="#内核支持的级别" class="headerlink" title="内核支持的级别"></a>内核支持的级别</h2><ul>
+<li>根本不支持：程序使用IN和OUT汇编直接操作I&#x2F;O 端口。完全绕过了内核设备驱动程序，常见的是X window系统对图形显示的传统处理方式。</li>
+<li>最小支持：内核不识别硬件设备，但是识别I&#x2F;O 接口。用户程序把I&#x2F;O 接口视为字符流的顺序设备。功能有限。</li>
+<li>扩展支持：内核识别硬件设备，并处理I&#x2F;O 接口本身。这种可能没有对应的设备文件。除了串口和并口以外的所有通用I&#x2F;O 接口上连接的外部设备都需要扩展支持。</li>
+</ul>
+<h2 id="字符设备驱动程序"><a href="#字符设备驱动程序" class="headerlink" title="字符设备驱动程序"></a>字符设备驱动程序</h2><h2 id="块设备驱动程序"><a href="#块设备驱动程序" class="headerlink" title="块设备驱动程序"></a>块设备驱动程序</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" data-id="cltvlnllz000p9kqqcoikago4" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十九章)进程通信" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.413Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="进程通信"><a href="#进程通信" class="headerlink" title="进程通信"></a>进程通信</h1><ul>
+<li>深入理解linux 内核： 第十九章 进程通信<br>keywords： 进程通信、IPC、FIFO、管道<br>进程通信常用手段：锁保护的磁盘文件、管道和FIFO（命名管道）、IPC 信号量、IPC 消息、IPC 共享内存、套接字。</li>
+</ul>
+<h1 id="锁保护的磁盘文件"><a href="#锁保护的磁盘文件" class="headerlink" title="锁保护的磁盘文件"></a>锁保护的磁盘文件</h1><p>代价很高，不推荐。</p>
+<h1 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h1><p>适合进程之间生产者消费者模型交互，一些进程写入，一些进程读取数据。一个进程写入管道的数据都由内核重定向到另一个进程，另一个进程就可以从管道中读取数据。  </p>
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><p>POSIX只定义了半双工的管道，如果需要双向数据流则需要定义两个不同的管道<br>有些unix系统，例如System V Releas 4 ,实现了全双工。linux则可以通过不关闭另一个描述符来实现全双工。</p>
+<p>linux shell 中的<code>ls | more</code> 就是使用的管道。 在这个场景下首先执行：  </p>
+<ol>
+<li>调用pipe()系统调用；假设返回文件描述符3（管道的读）和4（管道的写）</li>
+<li>两次fork()系统调用，分别创建用于执行ls和more。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+</ol>
+<p>对于执行ls的子进程：</p>
+<ol>
+<li>调用dup2(4,1),把描述符4拷贝到1的位置，替换掉默认写描述符。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+<li>调用execve()系统调用来执行ls程序。</li>
+</ol>
+<p>对于执行more的子进程：</p>
+<ol>
+<li>调用dup2(3,0),把描述符3拷贝到0的位置，替换掉默认读描述符。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+<li>调用execve()系统调用来执行more程序。</li>
+</ol>
+<h2 id="pipefs"><a href="#pipefs" class="headerlink" title="pipefs"></a>pipefs</h2><p>管道使用的是特殊文件系统pipefs，这个文件系统没有安装点，所以用户看不到。而对应的操作又可以通过pipefs进行整合。<br>init_pipe_fs() 函数：注册pipefs文件系统并安装它</p>
+<h2 id="管道创建过程"><a href="#管道创建过程" class="headerlink" title="管道创建过程"></a>管道创建过程</h2><p>管道创建在pipefs文件系统上，返回两个文件描述符。其中管道对象内部包含readers计数器和writers计数器，在非命名管道只能由此进程和子进程使用的这个情况下，其计数器的值不会大于1。这是由于fork 出的进程复制了文件描述符表，只会造成对应的文件条目内部的计数+1，子进程关闭文件时，也是将系统文件表条目内部的计数减一，当计数值减为0时，才将其删除。只有对应的文件对象被释放，计数器才会减一。</p>
+<h2 id="管道读数据过程"><a href="#管道读数据过程" class="headerlink" title="管道读数据过程"></a>管道读数据过程</h2><p><img src="/./static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png"></p>
+<h2 id="管道写数据过程"><a href="#管道写数据过程" class="headerlink" title="管道写数据过程"></a>管道写数据过程</h2><p><img src="/./static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png"></p>
+<h1 id="FIFO"><a href="#FIFO" class="headerlink" title="FIFO"></a>FIFO</h1><p>解决任意两个进程需要共享管道的问题。</p>
+<ol>
+<li>FIFO索引节点出现在系统目录树上而不是pipefs特殊文件系统中</li>
+<li>FIFO是一种双向通信管道；可以以读写方式打开一个FIFO。</li>
+</ol>
+<h1 id="System-V-IPC"><a href="#System-V-IPC" class="headerlink" title="System V IPC"></a>System V IPC</h1><p>IPC 是进程间通信的的缩写，通常指允许用户态程序执行下列操作的一组机制：</p>
+<ul>
+<li>通过信号量与其他进程进行同步（IPC 信号量）</li>
+<li>向其他进程发送消息或从其他进程接受消息（IPC 消息）</li>
+<li>和其他进程共享内存（IPC 共享内存）</li>
+</ul>
+<h1 id="POSIX-消息队列"><a href="#POSIX-消息队列" class="headerlink" title="POSIX 消息队列"></a>POSIX 消息队列</h1><p>相比systemV IPC 消息队列，有许多优点：</p>
+<ul>
+<li>更简单的基于文件的应用接口</li>
+<li>完全支持消息优先级</li>
+<li>完全支持消息到达的异步通知，通过信号或线程创建实现。</li>
+<li>用于阻塞发送与接受操作的超时机制</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" data-id="cltvlnllz000q9kqq1w2kbe7m" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十二章)linux文件系统" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.413Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="linux-文件系统代码"><a href="#linux-文件系统代码" class="headerlink" title="linux 文件系统代码"></a>linux 文件系统代码</h1><ul>
+<li>深入理解linux 内核：454 第十二章 虚拟文件系统<br>keywords： VFS、通用文件模型（common file model）</li>
+</ul>
+<h1 id="VFS"><a href="#VFS" class="headerlink" title="VFS"></a>VFS</h1><p>虚拟文件系统： linux 系统内部的一种封装的设计，使得能够兼容多种文件系统</p>
+<h1 id="通用文件模型"><a href="#通用文件模型" class="headerlink" title="通用文件模型"></a>通用文件模型</h1><p>VFS提供的设计方案。<br>超级块 superblock  对应磁盘大块文件系统。包含脏数据。<br>索引节点 inode 存放具体文件磁盘存储数据 对应磁盘存储中的节点。包含脏数据。<br>文件 file 文件对象，对应内核中的文件。文件被打开时创建，用于描述被使用的文件。不含脏数据。<br>目录项 dentry (对应一个硬连接)</p>
+<p>进程–fd-&gt;文件对象–f_dentry-&gt;目录项对象 –d_inode-&gt;索引节点–i_sb-&gt;超级块—&gt;磁盘</p>
+<h2 id="对于进程来说"><a href="#对于进程来说" class="headerlink" title="对于进程来说"></a>对于进程来说</h2><p>进程fs_struct 中会声明 当前工作目录和根目录<br>进程files_struct会记录打开的文件对象</p>
+<h1 id="文件系统的类型"><a href="#文件系统的类型" class="headerlink" title="文件系统的类型"></a>文件系统的类型</h1><p>文件系统类：</p>
+<h2 id="特殊文件系统-vfsmount"><a href="#特殊文件系统-vfsmount" class="headerlink" title="特殊文件系统(vfsmount)"></a>特殊文件系统(vfsmount)</h2><h2 id="普通文件系统-vfsmount"><a href="#普通文件系统-vfsmount" class="headerlink" title="普通文件系统(vfsmount)"></a>普通文件系统(vfsmount)</h2><h1 id="进程打开文件数量限制"><a href="#进程打开文件数量限制" class="headerlink" title="进程打开文件数量限制"></a>进程打开文件数量限制</h1><p>受限于进程描述符中 signal-&gt;rlim[RLIMIT_NOIFILE] 普通用户默认1024 如果是root 则可以增大<br>受限于内核参数 NR_OPEN 1048576</p>
+<h1 id="2-1-的作用"><a href="#2-1-的作用" class="headerlink" title="2 &gt; &amp;1 的作用"></a>2 &gt; &amp;1 的作用</h1><p>进程files_struct-&gt;fd 指向的文件数组中  0 为标准输入  1 为标准输出  2 为标准错误输出 ，这里的索引就是文件描述符（file descriptor）]</p>
+<h1 id="进程和文件系统层级关系图"><a href="#进程和文件系统层级关系图" class="headerlink" title="进程和文件系统层级关系图"></a>进程和文件系统层级关系图</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class process &#123;</span><br><span class="line">    进程描述  </span><br><span class="line">    Namespace* namespace</span><br><span class="line">    struct fs_struct fs  进程文件系统相关描述</span><br><span class="line">    struct files_struct files  打开文件的表</span><br><span class="line">&#125;</span><br><span class="line">class fs_struct&#123;</span><br><span class="line">    映射进程和文件系统</span><br><span class="line">    atomic_t count   共享此表的进程数量</span><br><span class="line">    rwlock_t lock 字段读写自旋锁</span><br><span class="line">    Int umask 打开文件位掩码</span><br><span class="line">    struct dentry * root 根目录的目录项</span><br><span class="line">    struct dentry * pwd 当前目录的目录项</span><br><span class="line">    struct dentry * altroot 模拟根目录的目录项（8086上始终为null）</span><br><span class="line">    struct vfsmount* rootmnt 根目录所安装文件系统的文件系统对象</span><br><span class="line">    struct vfsmount* pwdmnt 当前目录的安装文件系统的文件系统对象</span><br><span class="line">    struct vfsmount* altrootmnt 模拟根目录的安装文件系统的文件系统对象（8086上始终为null）</span><br><span class="line">&#125;</span><br><span class="line">class files_struct&#123;</span><br><span class="line">    进程打开的文件</span><br><span class="line">    atomic_t count   共享此表的进程数量</span><br><span class="line">    rwlock_t lock 字段读写自旋锁</span><br><span class="line">    Int max_fds 文件对象的当前最大数目</span><br><span class="line">    Int max_fdset 文件描述符的当前最大数目</span><br><span class="line">    Int next_fd 所分配的最大文件描述符+1</span><br><span class="line">    struct file ** fd 指向文件对象数组的指针</span><br><span class="line">    fd_set * close_on_exec 指向执行exec（）时需要关闭的文件描述符的指针</span><br><span class="line">    fd_set * open_fds 指向打开文件描述符的指针</span><br><span class="line">    fs_set  close_on_exec_init close_on_exec初始化指向的空间</span><br><span class="line">    fs_set  open_fds_init open_fds初始化指向的空间</span><br><span class="line">    struct file *p[] fd_array fd初始化指向的空间 0:标准输入，1:标准输出，2:错误输出</span><br><span class="line">&#125;</span><br><span class="line">class file&#123;</span><br><span class="line">    文件对象,不含脏数据</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class namespace &#123;</span><br><span class="line">    // 进程命名空间_多个进程可共享</span><br><span class="line">    atomic_t count   共享引用计数器</span><br><span class="line">    struct vfsmount * root  根目录文件系统描述符</span><br><span class="line">    struct list_head list  已安装文件系统描述符链表（vfsmount）</span><br><span class="line">    struct rw_semaphore sem  读写信号量</span><br><span class="line">&#125;</span><br><span class="line">class vfsmount&#123;</span><br><span class="line">    文件系统</span><br><span class="line">    struct list_head mnt_hash   用于散列表的指针</span><br><span class="line">    struct mount *mnt_parent    指向父文件系统</span><br><span class="line">	struct dentry *mnt_mountpoint  指向安装点目录dentry</span><br><span class="line">    struct dentry *mnt_root        指向根目录的dentry</span><br><span class="line">    struct super_block *mnt_sb     指向这个文件系统的超级块对象 （超级块对象是唯一，）</span><br><span class="line"></span><br><span class="line">    struct list_head mnt_mounts   包含所有文件系统描述符链表的头（对于此文件系统来说）</span><br><span class="line">    struct list_head mnt_child  用于已安装文件系统链表 mnt_mounts的指针</span><br><span class="line"></span><br><span class="line">	atomic_t mnt_count       引用计数器</span><br><span class="line">    Int    mnt_flags          文件系统标志： MNT_NOSUID禁止setuid和setgid MNT_NODEV禁止访问设备文件 MNT_NOEXEC禁止程序执行 </span><br><span class="line">    Int    mnt_expiry_mark     到期标志,已到期会等待计数归零释放。</span><br><span class="line">    char  *mnt_devname 设备文件名</span><br><span class="line">    struct list_head mnt_list   已安装文件系统描述符的 namespace.list 链表的头指针</span><br><span class="line">    struct list_head mnt_fslink 文件系统到期链表的指针的头指针</span><br><span class="line">    struct namespace *mnt_namespace 指向安装了文件系统namespace的进程命名空间</span><br><span class="line">&#125; </span><br><span class="line">class super_block&#123;</span><br><span class="line">    超级块，对应磁盘大块文件系统，和分区对应。包含脏数据</span><br><span class="line">    struct list_head s_list 指向超级块链表的指针</span><br><span class="line">    dev_t s_dev  设备标识符</span><br><span class="line">    unsigned long s_blocksize 以字节为单位的块大小</span><br><span class="line">    unsigned long s_old_blocksize 块设备驱动程序中的以字节为单位的块大小</span><br><span class="line">    unsigned char s_blocksize_bits 以位为单位的块大小</span><br><span class="line">    unsigned char s_dirt 脏标志</span><br><span class="line">    。。。</span><br><span class="line">    struct list_head s_inodes 所有索引节点的链表</span><br><span class="line">    struct list_head s_dirty 改进型索引节点的链表</span><br><span class="line">    struct list_head s_io 等待被写入磁盘的索引节点链表</span><br><span class="line">    struct hlist_head s_anon 处理远程文件系统匿名目录项的链表</span><br><span class="line">    struct list_head s_files 文件对象的链表</span><br><span class="line">    struct block_device * s_bdev 指向块设备驱动程序描述符的指针</span><br><span class="line">    struct list_head s_instances 文件系统类型的超级块对象链表的指针（用于文件系统类型注册）</span><br><span class="line">    。。。</span><br><span class="line">&#125;</span><br><span class="line">class dev_t&#123;</span><br><span class="line">    设备驱动程序</span><br><span class="line">&#125;</span><br><span class="line">class file_system_type&#123;</span><br><span class="line">    文件系统类型</span><br><span class="line">    const char* name 文件系统名</span><br><span class="line">    int fs_flags 文件系统类型标志</span><br><span class="line">    struct superblock * (*)() get_sb 读取超级块的方法</span><br><span class="line">    void (*)() kill_sb 删除超级块的方法</span><br><span class="line">    struct module* owner  实现此文件系统的模块的指针</span><br><span class="line">    struct file_system_type * next 链表下一位</span><br><span class="line">    struct list_head fs_supers  相同文件系统类型的超级块对象链表的头</span><br><span class="line">&#125;</span><br><span class="line">class inode&#123;</span><br><span class="line">    索引节点,包含脏数据，对应文件的磁盘。</span><br><span class="line">    struct hlist_node i_hash 散列链表指针</span><br><span class="line">    struct list_head i_list  描述inode当前状态的链表的指针</span><br><span class="line">    struct list_head i_sb_list  super_block中被管理的链表的头节点</span><br><span class="line">    struct list_head i_dentry 引用索引节点的目录项对象的链表的头</span><br><span class="line">    struct file_lock* i_flock 指向文件锁链表的指针</span><br><span class="line"></span><br><span class="line">    。。。</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class dentry&#123;</span><br><span class="line">    目录项对象</span><br><span class="line">    atomic_t d_count  引用计数器</span><br><span class="line">    unsigned int d_flag		</span><br><span class="line">	spinlock_t d_lock</span><br><span class="line"></span><br><span class="line">    struct inode *d_inode;		* Where the name belongs to - NULL is* negative *//</span><br><span class="line">	struct dentry *d_parent;	/* parent directory */</span><br><span class="line">	struct qstr d_name;</span><br><span class="line">	</span><br><span class="line">	struct list_head d_lru;		/* LRU list */</span><br><span class="line">	struct list_head d_child;	/* child of parent list */</span><br><span class="line">	struct list_head d_subdirs;	/* our children */</span><br><span class="line">    struct list_head d_alias;	</span><br><span class="line"></span><br><span class="line">    unsigned long d_time</span><br><span class="line">    struct dentry_operations* d_op</span><br><span class="line">    struct super_block *d_sb</span><br><span class="line">    void *d_fsdata</span><br><span class="line">    struct rcu_head d_rcu </span><br><span class="line">    struct dcookie_struct *d_cookie</span><br><span class="line">    struct hlist_node d_hash;	/* lookup hash list */</span><br><span class="line">    int d_mounted </span><br><span class="line">        </span><br><span class="line">    unsigned char d_iname[DNAME_INLINE_LEN];	/* small names */</span><br><span class="line">&#125;</span><br><span class="line">class file_lock&#123;</span><br><span class="line">    文件锁</span><br><span class="line">    struct file_lock* fl_next inode-&gt;i_flock单向链表</span><br><span class="line">    struct list_head fl_link 用于全局活动或阻塞链表的指针</span><br><span class="line">    struct list_head fl_block 用于锁的等待者链表的指针</span><br><span class="line">    wait_queue_head_t fl_wait 阻塞进程等待队列</span><br><span class="line">    fl_flags 标记此锁的类型 POSIX 0、FLOCK 1 等</span><br><span class="line">    。。。。</span><br><span class="line">&#125;</span><br><span class="line">process &lt;|-- fs_struct</span><br><span class="line">process &lt;|-- files_struct</span><br><span class="line">files_struct &lt;|-- file</span><br><span class="line">fs_struct &lt;|-- namespace</span><br><span class="line">fs_struct &lt;|-- vfsmount</span><br><span class="line">namespace &lt;|-- vfsmount</span><br><span class="line">vfsmount &lt;|-- super_block</span><br><span class="line">vfsmount &lt;|-- dentry</span><br><span class="line">vfsmount &lt;|-- vfsmount</span><br><span class="line"></span><br><span class="line">fs_struct &lt;|-- dentry</span><br><span class="line"></span><br><span class="line">dentry &lt;|-- inode</span><br><span class="line">dentry &lt;|-- super_block</span><br><span class="line">inode &lt;|-- super_block</span><br><span class="line">inode &lt;|-- file_lock</span><br><span class="line"></span><br><span class="line">super_block &lt;|-- dev_t</span><br><span class="line">super_block &lt;|-- file_system_type</span><br><span class="line"></span><br><span class="line">file  &lt;|-- dentry</span><br><span class="line">file  &lt;|-- vfsmount</span><br></pre></td></tr></table></figure>
+<h1 id="路径名查找过程"><a href="#路径名查找过程" class="headerlink" title="路径名查找过程"></a>路径名查找过程</h1><ol>
+<li>首先 对于路径 &#x2F;opt&#x2F;share&#x2F;xxx 分解路径名 [“opt”,”share”,”xxx”] 除最后一个以外 其他的必定是目录</li>
+<li>如果第一位是&#x2F; 是在 process-&gt;fs-&gt;root 中查找，否则在process-&gt;fs-&gt;pwd 中查找。</li>
+<li>结合目录项高速缓存（散列表和链表）和inode 的查找目录（lookup）等功能循环找到最终的 dentry,</li>
+<li>返回路径名对象nameidata</li>
+</ol>
+<h1 id="open-调用"><a href="#open-调用" class="headerlink" title="open 调用"></a>open 调用</h1><ol>
+<li>查找路径名</li>
+<li>存放新文件描述符到进程的process-&gt;files-&gt;fd 中。占好位置。</li>
+<li>调用filp_open()-&gt;open_namei() 进行检查锁权限等。</li>
+<li>调用dentry_open 创建文件对象，插入文件对象到 super_block-&gt;s_files 返回文件对象地址</li>
+<li>process-&gt;files-&gt;fd 设置为上一步创建的文件对象。</li>
+</ol>
+<h1 id="read-write"><a href="#read-write" class="headerlink" title="read&#x2F;write"></a>read&#x2F;write</h1><ol>
+<li>fget_light() 从fd获取文件对象</li>
+<li>检查file-&gt;f_mode 标志 判断操作是否允许</li>
+<li>判断文件对象是否有read&#x2F;write&#x2F;aio_read&#x2F;aio_wirte操作</li>
+<li>access_ok（） 检查buf 和count 参数</li>
+<li>rw_verify_area() 检查是否有冲突的强制锁</li>
+<li>调用文件对象的 file-&gt;f_op-&gt;read&#x2F;write&#x2F;aio_read&#x2F;aio_wirte</li>
+<li>fput_light() 释放文件对象</li>
+<li>返回传送字节数</li>
+</ol>
+<h1 id="close调用"><a href="#close调用" class="headerlink" title="close调用"></a>close调用</h1><ol>
+<li>从fd获取文件对象</li>
+<li>对应fd位置设为null，这是通过修改 process-&gt;files 中的open_fds和close_on_exec 字段的对应位来进行的</li>
+<li>filp_close(), 调用f_op-&gt;flush ，释放强制锁，fput()释放文件对象</li>
+<li>返回状态码</li>
+</ol>
+<h1 id="文件加锁"><a href="#文件加锁" class="headerlink" title="文件加锁"></a>文件加锁</h1><h1 id="加锁"><a href="#加锁" class="headerlink" title="加锁"></a>加锁</h1><p>linux 支持劝告锁、强制锁、基于强制锁的租借锁（lease）。 fcntl() flock() 和lockf()。<br>文件锁存放在inode 的 i_flock字段对应的单向链表中。也存放在内核的对应类型锁的链表中。<br>blocker+waiter 用于管理进程和资源</p>
+<h2 id="FL-FLOCK锁"><a href="#FL-FLOCK锁" class="headerlink" title="FL_FLOCK锁"></a>FL_FLOCK锁</h2><p>此锁和文件对象相关联。由打开文件的进程维护。锁定范围为整个文件。<br>flock() 用于申请或删除劝告锁，LOCK_SH 共享读、LOCK_EX 互斥写、LOCK_UN释放锁、LOCK_NB不阻塞锁定操作、LOCK_MAND 共享模式强制锁</p>
+<h2 id="FL-POSIX锁"><a href="#FL-POSIX锁" class="headerlink" title="FL_POSIX锁"></a>FL_POSIX锁</h2><p>此锁总是与进程和索引节点关联。进程死亡或文件关闭时进行清除，不会通过fork() 进行继承。锁定范围为文件的部分范围。<br>POSIX文件锁是为了保证多个程序同时访问同一个文件时数据的完整性。Linux在每次文件读写和加锁时都会检测是否有锁冲突，每次加锁或解锁，都会更新相应区域的锁为新锁类型，当然，解锁是直接把该区域的锁信息删除。另外，Linux将文件锁的区域按照从左到右排序，提高了锁的访问效率。<br>fcntl() 参数为 fd、cmd、和flock数据结构（指定锁的文件部分范围）。</p>
+<ol>
+<li>F_GETLK  获取相应类型的锁，如果存在，返回相应锁的信息（包括l_pid设置为加锁进程的PID）</li>
+<li>F_SETLK 非阻塞加锁</li>
+<li>F_SETLKW 阻塞加锁</li>
+<li>F_GETLK64 F_SETLK64 F_SETLKW64 64位版本</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" data-id="cltvlnlm0000r9kqqedvuagwl" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十八章)linuxExt2和Ext3 文件系统" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linuxExt2%E5%92%8CExt3%20%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.413Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="linux-Ext2和Ext3-文件系统"><a href="#linux-Ext2和Ext3-文件系统" class="headerlink" title="linux Ext2和Ext3 文件系统"></a>linux Ext2和Ext3 文件系统</h1><ul>
+<li>深入理解linux 内核：454 第十八章 Ext2和Ext3 文件系统<br>keywords： Ext2、Ext3、文件系统</li>
+</ul>
+<h1 id="磁盘数据结构"><a href="#磁盘数据结构" class="headerlink" title="磁盘数据结构"></a>磁盘数据结构</h1><p><img src="/./static/EXT2%E5%88%86%E5%8C%BA%E5%92%8CEXT2%E5%9D%97%E7%BB%84%E5%88%86%E5%B8%83%E5%9B%BE.png"><br>引导块：分区的引导扇区使用。<br>块组：大小相同，方便索引。内核会尽量把同一个文件放到一个块组中减少碎片。    其中包含：</p>
+<ul>
+<li>文件系统中超级块的拷贝：ext2_super_block,s_log_block_size:1024^ 为指数基数的块大小</li>
+<li>组描述符的拷贝：ext2_group_desc,描述块号 块个数，索引节点起始位置等。</li>
+<li>数据块位图:位图数据，大小固定为一个块，每一位描述一个数据块。</li>
+<li>索引节点位图:大小固定为一个块，每一位描述一个索引节点表中的块。</li>
+<li>索引节点表：ext2_innode,存放文件属性，一个索引节点128字节，一个1024的块可以存放8个索引节点，总数为：s_inodes_per_group&#x2F;每个块可以存放的索引节点数（比如8）<ul>
+<li>索引节点的增强属性：索引节点的i_file_acl 指向存放增强属性的块。块内头部包含增强属性名：ext2_xattr_entry描述符，尾部包含值。linux 2.6 通过增强属性实现ACL（访问控制列表）</li>
+</ul>
+</li>
+<li>属于文件的一大块数据，即数据块：<br>超级块和组描述符：只有快组0中被使用，其他的作为容灾备份。<br>快组个数取决于分区大小和块大小：因为数据块位图大小固定为一个块，每一位描述一个数据块，块组大小的最小值就固定了，分区除以快组大小就是可能的快组数量。</li>
+</ul>
+<h1 id="各种文件类型如何使用磁盘块"><a href="#各种文件类型如何使用磁盘块" class="headerlink" title="各种文件类型如何使用磁盘块"></a>各种文件类型如何使用磁盘块</h1><p>ext2 文件类型（file_type）</p>
+<table>
+<thead>
+<tr>
+<th>文件类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>未知</td>
+</tr>
+<tr>
+<td>1</td>
+<td>普通文件</td>
+</tr>
+<tr>
+<td>2</td>
+<td>目录</td>
+</tr>
+<tr>
+<td>3</td>
+<td>字符设备</td>
+</tr>
+<tr>
+<td>4</td>
+<td>块设备</td>
+</tr>
+<tr>
+<td>5</td>
+<td>命名管道</td>
+</tr>
+<tr>
+<td>6</td>
+<td>套接字</td>
+</tr>
+<tr>
+<td>7</td>
+<td>符号链接</td>
+</tr>
+</tbody></table>
+<h2 id="普通文件"><a href="#普通文件" class="headerlink" title="普通文件"></a>普通文件</h2><p>初始创建：不使用磁盘块<br>写入数据：使用磁盘快</p>
+<h2 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h2><p>EXT2使用特殊的文件结构实现了目录，文件的数据块把文件名和索引节点号存放在一起。<br>数据结构如下:</p>
+<ul>
+<li>__len32 inode：文件所在索引节点号</li>
+<li>__len16 rec_len:此目录项长度（Byte）</li>
+<li>__u8 name_len:文件名长度（Byte）</li>
+<li>__u8 file_type:文件类型</li>
+<li>char[EXT2_NAME_LEN] name:文件名<br>空间分布如下：（其中oldfile已经被删除）<br><img src="/./static/EXT2%E7%9B%AE%E5%BD%95%E6%96%87%E4%BB%B6%E7%9A%84%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90.png"></li>
+</ul>
+<h2 id="符号链接"><a href="#符号链接" class="headerlink" title="符号链接"></a>符号链接</h2><p>如果符号链接路径名小于等于60字符，存在索引节点的i_block（15*4Byte整数）字段。如果大于60个字符需要数据块。</p>
+<h2 id="设备文件、管道、套接字"><a href="#设备文件、管道、套接字" class="headerlink" title="设备文件、管道、套接字"></a>设备文件、管道、套接字</h2><p>不需要数据块。都存在索引节点中。</p>
+<h1 id="EXT2-内存数据结构"><a href="#EXT2-内存数据结构" class="headerlink" title="EXT2 内存数据结构"></a>EXT2 内存数据结构</h1><p><img src="/./static/EXT2%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84VFS%E6%98%A0%E5%83%8F.png"><br>内核使用高速缓存来缓存数据<br>总是缓存：一直存放在页高速缓存，直到分区被卸载。原理：引用计数一直大于0。周期性地写回磁盘<br>动态模式：只要对象被使用就缓存。页框回收算法回收后进行删除。</p>
+<h2 id="EXT2-超级块对象"><a href="#EXT2-超级块对象" class="headerlink" title="EXT2 超级块对象"></a>EXT2 超级块对象</h2><p><img src="/./static/EXT2%20ext2_sb_info%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"><br>EXT2 超级块(ext2_sb_info)中包含</p>
+<ul>
+<li>磁盘超级块中大部分字段</li>
+<li>s_es指针，指向磁盘超级块所在缓冲区</li>
+<li>s_sbh指针，指向磁盘超级块所在缓冲区的头部</li>
+<li>组描述符的个数s_desc_per_block,</li>
+<li>s_group_desc指针，指向一个缓冲区（包含组描述符的缓冲区）的首部数组</li>
+<li>其他与安装状态安装选项有关的数据<br>在安装ext2 文件系统时对以上字段进行初始化。包括读入包含EXT2组描述符的块，并将缓冲区首部地址写入s_group_desc。为根目录分配一个索引节点和目录项对象，从而可以读取根节点。</li>
+</ul>
+<h2 id="索引节点对象"><a href="#索引节点对象" class="headerlink" title="索引节点对象"></a>索引节点对象</h2><p>ext2_inode_info</p>
+<h1 id="数据块寻址"><a href="#数据块寻址" class="headerlink" title="数据块寻址"></a>数据块寻址</h1><p>对于文件内偏移量f如何找到其在磁盘中的位置?<br>f&#x2F;块大小 为所在的文件块号。<br><img src="/./static/EXT2%20%E5%AF%B9%E6%96%87%E4%BB%B6%E7%9A%84%E6%95%B0%E6%8D%AE%E5%9D%97%E8%BF%9B%E8%A1%8C%E5%AF%BB%E5%9D%80%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"><br>其中一个寻址占用4B。</p>
+<ul>
+<li>0-11个用于直接寻址</li>
+<li>12号一次间接寻址</li>
+<li>13号二次间接寻址</li>
+<li>14号三次间接寻址</li>
+</ul>
+<p><img src="/./static/EXT2%E6%95%B0%E6%8D%AE%E5%9D%97%E5%AF%BB%E5%9D%80%E7%9A%84%E6%96%87%E4%BB%B6%E5%A4%A7%E5%B0%8F%E4%B8%8A%E7%95%8C.png"><br>比如块大小为1024Byte，直接寻址可以寻址12个块共12&#x3D;12KB。一次间接为 1*(1024&#x2F;4)+12&#x3D;256+12&#x3D;268KB。二次间接为 1*(1024&#x2F;4)*(1024&#x2F;4)+256+12&#x3D;65536+256+12&#x3D;64.26171875 MB。。。</p>
+<h1 id="文件中的洞"><a href="#文件中的洞" class="headerlink" title="文件中的洞"></a>文件中的洞</h1><p>引入文件的洞是为了避免磁盘空间的浪费，被广泛应用在数据库应用中，更一般的说，用于在文件上进行散列的所有应用。<br>文件洞在ext2中的实现是基于动态数据块分配的，只有当进程需要向一个块写数据时才会真正把这个块分配给文件。索引节点的i_size字段定义程序看到的文件大小，包括洞。i_blocks字段存放分配给文件的有效数据块数量（以512字节为单位）。</p>
+<p>echo -n “X” |dd of&#x3D;&#x2F;tmp&#x2F;hole bs&#x3D;1024 seek&#x3D;6 &#x2F;&#x2F; 在1024<em>6位置输出X<br>下图为上述命令在块大小为4096的ext2分区上的数据结构。此时i_size 大小为1024</em>6+1&#x3D;6145 i_block字段为1*4096&#x2F;512&#x3D;8。ibock数组第二个元素为已分配的块，其他为空。<br><img src="/./static/EXT2%E8%B5%B7%E5%A7%8B%E6%9C%89%E6%B4%9E%E7%9A%84%E6%96%87%E4%BB%B6.png"></p>
+<h1 id="块分配策略"><a href="#块分配策略" class="headerlink" title="块分配策略"></a>块分配策略</h1><p>EXT2首先尝试在文件最后一个块附近寻找块，然后是包含文件索引节点的块组内，然后是其他块组。<br>ext2 预分配策略：文件一次获取一组为8个邻接的块，ext2_inode_info的i_prealloc_count字段存放预分配的块数量,i_prealloc_block存放下次要使用的预分配块号。文件关闭、缩短、写操作非顺序写时释放预分配的块。</p>
+<h1 id="ext3文件系统"><a href="#ext3文件系统" class="headerlink" title="ext3文件系统"></a>ext3文件系统</h1><p>ext3文件系统可以视为  ext2+日志文件系统，日志文件系统作用是在程序断电或系统崩溃时通过日志能够快速恢复。<br>ext3提供三种不同的日志模式：</p>
+<ul>
+<li>日志（journal):对数据和元数据的修改都写入日志，最慢最安全</li>
+<li>预定（ordered）：默认模式，只有对文件系统元数据的修改才计入日志，ext3会把元数据和相关数据块进行分区，确保元数据之前数据块已经写入磁盘，尽可能减少文件内数据损坏。</li>
+<li>写回（writeback）:只有对文件系统元数据的修改才计入日志。最快，其他日志文件系统中发现的方法。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linuxExt2%E5%92%8CExt3%20%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" data-id="cltvlnlm1000s9kqqbivlf3t5" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十章)系统调用-未完成" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E7%AB%A0)%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E6%9C%AA%E5%AE%8C%E6%88%90/" class="article-date">
+  <time datetime="2024-03-17T14:14:24.413Z" itemprop="datePublished">2024-03-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="系统调用"><a href="#系统调用" class="headerlink" title="系统调用"></a>系统调用</h1><ul>
+<li>深入理解linux 内核： 第十章 系统调用<br>keywords： 系统调用、system call</li>
+</ul>
+<p>unix系统通过向内核发出系统调用（system call）实现了用户态进程和硬件设置之间的大部分接口。</p>
+<h2 id="POSIX-API-和系统调用"><a href="#POSIX-API-和系统调用" class="headerlink" title="POSIX API 和系统调用"></a>POSIX API 和系统调用</h2><p>POSIX API ：指的是用户态程序所引用的库函数。例如linux 的libc库提供的malloc calloc所提供的能力<br>系统调用：系统提供给用户程序的内核态代码调用接口，用户态库函数不属于内核。</p>
+<p>大多数封装例程返回一个整数，其值的含义依赖于相应的系统调用。返回值-1 通常表示内核不能满足进程请求。libc库中定义的error变量包含特定的出错码。<br>每个出错码都定义为一个常量宏。posix标准指定了很多出错码的宏名，8086系统调用的错误返回码在 include&#x2F;asm&#x2F;error.h 的头文件中定义。</p>
+<h2 id="系统调用处理程序及服务例程"><a href="#系统调用处理程序及服务例程" class="headerlink" title="系统调用处理程序及服务例程"></a>系统调用处理程序及服务例程</h2><p>当用户态进程调用一个系统调用时，CPU切换到内核态并开始执行一个内核函数。</p>
+<p>在8086体系结构中，可以用两种不同的方式调用linux的系统调用。两种方式的最终结果都是跳转到所谓系统调用处理程序的汇编语言函数。</p>
+<p>所有的系统调用都返回一个整数值，这些返回值和封装例程返回值的约定是不同的。在内核中，正数或0表示系统调用成功结束，负数表示一个出错条件。在后一种情况下，这个值就是被存放在error中必须返回给应用程序的负出错码。</p>
+<p>系统调用处理程序与其他异常处理程序的结构类似，执行以下操作：</p>
+<ol>
+<li>在内核态堆栈保存大多数寄存器的内容（对所有系统调用通用，并使用汇编实现）</li>
+<li>调用名为系统调用服务例程（system call service routine）的相应C函数来处理系统调用</li>
+<li>退出系统调用处理程序：用保存在内核栈中的值加载寄存器，CPU从内核态切换回用户态（对所有系统调用通用，并使用汇编实现）</li>
+</ol>
+<p>xyz() 系统调用对应的服务例程的名字通常是 sys_xyz()。 不过有一些例外。</p>
+<p>下图显示了使用系统调用的应用程序、相应的封装例程、系统调用处理程序及系统调用服务例程之间的关系。占位符“SYSTEMCALL” 和 “SYSTEMEXIT”是真正的汇编语言指令，它们执行用户态和内核态之间的切换。<br><img src="/./static/%E8%B0%83%E7%94%A8%E4%B8%80%E4%B8%AA%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"></p>
+<p>为了把系统调用号和相应的服务例程关联起来，内核使用了系统调用分派表（dispatch table）。这个表存放在sys_call_table数组中，有NR_syscalls个表项。剩余位置对应的是 sys_ni_syscall()函数（仅返回错误码-ENOSYS）地址。</p>
+<h3 id="进入和退出系统调用"><a href="#进入和退出系统调用" class="headerlink" title="进入和退出系统调用"></a>进入和退出系统调用</h3><p>本地应用可以通过两种不同的方式调用系统调用：</p>
+<ul>
+<li>执行 int $0x80 汇编语言指令。在linux老版本中，这是用户态切换到内核态的唯一方式</li>
+<li>执行 sysenter 汇编语言指令。在Intel Pentium II 芯片引入了这条指令，linux&gt;2.6支持这条指令</li>
+</ul>
+<p>内核可以通过两种方式从系统调用退出，从而使CPU切换到用户态：</p>
+<ul>
+<li>执行iret汇编语言指令</li>
+<li>执行sysexit 汇编语言指令，和sysenter 一起引入</li>
+</ul>
+<p>支持进入内核的两种方式并不简单，因为：</p>
+<ul>
+<li>内核必须支持仅使用int $0x80 指令的旧函数库，同时支持sysenter 的新函数库</li>
+<li>使用 sysenter 指令的标准库必须能处理仅支持 int $0x80 指令的旧内核</li>
+<li>内核和标准库必须技能运行在不含  sysenter指令的旧处理器上，也能运行在包含它的新处理器上</li>
+</ul>
+<h3 id="通过-int-0x80-发出系统调用"><a href="#通过-int-0x80-发出系统调用" class="headerlink" title="通过  int $0x80 发出系统调用"></a>通过  int $0x80 发出系统调用</h3><p>向量 128（十六禁止0x80）对应于内核入口点。在内核初始化时调用的函数trap_init():</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set_system_gate(0x80,&amp;system_call)</span><br></pre></td></tr></table></figure>
+<p>该调用设置一些门描述符字段：</p>
+<p><img src="/./static/0x80%E4%B8%AD%E6%96%AD%E9%97%A8%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5%E8%AE%BE%E7%BD%AE.png"></p>
+<p>system_call() 函数处理过程：</p>
+<ol>
+<li>把系统调用号和这个异常处理程序用到的所有CPU寄存器保存到相应的栈</li>
+<li>在ebx中存放当前进程的thread_info数据结构的地址</li>
+<li>通过检查thread_info的flag字段的标志判断是否有调试程序，如果是，则进入和退出时调用do_syscall_trace()函数（停止current，并因此允许调试进程收集数据）</li>
+<li>对系统调用号进行有效性检查，如果无效，返回-ENOSYS</li>
+<li>调用系统调用号对应的服务例程。</li>
+<li>从eax获取服务例程返回值，并写入到保存用户态eax的位置的值。</li>
+<li>关中断并检查thread_info的flag字段，根据标志进行处理</li>
+<li>调用iret返回</li>
+</ol>
+<h3 id="通过-sysenter-指令发出的系统调用"><a href="#通过-sysenter-指令发出的系统调用" class="headerlink" title="通过 sysenter 指令发出的系统调用"></a>通过 sysenter 指令发出的系统调用</h3><p>因为int指令需要执行几个一致性和安全性检查，所以速度较慢。intel文档中提供了“快速系统调用”sysenter指令，提供了一种从用户态到内核态的快速切换方法。</p>
+<p>汇编指令 sysenter 使用三种特殊寄存器，它们必须提前装入下列信息：</p>
+<ul>
+<li>SYSTENTER_CS_MSR: 内核代码的段选择符</li>
+<li>SYSTENTER_EIP_MSR：内核入口点的线性地址</li>
+<li>SYSTENTER_ESP_MSR：内核堆栈指针<br>当执行sysenter指令时,CPU会使用上述寄存器的值替换 cs,eip,esp,ss(SYSTENTER_CS_MSR+8)。因此CPU会切换到内核态并开始执行内核入口点第一条指令。</li>
+</ul>
+<p>退出时的情况和int $0x80 发出系统调用类似，返回时使用的是sysexit指令。</p>
+<ol>
+<li>把 SYSENTER_CS_MSR寄存器中的值加16所得到的结果加载到cs寄存器。</li>
+</ol>
+<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2024/03/17/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E7%AB%A0)%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E6%9C%AA%E5%AE%8C%E6%88%90/" data-id="cltvlnlm2000t9kqq0p3r7vf8" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+  <nav id="page-nav">
+    <a class="extend prev" rel="prev" href="/">&laquo; __(&#39;prev&#39;)</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/">__(&#39;next&#39;) &raquo;</a>
+  </nav>
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/03/">三月 2024</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/1.%E6%9E%84%E5%BB%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/2.%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/helloworld%E9%A9%B1%E5%8A%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/03/17/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/%E5%86%85%E6%A0%B8%E5%8D%87%E7%BA%A7/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2024 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>
