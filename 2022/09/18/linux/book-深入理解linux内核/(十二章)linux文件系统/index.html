@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(十二章)linux文件系统 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="linux 文件系统代码 深入理解linux 内核：454 第十二章 虚拟文件系统keywords： VFS、通用文件模型（common file model）  VFS虚拟文件系统： linux 系统内部的一种封装的设计，使得能够兼容多种文件系统 通用文件模型VFS提供的设计方案。超级块 superblock  对应磁盘大块文件系统。包含脏数据。索引节点 inode 存放具体文件磁盘存储数据 对">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(十二章)linux文件系统">
+<meta property="og:url" content="http://yoursite.com/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="linux 文件系统代码 深入理解linux 内核：454 第十二章 虚拟文件系统keywords： VFS、通用文件模型（common file model）  VFS虚拟文件系统： linux 系统内部的一种封装的设计，使得能够兼容多种文件系统 通用文件模型VFS提供的设计方案。超级块 superblock  对应磁盘大块文件系统。包含脏数据。索引节点 inode 存放具体文件磁盘存储数据 对">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-09-18T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(十二章)linux文件系统" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="article-date">
+  <time datetime="2022-09-18T10:00:00.000Z" itemprop="datePublished">2022-09-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (十二章)linux文件系统
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="linux-文件系统代码"><a href="#linux-文件系统代码" class="headerlink" title="linux 文件系统代码"></a>linux 文件系统代码</h1><ul>
+<li>深入理解linux 内核：454 第十二章 虚拟文件系统<br>keywords： VFS、通用文件模型（common file model）</li>
+</ul>
+<h1 id="VFS"><a href="#VFS" class="headerlink" title="VFS"></a>VFS</h1><p>虚拟文件系统： linux 系统内部的一种封装的设计，使得能够兼容多种文件系统</p>
+<h1 id="通用文件模型"><a href="#通用文件模型" class="headerlink" title="通用文件模型"></a>通用文件模型</h1><p>VFS提供的设计方案。<br>超级块 superblock  对应磁盘大块文件系统。包含脏数据。<br>索引节点 inode 存放具体文件磁盘存储数据 对应磁盘存储中的节点。包含脏数据。<br>文件 file 文件对象，对应内核中的文件。文件被打开时创建，用于描述被使用的文件。不含脏数据。<br>目录项 dentry (对应一个硬连接)</p>
+<p>进程–fd-&gt;文件对象–f_dentry-&gt;目录项对象 –d_inode-&gt;索引节点–i_sb-&gt;超级块—&gt;磁盘</p>
+<h2 id="对于进程来说"><a href="#对于进程来说" class="headerlink" title="对于进程来说"></a>对于进程来说</h2><p>进程fs_struct 中会声明 当前工作目录和根目录<br>进程files_struct会记录打开的文件对象</p>
+<h1 id="文件系统的类型"><a href="#文件系统的类型" class="headerlink" title="文件系统的类型"></a>文件系统的类型</h1><p>文件系统类：</p>
+<h2 id="特殊文件系统-vfsmount"><a href="#特殊文件系统-vfsmount" class="headerlink" title="特殊文件系统(vfsmount)"></a>特殊文件系统(vfsmount)</h2><h2 id="普通文件系统-vfsmount"><a href="#普通文件系统-vfsmount" class="headerlink" title="普通文件系统(vfsmount)"></a>普通文件系统(vfsmount)</h2><h1 id="进程打开文件数量限制"><a href="#进程打开文件数量限制" class="headerlink" title="进程打开文件数量限制"></a>进程打开文件数量限制</h1><p>受限于进程描述符中 signal-&gt;rlim[RLIMIT_NOIFILE] 普通用户默认1024 如果是root 则可以增大<br>受限于内核参数 NR_OPEN 1048576</p>
+<h1 id="2-1-的作用"><a href="#2-1-的作用" class="headerlink" title="2 &gt; &amp;1 的作用"></a>2 &gt; &amp;1 的作用</h1><p>进程files_struct-&gt;fd 指向的文件数组中  0 为标准输入  1 为标准输出  2 为标准错误输出 ，这里的索引就是文件描述符（file descriptor）]</p>
+<h1 id="进程和文件系统层级关系图"><a href="#进程和文件系统层级关系图" class="headerlink" title="进程和文件系统层级关系图"></a>进程和文件系统层级关系图</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class process &#123;</span><br><span class="line">    进程描述  </span><br><span class="line">    Namespace* namespace</span><br><span class="line">    struct fs_struct fs  进程文件系统相关描述</span><br><span class="line">    struct files_struct files  打开文件的表</span><br><span class="line">&#125;</span><br><span class="line">class fs_struct&#123;</span><br><span class="line">    映射进程和文件系统</span><br><span class="line">    atomic_t count   共享此表的进程数量</span><br><span class="line">    rwlock_t lock 字段读写自旋锁</span><br><span class="line">    Int umask 打开文件位掩码</span><br><span class="line">    struct dentry * root 根目录的目录项</span><br><span class="line">    struct dentry * pwd 当前目录的目录项</span><br><span class="line">    struct dentry * altroot 模拟根目录的目录项（8086上始终为null）</span><br><span class="line">    struct vfsmount* rootmnt 根目录所安装文件系统的文件系统对象</span><br><span class="line">    struct vfsmount* pwdmnt 当前目录的安装文件系统的文件系统对象</span><br><span class="line">    struct vfsmount* altrootmnt 模拟根目录的安装文件系统的文件系统对象（8086上始终为null）</span><br><span class="line">&#125;</span><br><span class="line">class files_struct&#123;</span><br><span class="line">    进程打开的文件</span><br><span class="line">    atomic_t count   共享此表的进程数量</span><br><span class="line">    rwlock_t lock 字段读写自旋锁</span><br><span class="line">    Int max_fds 文件对象的当前最大数目</span><br><span class="line">    Int max_fdset 文件描述符的当前最大数目</span><br><span class="line">    Int next_fd 所分配的最大文件描述符+1</span><br><span class="line">    struct file ** fd 指向文件对象数组的指针</span><br><span class="line">    fd_set * close_on_exec 指向执行exec（）时需要关闭的文件描述符的指针</span><br><span class="line">    fd_set * open_fds 指向打开文件描述符的指针</span><br><span class="line">    fs_set  close_on_exec_init close_on_exec初始化指向的空间</span><br><span class="line">    fs_set  open_fds_init open_fds初始化指向的空间</span><br><span class="line">    struct file *p[] fd_array fd初始化指向的空间 0:标准输入，1:标准输出，2:错误输出</span><br><span class="line">&#125;</span><br><span class="line">class file&#123;</span><br><span class="line">    文件对象,不含脏数据</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class namespace &#123;</span><br><span class="line">    // 进程命名空间_多个进程可共享</span><br><span class="line">    atomic_t count   共享引用计数器</span><br><span class="line">    struct vfsmount * root  根目录文件系统描述符</span><br><span class="line">    struct list_head list  已安装文件系统描述符链表（vfsmount）</span><br><span class="line">    struct rw_semaphore sem  读写信号量</span><br><span class="line">&#125;</span><br><span class="line">class vfsmount&#123;</span><br><span class="line">    文件系统</span><br><span class="line">    struct list_head mnt_hash   用于散列表的指针</span><br><span class="line">    struct mount *mnt_parent    指向父文件系统</span><br><span class="line">	struct dentry *mnt_mountpoint  指向安装点目录dentry</span><br><span class="line">    struct dentry *mnt_root        指向根目录的dentry</span><br><span class="line">    struct super_block *mnt_sb     指向这个文件系统的超级块对象 （超级块对象是唯一，）</span><br><span class="line"></span><br><span class="line">    struct list_head mnt_mounts   包含所有文件系统描述符链表的头（对于此文件系统来说）</span><br><span class="line">    struct list_head mnt_child  用于已安装文件系统链表 mnt_mounts的指针</span><br><span class="line"></span><br><span class="line">	atomic_t mnt_count       引用计数器</span><br><span class="line">    Int    mnt_flags          文件系统标志： MNT_NOSUID禁止setuid和setgid MNT_NODEV禁止访问设备文件 MNT_NOEXEC禁止程序执行 </span><br><span class="line">    Int    mnt_expiry_mark     到期标志,已到期会等待计数归零释放。</span><br><span class="line">    char  *mnt_devname 设备文件名</span><br><span class="line">    struct list_head mnt_list   已安装文件系统描述符的 namespace.list 链表的头指针</span><br><span class="line">    struct list_head mnt_fslink 文件系统到期链表的指针的头指针</span><br><span class="line">    struct namespace *mnt_namespace 指向安装了文件系统namespace的进程命名空间</span><br><span class="line">&#125; </span><br><span class="line">class super_block&#123;</span><br><span class="line">    超级块，对应磁盘大块文件系统，和分区对应。包含脏数据</span><br><span class="line">    struct list_head s_list 指向超级块链表的指针</span><br><span class="line">    dev_t s_dev  设备标识符</span><br><span class="line">    unsigned long s_blocksize 以字节为单位的块大小</span><br><span class="line">    unsigned long s_old_blocksize 块设备驱动程序中的以字节为单位的块大小</span><br><span class="line">    unsigned char s_blocksize_bits 以位为单位的块大小</span><br><span class="line">    unsigned char s_dirt 脏标志</span><br><span class="line">    。。。</span><br><span class="line">    struct list_head s_inodes 所有索引节点的链表</span><br><span class="line">    struct list_head s_dirty 改进型索引节点的链表</span><br><span class="line">    struct list_head s_io 等待被写入磁盘的索引节点链表</span><br><span class="line">    struct hlist_head s_anon 处理远程文件系统匿名目录项的链表</span><br><span class="line">    struct list_head s_files 文件对象的链表</span><br><span class="line">    struct block_device * s_bdev 指向块设备驱动程序描述符的指针</span><br><span class="line">    struct list_head s_instances 文件系统类型的超级块对象链表的指针（用于文件系统类型注册）</span><br><span class="line">    。。。</span><br><span class="line">&#125;</span><br><span class="line">class dev_t&#123;</span><br><span class="line">    设备驱动程序</span><br><span class="line">&#125;</span><br><span class="line">class file_system_type&#123;</span><br><span class="line">    文件系统类型</span><br><span class="line">    const char* name 文件系统名</span><br><span class="line">    int fs_flags 文件系统类型标志</span><br><span class="line">    struct superblock * (*)() get_sb 读取超级块的方法</span><br><span class="line">    void (*)() kill_sb 删除超级块的方法</span><br><span class="line">    struct module* owner  实现此文件系统的模块的指针</span><br><span class="line">    struct file_system_type * next 链表下一位</span><br><span class="line">    struct list_head fs_supers  相同文件系统类型的超级块对象链表的头</span><br><span class="line">&#125;</span><br><span class="line">class inode&#123;</span><br><span class="line">    索引节点,包含脏数据，对应文件的磁盘。</span><br><span class="line">    struct hlist_node i_hash 散列链表指针</span><br><span class="line">    struct list_head i_list  描述inode当前状态的链表的指针</span><br><span class="line">    struct list_head i_sb_list  super_block中被管理的链表的头节点</span><br><span class="line">    struct list_head i_dentry 引用索引节点的目录项对象的链表的头</span><br><span class="line">    struct file_lock* i_flock 指向文件锁链表的指针</span><br><span class="line"></span><br><span class="line">    。。。</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class dentry&#123;</span><br><span class="line">    目录项对象</span><br><span class="line">    atomic_t d_count  引用计数器</span><br><span class="line">    unsigned int d_flag		</span><br><span class="line">	spinlock_t d_lock</span><br><span class="line"></span><br><span class="line">    struct inode *d_inode;		* Where the name belongs to - NULL is* negative *//</span><br><span class="line">	struct dentry *d_parent;	/* parent directory */</span><br><span class="line">	struct qstr d_name;</span><br><span class="line">	</span><br><span class="line">	struct list_head d_lru;		/* LRU list */</span><br><span class="line">	struct list_head d_child;	/* child of parent list */</span><br><span class="line">	struct list_head d_subdirs;	/* our children */</span><br><span class="line">    struct list_head d_alias;	</span><br><span class="line"></span><br><span class="line">    unsigned long d_time</span><br><span class="line">    struct dentry_operations* d_op</span><br><span class="line">    struct super_block *d_sb</span><br><span class="line">    void *d_fsdata</span><br><span class="line">    struct rcu_head d_rcu </span><br><span class="line">    struct dcookie_struct *d_cookie</span><br><span class="line">    struct hlist_node d_hash;	/* lookup hash list */</span><br><span class="line">    int d_mounted </span><br><span class="line">        </span><br><span class="line">    unsigned char d_iname[DNAME_INLINE_LEN];	/* small names */</span><br><span class="line">&#125;</span><br><span class="line">class file_lock&#123;</span><br><span class="line">    文件锁</span><br><span class="line">    struct file_lock* fl_next inode-&gt;i_flock单向链表</span><br><span class="line">    struct list_head fl_link 用于全局活动或阻塞链表的指针</span><br><span class="line">    struct list_head fl_block 用于锁的等待者链表的指针</span><br><span class="line">    wait_queue_head_t fl_wait 阻塞进程等待队列</span><br><span class="line">    fl_flags 标记此锁的类型 POSIX 0、FLOCK 1 等</span><br><span class="line">    。。。。</span><br><span class="line">&#125;</span><br><span class="line">process &lt;|-- fs_struct</span><br><span class="line">process &lt;|-- files_struct</span><br><span class="line">files_struct &lt;|-- file</span><br><span class="line">fs_struct &lt;|-- namespace</span><br><span class="line">fs_struct &lt;|-- vfsmount</span><br><span class="line">namespace &lt;|-- vfsmount</span><br><span class="line">vfsmount &lt;|-- super_block</span><br><span class="line">vfsmount &lt;|-- dentry</span><br><span class="line">vfsmount &lt;|-- vfsmount</span><br><span class="line"></span><br><span class="line">fs_struct &lt;|-- dentry</span><br><span class="line"></span><br><span class="line">dentry &lt;|-- inode</span><br><span class="line">dentry &lt;|-- super_block</span><br><span class="line">inode &lt;|-- super_block</span><br><span class="line">inode &lt;|-- file_lock</span><br><span class="line"></span><br><span class="line">super_block &lt;|-- dev_t</span><br><span class="line">super_block &lt;|-- file_system_type</span><br><span class="line"></span><br><span class="line">file  &lt;|-- dentry</span><br><span class="line">file  &lt;|-- vfsmount</span><br></pre></td></tr></table></figure>
+<h1 id="路径名查找过程"><a href="#路径名查找过程" class="headerlink" title="路径名查找过程"></a>路径名查找过程</h1><ol>
+<li>首先 对于路径 &#x2F;opt&#x2F;share&#x2F;xxx 分解路径名 [“opt”,”share”,”xxx”] 除最后一个以外 其他的必定是目录</li>
+<li>如果第一位是&#x2F; 是在 process-&gt;fs-&gt;root 中查找，否则在process-&gt;fs-&gt;pwd 中查找。</li>
+<li>结合目录项高速缓存（散列表和链表）和inode 的查找目录（lookup）等功能循环找到最终的 dentry,</li>
+<li>返回路径名对象nameidata</li>
+</ol>
+<h1 id="open-调用"><a href="#open-调用" class="headerlink" title="open 调用"></a>open 调用</h1><ol>
+<li>查找路径名</li>
+<li>存放新文件描述符到进程的process-&gt;files-&gt;fd 中。占好位置。</li>
+<li>调用filp_open()-&gt;open_namei() 进行检查锁权限等。</li>
+<li>调用dentry_open 创建文件对象，插入文件对象到 super_block-&gt;s_files 返回文件对象地址</li>
+<li>process-&gt;files-&gt;fd 设置为上一步创建的文件对象。</li>
+</ol>
+<h1 id="read-write"><a href="#read-write" class="headerlink" title="read&#x2F;write"></a>read&#x2F;write</h1><ol>
+<li>fget_light() 从fd获取文件对象</li>
+<li>检查file-&gt;f_mode 标志 判断操作是否允许</li>
+<li>判断文件对象是否有read&#x2F;write&#x2F;aio_read&#x2F;aio_wirte操作</li>
+<li>access_ok（） 检查buf 和count 参数</li>
+<li>rw_verify_area() 检查是否有冲突的强制锁</li>
+<li>调用文件对象的 file-&gt;f_op-&gt;read&#x2F;write&#x2F;aio_read&#x2F;aio_wirte</li>
+<li>fput_light() 释放文件对象</li>
+<li>返回传送字节数</li>
+</ol>
+<h1 id="close调用"><a href="#close调用" class="headerlink" title="close调用"></a>close调用</h1><ol>
+<li>从fd获取文件对象</li>
+<li>对应fd位置设为null，这是通过修改 process-&gt;files 中的open_fds和close_on_exec 字段的对应位来进行的</li>
+<li>filp_close(), 调用f_op-&gt;flush ，释放强制锁，fput()释放文件对象</li>
+<li>返回状态码</li>
+</ol>
+<h1 id="文件加锁"><a href="#文件加锁" class="headerlink" title="文件加锁"></a>文件加锁</h1><h1 id="加锁"><a href="#加锁" class="headerlink" title="加锁"></a>加锁</h1><p>linux 支持劝告锁、强制锁、基于强制锁的租借锁（lease）。 fcntl() flock() 和lockf()。<br>文件锁存放在inode 的 i_flock字段对应的单向链表中。也存放在内核的对应类型锁的链表中。<br>blocker+waiter 用于管理进程和资源</p>
+<h2 id="FL-FLOCK锁"><a href="#FL-FLOCK锁" class="headerlink" title="FL_FLOCK锁"></a>FL_FLOCK锁</h2><p>此锁和文件对象相关联。由打开文件的进程维护。锁定范围为整个文件。<br>flock() 用于申请或删除劝告锁，LOCK_SH 共享读、LOCK_EX 互斥写、LOCK_UN释放锁、LOCK_NB不阻塞锁定操作、LOCK_MAND 共享模式强制锁</p>
+<h2 id="FL-POSIX锁"><a href="#FL-POSIX锁" class="headerlink" title="FL_POSIX锁"></a>FL_POSIX锁</h2><p>此锁总是与进程和索引节点关联。进程死亡或文件关闭时进行清除，不会通过fork() 进行继承。锁定范围为文件的部分范围。<br>POSIX文件锁是为了保证多个程序同时访问同一个文件时数据的完整性。Linux在每次文件读写和加锁时都会检测是否有锁冲突，每次加锁或解锁，都会更新相应区域的锁为新锁类型，当然，解锁是直接把该区域的锁信息删除。另外，Linux将文件锁的区域按照从左到右排序，提高了锁的访问效率。<br>fcntl() 参数为 fd、cmd、和flock数据结构（指定锁的文件部分范围）。</p>
+<ol>
+<li>F_GETLK  获取相应类型的锁，如果存在，返回相应锁的信息（包括l_pid设置为加锁进程的PID）</li>
+<li>F_SETLK 非阻塞加锁</li>
+<li>F_SETLKW 阻塞加锁</li>
+<li>F_GETLK64 F_SETLK64 F_SETLKW64 64位版本</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" data-id="cm6yz33dk001n8zlv2s728eyb" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (十三章)linux IO体系结构和设备驱动
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/08/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linux-Ext2%E5%92%8CExt3%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(十八章)linuxExt2和Ext3 文件系统</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

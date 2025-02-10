@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(五章)linux内核同步 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="内核同步 深入理解linux 内核： 第五章 内核同步keywords： 内核同步   CPU上的进程或中断会随时对内核发起请求 内核以交错方式执行，处理这些请求 内核需要处理好内核抢占和临界区问题。  内核抢占抢占内核的主要特点：一个在内核态运行的进程，可能在执行内核函数期间被另外一个进程取代。linux内核在以下情况时禁止内核抢占（标志为current_thread_info()-&gt;er">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(五章)linux内核同步">
+<meta property="og:url" content="http://yoursite.com/2022/12/16/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="内核同步 深入理解linux 内核： 第五章 内核同步keywords： 内核同步   CPU上的进程或中断会随时对内核发起请求 内核以交错方式执行，处理这些请求 内核需要处理好内核抢占和临界区问题。  内核抢占抢占内核的主要特点：一个在内核态运行的进程，可能在执行内核函数期间被另外一个进程取代。linux内核在以下情况时禁止内核抢占（标志为current_thread_info()-&gt;er">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E6%A0%B8%E4%BD%BF%E7%94%A8%E7%9A%84%E5%90%84%E7%A7%8D%E5%90%8C%E6%AD%A5%E6%8A%80%E6%9C%AF.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4-2.png">
+<meta property="og:image" content="http://yoursite.com/static/%E4%B8%8E%E4%B8%AD%E6%96%AD%E7%9B%B8%E5%85%B3%E7%9A%84%E8%87%AA%E6%97%8B%E9%94%81%E5%AE%8F.png">
+<meta property="article:published_time" content="2022-12-16T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/%E5%86%85%E6%A0%B8%E4%BD%BF%E7%94%A8%E7%9A%84%E5%90%84%E7%A7%8D%E5%90%8C%E6%AD%A5%E6%8A%80%E6%9C%AF.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(五章)内核同步" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/16/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/" class="article-date">
+  <time datetime="2022-12-16T10:00:00.000Z" itemprop="datePublished">2022-12-16</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (五章)linux内核同步
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内核同步"><a href="#内核同步" class="headerlink" title="内核同步"></a>内核同步</h1><ul>
+<li>深入理解linux 内核： 第五章 内核同步<br>keywords： 内核同步</li>
+</ul>
+<ul>
+<li>CPU上的进程或中断会随时对内核发起请求</li>
+<li>内核以交错方式执行，处理这些请求</li>
+<li>内核需要处理好内核抢占和临界区问题。</li>
+</ul>
+<h2 id="内核抢占"><a href="#内核抢占" class="headerlink" title="内核抢占"></a>内核抢占</h2><p>抢占内核的主要特点：一个在内核态运行的进程，可能在执行内核函数期间被另外一个进程取代。<br>linux内核在以下情况时禁止内核抢占（标志为current_thread_info()-&gt;erempt_count&gt;0）：</p>
+<ol>
+<li>内核正在执行中断服务例程。</li>
+<li>可延迟函数被禁止（当内核正在执行软中断或tasklet时经常如此）</li>
+<li>通过把抢占计数器设置为正数显式禁用内核抢占。</li>
+</ol>
+<p>下面一些宏用于处理抢占计数器子字段：</p>
+<table>
+<thead>
+<tr>
+<th align="left">宏</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">preempt_count</td>
+<td align="left">在thread_info描述符中选择preempt_count字段</td>
+</tr>
+<tr>
+<td align="left">preempt_disable</td>
+<td align="left">preempt_count+1</td>
+</tr>
+<tr>
+<td align="left">preempt_enable_no_resched</td>
+<td align="left">preempt_count-1</td>
+</tr>
+<tr>
+<td align="left">preempt_enable</td>
+<td align="left">preempt_count-1并在thread_info中TIF_NEED_RESCHED标志为1的情况下调用preempt_schedule</td>
+</tr>
+<tr>
+<td align="left">get_cpu</td>
+<td align="left">&#x3D;preempt_disable 并返回本地CPU数量</td>
+</tr>
+<tr>
+<td align="left">put_cpu</td>
+<td align="left">&#x3D;preempt_enable</td>
+</tr>
+<tr>
+<td align="left">put_cpu_no_resched</td>
+<td align="left">&#x3D;preempt_enable_no_resched</td>
+</tr>
+</tbody></table>
+<p>preempt_schedule的作用是检查是否允许本地中断和preempt_count是否为0 如果都为真则调用schedule() 来选择另一个进程执行。</p>
+<p>linux 内核允许在编译时开启或禁用内核抢占。</p>
+<h2 id="同步"><a href="#同步" class="headerlink" title="同步"></a>同步</h2><ul>
+<li>中断处理程序和tasklet不必编写成可重入的函数</li>
+<li>仅被软中断和tasklet访问的每CPU变量不需要同步。</li>
+<li>仅被一种tasklet访问的数据结构不需要同步</li>
+</ul>
+<h2 id="同步原语"><a href="#同步原语" class="headerlink" title="同步原语"></a>同步原语</h2><p><img src="/./static/%E5%86%85%E6%A0%B8%E4%BD%BF%E7%94%A8%E7%9A%84%E5%90%84%E7%A7%8D%E5%90%8C%E6%AD%A5%E6%8A%80%E6%9C%AF.png"></p>
+<p>每CPU变量（pre_cpu）：内核抢占可能使它产生竞争条件，应在禁用内核抢占的情况下访问。<br>原子操作（lock&#x2F;atomic&#x2F;test_and）:对值的操作是原子操作。<br>内存屏障(mb)：保证在原语之后的操作执行之前，原语之前的操作已经完成。主要防止编译器优化。<br>自旋锁（spinlock）：获取锁之前一直循环，spin_lock相关的宏基于原子操作进行，用于保护锁。<br>顺序锁（seqlock）: 写者不受读者限制。即使有读者也不限制写入。读者有时必须读取多次以获取有效的值。<br>读-拷贝-更新（RCU）：RCU只保护被动态分配并通过指针引用的数据结构，在被RCU保护的临界区中，任何内核控制路径都不能睡眠。写入时对指针指向的数据进行拷贝，然后通过原子操作执行指针值替换。只有在旧副本的所有读者都读完后才能释放旧副本。（在linux2.6中主要用在网络层和虚拟文件系统中）<br>信号量（IPC信号量或内核信号量，mutex）：一个加锁的原语，和自旋锁不一样，等待信号量时进程挂起。<br>禁止本地中断（local_irq_disable）:单处理器可保护数据，多处理器情况下常配合自旋锁一起。<br>禁止和激活可延迟函数（local_bh_disable）:当内核只禁止可延迟函数而不禁止中断时使用。</p>
+<h2 id="对内核数据结构的同步访问"><a href="#对内核数据结构的同步访问" class="headerlink" title="对内核数据结构的同步访问"></a>对内核数据结构的同步访问</h2><p>选择同步原语的的原则：把系统的并发度保持在尽可能高的程度。</p>
+<p>系统中的并发度又取决于两个主要因素：</p>
+<ul>
+<li>同时运转的I&#x2F;O设备数</li>
+<li>进行有效工作的CPU数</li>
+</ul>
+<p><img src="/./static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4.png"><br><img src="/./static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4-2.png"></p>
+<p>一个中断独占的数据结构可以通过关中断进行保护，在多个中断访问同一个数据结构的情况下需要使用中断+自旋锁。</p>
+<p>使用中断+自旋锁是在多处理器情况下保护数据的常用方法：<br><img src="/./static/%E4%B8%8E%E4%B8%AD%E6%96%AD%E7%9B%B8%E5%85%B3%E7%9A%84%E8%87%AA%E6%97%8B%E9%94%81%E5%AE%8F.png"></p>
+<p>下面仅考虑多处理器系统：</p>
+<table>
+<thead>
+<tr>
+<th align="left">访问方式</th>
+<th align="left">一种类型访问</th>
+<th align="left">多种访问同一数据结构</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">异常</td>
+<td align="left">信号量</td>
+<td align="left">…</td>
+</tr>
+<tr>
+<td align="left">异常-&gt;每CPU变量</td>
+<td align="left">信号量+禁用内核抢占</td>
+<td align="left">…</td>
+</tr>
+<tr>
+<td align="left">中断</td>
+<td align="left">无需同步原语，禁止中断即可</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+<tr>
+<td align="left">可延迟函数-软中断</td>
+<td align="left">自旋锁</td>
+<td align="left">自旋锁</td>
+</tr>
+<tr>
+<td align="left">可延迟函数-tasklet</td>
+<td align="left">无</td>
+<td align="left">自旋锁</td>
+</tr>
+<tr>
+<td align="left">异常+中断</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁&#x2F;信号量</td>
+</tr>
+<tr>
+<td align="left">异常+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+<tr>
+<td align="left">中断+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁，可延迟函数执行时关中断，中断处理程序随意访问 多处理器+自旋锁</td>
+</tr>
+<tr>
+<td align="left">中断+异常+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+</tbody></table>
+<h2 id="避免竞争的例子"><a href="#避免竞争的例子" class="headerlink" title="避免竞争的例子"></a>避免竞争的例子</h2><h3 id="引用计数器"><a href="#引用计数器" class="headerlink" title="引用计数器"></a>引用计数器</h3><p>广泛地应用来避免资源的并发分配和释放产生的竞争条件。引用计数器是一个atomic_t 计数器，与特定的资源，如内存、页、模块或文件相关。使用时减少计数器的值，使用完就增加计数器的值。当计数器为0时，说明资源未被使用，必要时释放。</p>
+<h3 id="大内核锁"><a href="#大内核锁" class="headerlink" title="大内核锁"></a>大内核锁</h3><p>在早期linux版本中是一个粗粒度的自旋锁。</p>
+<ul>
+<li>2.0中是用来确保每次只有一个进程运行在内核态，后面改用许多自旋锁来保护大量内核数据结构。</li>
+<li>2.6版本的内核中用于保护旧的代码。</li>
+<li>2.6.11版本开始，使用 kernel_sm 信号量用来实现大内核锁。</li>
+</ul>
+<p>每个进程描述符都含有lock_depth 字段，这个字段允许同一个进程多次获取大内核锁。如果未获得过 字段为-1，否则+1.</p>
+<h3 id="内存描述符-读-写信号量"><a href="#内存描述符-读-写信号量" class="headerlink" title="内存描述符 读&#x2F;写信号量"></a>内存描述符 读&#x2F;写信号量</h3><p>mm_struct 类型的内存描述符在mmap_sem 字段中都包含了自己的信号量，由于几个轻量级进程之间可以共享一个内存描述符，因此信号量保护这个描述符来避免可能的竞争条件。</p>
+<p>这个信号量是作为读&#x2F;写信号量实现的，因为一些内核函数，如缺页异常处理程序只需要扫描内存描述符。</p>
+<h3 id="slab-高速缓存链表的信号量"><a href="#slab-高速缓存链表的信号量" class="headerlink" title="slab 高速缓存链表的信号量"></a>slab 高速缓存链表的信号量</h3><p>slab 高速缓存链表是通过cache_chain_sem信号量保护的，这个信号量允许互斥地访问和修改该量表。</p>
+<h3 id="索引节点inode的信号量"><a href="#索引节点inode的信号量" class="headerlink" title="索引节点inode的信号量"></a>索引节点inode的信号量</h3><p>inode中的i_sem信号量，用于防止文件操作的竞争条件。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/16/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/" data-id="cm6yz33dc00148zlv309manip" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (四章)linux中断和异常-未完成
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/12/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%83%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(七章)linux进程调度</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

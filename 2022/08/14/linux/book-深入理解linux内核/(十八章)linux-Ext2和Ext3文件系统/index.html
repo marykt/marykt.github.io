@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(十八章)linuxExt2和Ext3 文件系统 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="linux Ext2和Ext3 文件系统 深入理解linux 内核：454 第十八章 Ext2和Ext3 文件系统keywords： Ext2、Ext3、文件系统  磁盘数据结构引导块：分区的引导扇区使用。块组：大小相同，方便索引。内核会尽量把同一个文件放到一个块组中减少碎片。    其中包含：  文件系统中超级块的拷贝：ext2_super_block,s_log_block_size:1024">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(十八章)linuxExt2和Ext3 文件系统">
+<meta property="og:url" content="http://yoursite.com/2022/08/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linux-Ext2%E5%92%8CExt3%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="linux Ext2和Ext3 文件系统 深入理解linux 内核：454 第十八章 Ext2和Ext3 文件系统keywords： Ext2、Ext3、文件系统  磁盘数据结构引导块：分区的引导扇区使用。块组：大小相同，方便索引。内核会尽量把同一个文件放到一个块组中减少碎片。    其中包含：  文件系统中超级块的拷贝：ext2_super_block,s_log_block_size:1024">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/EXT2%E5%88%86%E5%8C%BA%E5%92%8CEXT2%E5%9D%97%E7%BB%84%E5%88%86%E5%B8%83%E5%9B%BE.png">
+<meta property="og:image" content="http://yoursite.com/static/EXT2%E7%9B%AE%E5%BD%95%E6%96%87%E4%BB%B6%E7%9A%84%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90.png">
+<meta property="og:image" content="http://yoursite.com/static/EXT2%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84VFS%E6%98%A0%E5%83%8F.png">
+<meta property="og:image" content="http://yoursite.com/static/EXT2%20ext2_sb_info%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png">
+<meta property="og:image" content="http://yoursite.com/static/EXT2%20%E5%AF%B9%E6%96%87%E4%BB%B6%E7%9A%84%E6%95%B0%E6%8D%AE%E5%9D%97%E8%BF%9B%E8%A1%8C%E5%AF%BB%E5%9D%80%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png">
+<meta property="og:image" content="http://yoursite.com/static/EXT2%E6%95%B0%E6%8D%AE%E5%9D%97%E5%AF%BB%E5%9D%80%E7%9A%84%E6%96%87%E4%BB%B6%E5%A4%A7%E5%B0%8F%E4%B8%8A%E7%95%8C.png">
+<meta property="og:image" content="http://yoursite.com/static/EXT2%E8%B5%B7%E5%A7%8B%E6%9C%89%E6%B4%9E%E7%9A%84%E6%96%87%E4%BB%B6.png">
+<meta property="article:published_time" content="2022-08-14T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/EXT2%E5%88%86%E5%8C%BA%E5%92%8CEXT2%E5%9D%97%E7%BB%84%E5%88%86%E5%B8%83%E5%9B%BE.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(十八章)linux-Ext2和Ext3文件系统" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/08/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linux-Ext2%E5%92%8CExt3%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="article-date">
+  <time datetime="2022-08-14T10:00:00.000Z" itemprop="datePublished">2022-08-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (十八章)linuxExt2和Ext3 文件系统
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="linux-Ext2和Ext3-文件系统"><a href="#linux-Ext2和Ext3-文件系统" class="headerlink" title="linux Ext2和Ext3 文件系统"></a>linux Ext2和Ext3 文件系统</h1><ul>
+<li>深入理解linux 内核：454 第十八章 Ext2和Ext3 文件系统<br>keywords： Ext2、Ext3、文件系统</li>
+</ul>
+<h1 id="磁盘数据结构"><a href="#磁盘数据结构" class="headerlink" title="磁盘数据结构"></a>磁盘数据结构</h1><p><img src="/./static/EXT2%E5%88%86%E5%8C%BA%E5%92%8CEXT2%E5%9D%97%E7%BB%84%E5%88%86%E5%B8%83%E5%9B%BE.png"><br>引导块：分区的引导扇区使用。<br>块组：大小相同，方便索引。内核会尽量把同一个文件放到一个块组中减少碎片。    其中包含：</p>
+<ul>
+<li>文件系统中超级块的拷贝：ext2_super_block,s_log_block_size:1024^ 为指数基数的块大小</li>
+<li>组描述符的拷贝：ext2_group_desc,描述块号 块个数，索引节点起始位置等。</li>
+<li>数据块位图:位图数据，大小固定为一个块，每一位描述一个数据块。</li>
+<li>索引节点位图:大小固定为一个块，每一位描述一个索引节点表中的块。</li>
+<li>索引节点表：ext2_innode,存放文件属性，一个索引节点128字节，一个1024的块可以存放8个索引节点，总数为：s_inodes_per_group&#x2F;每个块可以存放的索引节点数（比如8）<ul>
+<li>索引节点的增强属性：索引节点的i_file_acl 指向存放增强属性的块。块内头部包含增强属性名：ext2_xattr_entry描述符，尾部包含值。linux 2.6 通过增强属性实现ACL（访问控制列表）</li>
+</ul>
+</li>
+<li>属于文件的一大块数据，即数据块：<br>超级块和组描述符：只有快组0中被使用，其他的作为容灾备份。<br>快组个数取决于分区大小和块大小：因为数据块位图大小固定为一个块，每一位描述一个数据块，块组大小的最小值就固定了，分区除以快组大小就是可能的快组数量。</li>
+</ul>
+<h1 id="各种文件类型如何使用磁盘块"><a href="#各种文件类型如何使用磁盘块" class="headerlink" title="各种文件类型如何使用磁盘块"></a>各种文件类型如何使用磁盘块</h1><p>ext2 文件类型（file_type）</p>
+<table>
+<thead>
+<tr>
+<th>文件类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>未知</td>
+</tr>
+<tr>
+<td>1</td>
+<td>普通文件</td>
+</tr>
+<tr>
+<td>2</td>
+<td>目录</td>
+</tr>
+<tr>
+<td>3</td>
+<td>字符设备</td>
+</tr>
+<tr>
+<td>4</td>
+<td>块设备</td>
+</tr>
+<tr>
+<td>5</td>
+<td>命名管道</td>
+</tr>
+<tr>
+<td>6</td>
+<td>套接字</td>
+</tr>
+<tr>
+<td>7</td>
+<td>符号链接</td>
+</tr>
+</tbody></table>
+<h2 id="普通文件"><a href="#普通文件" class="headerlink" title="普通文件"></a>普通文件</h2><p>初始创建：不使用磁盘块<br>写入数据：使用磁盘快</p>
+<h2 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h2><p>EXT2使用特殊的文件结构实现了目录，文件的数据块把文件名和索引节点号存放在一起。<br>数据结构如下:</p>
+<ul>
+<li>__len32 inode：文件所在索引节点号</li>
+<li>__len16 rec_len:此目录项长度（Byte）</li>
+<li>__u8 name_len:文件名长度（Byte）</li>
+<li>__u8 file_type:文件类型</li>
+<li>char[EXT2_NAME_LEN] name:文件名<br>空间分布如下：（其中oldfile已经被删除）<br><img src="/./static/EXT2%E7%9B%AE%E5%BD%95%E6%96%87%E4%BB%B6%E7%9A%84%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90.png"></li>
+</ul>
+<h2 id="符号链接"><a href="#符号链接" class="headerlink" title="符号链接"></a>符号链接</h2><p>如果符号链接路径名小于等于60字符，存在索引节点的i_block（15*4Byte整数）字段。如果大于60个字符需要数据块。</p>
+<h2 id="设备文件、管道、套接字"><a href="#设备文件、管道、套接字" class="headerlink" title="设备文件、管道、套接字"></a>设备文件、管道、套接字</h2><p>不需要数据块。都存在索引节点中。</p>
+<h1 id="EXT2-内存数据结构"><a href="#EXT2-内存数据结构" class="headerlink" title="EXT2 内存数据结构"></a>EXT2 内存数据结构</h1><p><img src="/./static/EXT2%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84VFS%E6%98%A0%E5%83%8F.png"><br>内核使用高速缓存来缓存数据<br>总是缓存：一直存放在页高速缓存，直到分区被卸载。原理：引用计数一直大于0。周期性地写回磁盘<br>动态模式：只要对象被使用就缓存。页框回收算法回收后进行删除。</p>
+<h2 id="EXT2-超级块对象"><a href="#EXT2-超级块对象" class="headerlink" title="EXT2 超级块对象"></a>EXT2 超级块对象</h2><p><img src="/./static/EXT2%20ext2_sb_info%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"><br>EXT2 超级块(ext2_sb_info)中包含</p>
+<ul>
+<li>磁盘超级块中大部分字段</li>
+<li>s_es指针，指向磁盘超级块所在缓冲区</li>
+<li>s_sbh指针，指向磁盘超级块所在缓冲区的头部</li>
+<li>组描述符的个数s_desc_per_block,</li>
+<li>s_group_desc指针，指向一个缓冲区（包含组描述符的缓冲区）的首部数组</li>
+<li>其他与安装状态安装选项有关的数据<br>在安装ext2 文件系统时对以上字段进行初始化。包括读入包含EXT2组描述符的块，并将缓冲区首部地址写入s_group_desc。为根目录分配一个索引节点和目录项对象，从而可以读取根节点。</li>
+</ul>
+<h2 id="索引节点对象"><a href="#索引节点对象" class="headerlink" title="索引节点对象"></a>索引节点对象</h2><p>ext2_inode_info</p>
+<h1 id="数据块寻址"><a href="#数据块寻址" class="headerlink" title="数据块寻址"></a>数据块寻址</h1><p>对于文件内偏移量f如何找到其在磁盘中的位置?<br>f&#x2F;块大小 为所在的文件块号。<br><img src="/./static/EXT2%20%E5%AF%B9%E6%96%87%E4%BB%B6%E7%9A%84%E6%95%B0%E6%8D%AE%E5%9D%97%E8%BF%9B%E8%A1%8C%E5%AF%BB%E5%9D%80%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"><br>其中一个寻址占用4B。</p>
+<ul>
+<li>0-11个用于直接寻址</li>
+<li>12号一次间接寻址</li>
+<li>13号二次间接寻址</li>
+<li>14号三次间接寻址</li>
+</ul>
+<p><img src="/./static/EXT2%E6%95%B0%E6%8D%AE%E5%9D%97%E5%AF%BB%E5%9D%80%E7%9A%84%E6%96%87%E4%BB%B6%E5%A4%A7%E5%B0%8F%E4%B8%8A%E7%95%8C.png"><br>比如块大小为1024Byte，直接寻址可以寻址12个块共12&#x3D;12KB。一次间接为 1*(1024&#x2F;4)+12&#x3D;256+12&#x3D;268KB。二次间接为 1*(1024&#x2F;4)*(1024&#x2F;4)+256+12&#x3D;65536+256+12&#x3D;64.26171875 MB。。。</p>
+<h1 id="文件中的洞"><a href="#文件中的洞" class="headerlink" title="文件中的洞"></a>文件中的洞</h1><p>引入文件的洞是为了避免磁盘空间的浪费，被广泛应用在数据库应用中，更一般的说，用于在文件上进行散列的所有应用。<br>文件洞在ext2中的实现是基于动态数据块分配的，只有当进程需要向一个块写数据时才会真正把这个块分配给文件。索引节点的i_size字段定义程序看到的文件大小，包括洞。i_blocks字段存放分配给文件的有效数据块数量（以512字节为单位）。</p>
+<p>echo -n “X” |dd of&#x3D;&#x2F;tmp&#x2F;hole bs&#x3D;1024 seek&#x3D;6 &#x2F;&#x2F; 在1024<em>6位置输出X<br>下图为上述命令在块大小为4096的ext2分区上的数据结构。此时i_size 大小为1024</em>6+1&#x3D;6145 i_block字段为1*4096&#x2F;512&#x3D;8。ibock数组第二个元素为已分配的块，其他为空。<br><img src="/./static/EXT2%E8%B5%B7%E5%A7%8B%E6%9C%89%E6%B4%9E%E7%9A%84%E6%96%87%E4%BB%B6.png"></p>
+<h1 id="块分配策略"><a href="#块分配策略" class="headerlink" title="块分配策略"></a>块分配策略</h1><p>EXT2首先尝试在文件最后一个块附近寻找块，然后是包含文件索引节点的块组内，然后是其他块组。<br>ext2 预分配策略：文件一次获取一组为8个邻接的块，ext2_inode_info的i_prealloc_count字段存放预分配的块数量,i_prealloc_block存放下次要使用的预分配块号。文件关闭、缩短、写操作非顺序写时释放预分配的块。</p>
+<h1 id="ext3文件系统"><a href="#ext3文件系统" class="headerlink" title="ext3文件系统"></a>ext3文件系统</h1><p>ext3文件系统可以视为  ext2+日志文件系统，日志文件系统作用是在程序断电或系统崩溃时通过日志能够快速恢复。<br>ext3提供三种不同的日志模式：</p>
+<ul>
+<li>日志（journal):对数据和元数据的修改都写入日志，最慢最安全</li>
+<li>预定（ordered）：默认模式，只有对文件系统元数据的修改才计入日志，ext3会把元数据和相关数据块进行分区，确保元数据之前数据块已经写入磁盘，尽可能减少文件内数据损坏。</li>
+<li>写回（writeback）:只有对文件系统元数据的修改才计入日志。最快，其他日志文件系统中发现的方法。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/08/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linux-Ext2%E5%92%8CExt3%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" data-id="cm6yz33dn001r8zlv7cgcblkf" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (十二章)linux文件系统
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/06/05/linux/dtb%E6%96%87%E4%BB%B6/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">kernel文档和邮件列表</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(十三章)linux IO体系结构和设备驱动 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="IO体系结构和设备驱动 深入理解linux 内核： 第十三章 IO体系结构和设备驱动keywords： 驱动、设备驱动、IO  kobject、kset、subsystemsysfs文件系统是一种特殊的文件系统，其 sysfs 树用于保存各种已注册kobject之间和各种容器对象之间的层级关系和设备驱动程序所占io端口的范围。通常sysfs文件系统的上层目录肯定是已注册的subsystem。 sy">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(十三章)linux IO体系结构和设备驱动">
+<meta property="og:url" content="http://yoursite.com/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="IO体系结构和设备驱动 深入理解linux 内核： 第十三章 IO体系结构和设备驱动keywords： 驱动、设备驱动、IO  kobject、kset、subsystemsysfs文件系统是一种特殊的文件系统，其 sysfs 树用于保存各种已注册kobject之间和各种容器对象之间的层级关系和设备驱动程序所占io端口的范围。通常sysfs文件系统的上层目录肯定是已注册的subsystem。 sy">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-09-18T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(十三章)IO体系结构和设备驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2022-09-18T10:00:00.000Z" itemprop="datePublished">2022-09-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (十三章)linux IO体系结构和设备驱动
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="IO体系结构和设备驱动"><a href="#IO体系结构和设备驱动" class="headerlink" title="IO体系结构和设备驱动"></a>IO体系结构和设备驱动</h1><ul>
+<li>深入理解linux 内核： 第十三章 IO体系结构和设备驱动<br>keywords： 驱动、设备驱动、IO</li>
+</ul>
+<h1 id="kobject、kset、subsystem"><a href="#kobject、kset、subsystem" class="headerlink" title="kobject、kset、subsystem"></a>kobject、kset、subsystem</h1><p>sysfs文件系统是一种特殊的文件系统，其 sysfs 树用于保存各种已注册kobject之间和各种容器对象之间的层级关系和设备驱动程序所占io端口的范围。<br>通常sysfs文件系统的上层目录肯定是已注册的subsystem。</p>
+<h1 id="sysfs层级关系图"><a href="#sysfs层级关系图" class="headerlink" title="sysfs层级关系图"></a>sysfs层级关系图</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class subsystem &#123;</span><br><span class="line">    子系统数据结构  </span><br><span class="line">    struct kset kset 嵌入的kset结构</span><br><span class="line">    rwsem 读写信号量</span><br><span class="line">&#125;</span><br><span class="line">class kset&#123;</span><br><span class="line">    设备驱动程序set</span><br><span class="line">    struct subsystem* subsys 指向subsystem描述符</span><br><span class="line">    struct kobj_type* ktype 指向kset的kobject类型描述符</span><br><span class="line">    struct list_head list 包含在此kset中的kobject链表的首部</span><br><span class="line">    struct kobject kobj 嵌入的kobject结构</span><br><span class="line">    struct kset_hotplug_ops* hotplug_ops 指向用于处理kobject结构的过滤和热插拔操作的回调函数表</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class kobject&#123;</span><br><span class="line">    设备驱动程序</span><br><span class="line">    char* k_name 含有容器名称的字符串</span><br><span class="line">    char[] name 含有容器名称的字符串如果不超过20字节</span><br><span class="line">    struct kref 容器的引用计数器</span><br><span class="line">    struct list_head entry 用于kobject所插入的链表的指针</span><br><span class="line">    struct kobject* parent 指向父kobject(如果存在)</span><br><span class="line">    struct ket* kset       指向包含此kobject的kset</span><br><span class="line">    struct kobj_type* ktype 指向kobject 的类型描述符</span><br><span class="line">    struct dentry* dentry  指向kobject相对应的sysfs文件的dentry数据结构 （对应/sys目录下文件）</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">subsystem &lt;|-- subsystem</span><br><span class="line">subsystem &lt;|-- kset</span><br><span class="line"></span><br><span class="line">kset  &lt;|-- kset</span><br><span class="line">kset  &lt;|-- kobject</span><br><span class="line">kobject  &lt;|-- kobject</span><br><span class="line">kobject  &lt;|-- attribute</span><br></pre></td></tr></table></figure>
+<h1 id="设备驱动程序模型"><a href="#设备驱动程序模型" class="headerlink" title="设备驱动程序模型"></a>设备驱动程序模型</h1><p>模型包含几个基本数据结构之上：这些结构描述了总线、设备、设备驱动器等</p>
+<h2 id="结构图"><a href="#结构图" class="headerlink" title="结构图"></a>结构图</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class device &#123;</span><br><span class="line">    设备，对应一个设备  (/sys/devices)</span><br><span class="line">&#125;</span><br><span class="line">class device_driver &#123;</span><br><span class="line">    设备驱动程序  </span><br><span class="line">&#125;</span><br><span class="line">class bus_type &#123;</span><br><span class="line">    总线  (/sys/bus)</span><br><span class="line">&#125;</span><br><span class="line">class `class` &#123;</span><br><span class="line">    类(/sys/class)</span><br><span class="line">&#125;</span><br><span class="line">device_driver  &lt;|-- device</span><br><span class="line">bus_type  &lt;|-- device_driver</span><br><span class="line">bus_type  &lt;|-- device</span><br></pre></td></tr></table></figure>
+<h1 id="设备文件"><a href="#设备文件" class="headerlink" title="设备文件"></a>设备文件</h1><p>io设备是可以当作普通文件的，按照类型分主要分为块设备和字符设备。</p>
+<ul>
+<li>块设备：可以随机访问，比如硬盘、dvd等</li>
+<li>字符设备：可以或不可以随机访问（声卡），访问开销取决于硬件（磁带机）。<br>网卡是例外，网卡不直接与设备文件对应。<br>块设备和字符设备的主次设备号互相独立。（Linux2.6之前设备号为8+8,之后为12+20 合并为dev_t,可以使用MAJOR、MINOR、MKDEV进行拆分和合并）</li>
+</ul>
+<h2 id="动态创建设备号"><a href="#动态创建设备号" class="headerlink" title="动态创建设备号"></a>动态创建设备号</h2><ul>
+<li>驱动程序可以申请系统中的空闲设备号<br>设备文件在驱动程序初始化主次设备号时进行创建，主次设备号存放在&#x2F;sys&#x2F;class子目录下的dev属性中。</li>
+</ul>
+<h2 id="动态创建设备文件"><a href="#动态创建设备文件" class="headerlink" title="动态创建设备文件"></a>动态创建设备文件</h2><ul>
+<li>使用udev工具集的用户态程序。系统启动时&#x2F;dev目录是空的，udev扫描&#x2F;sys&#x2F;class目录来寻找dev文件，对于每一个dev文件udev会在&#x2F;dev目录下创建一个相应的设备文件。udev会根据配置分配文件名和创建符号链接，最后dev目录只存放了内核所支持的所有设备的设备文件。</li>
+<li>通常系统初始化后才会创建设备文件，驱动程序加载或热插设备加入系统时udev可以自动创建对应设备文件（支持热插拔的的驱动在发现新设备后会调用脚本<code>/sbin/hotplug</code>，参数作为环境变量传给此脚本）。</li>
+</ul>
+<h2 id="设备文件的VFS处理"><a href="#设备文件的VFS处理" class="headerlink" title="设备文件的VFS处理"></a>设备文件的VFS处理</h2><ul>
+<li>VFS模型中open调用，调用到ext2&#x2F;3_read_inode时。此函数判断索引节点和设备文件对应时调用init_special_inode()，该函数把索引节点对象的i_rdev字段初始化为设备文件的主次设备号，把i_fop字段设备def_blk_fops或者def_chr_fops 文件操作表的地址（根据设备文件类型）。基于这两个表，对设备文件的系统调用会激活设备驱动程序的函数，而不是基本文件系统的函数。</li>
+</ul>
+<h1 id="设备驱动程序"><a href="#设备驱动程序" class="headerlink" title="设备驱动程序"></a>设备驱动程序</h1><p>驱动程序是内核例程的集合，它使得硬件设备响应控制设备的编程接口，因此该接口是一组规范的VFS函数集（open、read、lseek、ioctl等等）。<br>除了标准VFS函数集合以外仍有很多地方需要考虑： </p>
+<h2 id="驱动程序注册"><a href="#驱动程序注册" class="headerlink" title="驱动程序注册"></a>驱动程序注册</h2><p>注册设备驱动程序意味着分配一个新的device_driver描述符，并将其插入到设备驱动程序模型的数据结构中，并把它与对应的设备文件连接起来。<br>如果设备文件对应的驱动程序未被注册，则堆设备文件的访问会返回-ENODEV</p>
+<ul>
+<li>静态编译的驱动程序，注册在内核初始化阶段进行</li>
+<li>内核模块形式的驱动程序，注册在模块装入时进行。模块卸载时注销。</li>
+</ul>
+<p>例如，对一个pci设备。驱动程序初始化一个pci_driver类型的描述符，调用pci_register_driver()-&gt;<code>driver_register()</code>进行注册。注册时内核会寻找可能由此驱动支持的硬件设备（内核依靠相关的总线类型描述符bus_type 的match方法，以及device_driver对象的probe方法。如果探测到，内核会分配一个设备对象，然后调用<code>device_register()</code>函数把设备插入设备驱动程序的模型中）。</p>
+<h2 id="初始化设备驱动程序"><a href="#初始化设备驱动程序" class="headerlink" title="初始化设备驱动程序"></a>初始化设备驱动程序</h2><p>初始化设备驱动程序意味着分配系统资源。<br>例如设备需要使用IRQ，多个设备可能共享同一个IRQ线。其他的还有用于DMA传送缓冲区的页框和DMA通道本身。<br>为了确保资源在需要时能够获得，获得后不用再次请求，设备驱动程序通常采用以下模式：</p>
+<ul>
+<li>引用计数器计算当前访问设备文件的进程数，open时增加，release时减少。</li>
+<li>open时判断计数器大小，如果为0则申请资源（中断、DMA等）</li>
+<li>release减少计数器后，如果为0则释放资源（中断、DMA等）</li>
+</ul>
+<h2 id="监控I-O-操作"><a href="#监控I-O-操作" class="headerlink" title="监控I&#x2F;O 操作"></a>监控I&#x2F;O 操作</h2><p>I&#x2F;O操作的耗时是不固定的，所以需要监控I&#x2F;O操作的状态。通常使用轮询模式和中断模式</p>
+<h3 id="轮询模式"><a href="#轮询模式" class="headerlink" title="轮询模式"></a>轮询模式</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">for(;;)&#123;</span><br><span class="line">    ... //使用计数或节拍计数器，并判断退出条件</span><br><span class="line">    ...// 可选的释放cpu。</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="中断模式"><a href="#中断模式" class="headerlink" title="中断模式"></a>中断模式</h3><p>如果I&#x2F;O 控制器能够通过IRQ线发出I&#x2F;O结束的信号，那么中断模式才能被使用。<br>一般使用中断+定时器来进行控制。</p>
+<h2 id="访问I-O-共享存储器"><a href="#访问I-O-共享存储器" class="headerlink" title="访问I/O 共享存储器"></a><code>访问I/O 共享存储器</code></h2><p>根据设备和总线的类型，I&#x2F;O 共享存储器可以被映射到不同的物理地址范围。</p>
+<h2 id="直接内存访问（DMA）"><a href="#直接内存访问（DMA）" class="headerlink" title="直接内存访问（DMA）"></a>直接内存访问（DMA）</h2><ul>
+<li>DMA使用可以采用同步或异步方式，第一种方式数据传送是由进程触发的（如声卡，用户态程序写入到dsp设备文件中，驱动程序会把数据从内核缓冲区拷贝到预先定时的DSP中，声卡传送完后引发中断，驱动程序会检查内核缓冲区是否还有要播放的样本。如果没有驱动程序再启动一次DMA传送），第二种是由硬件设备触发的（如网卡，可以从LAN中接受帧，网卡把接受的帧存储到自己的I&#x2F;O 共享存储器中，然后引发中断驱动程序确认中断后，命令网卡将帧从I&#x2F;O 共享存储器拷贝到内核缓冲区。传送完成后再引发新中断，驱动程序将新帧通知上层）。</li>
+</ul>
+<h2 id="内核支持的级别"><a href="#内核支持的级别" class="headerlink" title="内核支持的级别"></a>内核支持的级别</h2><ul>
+<li>根本不支持：程序使用IN和OUT汇编直接操作I&#x2F;O 端口。完全绕过了内核设备驱动程序，常见的是X window系统对图形显示的传统处理方式。</li>
+<li>最小支持：内核不识别硬件设备，但是识别I&#x2F;O 接口。用户程序把I&#x2F;O 接口视为字符流的顺序设备。功能有限。</li>
+<li>扩展支持：内核识别硬件设备，并处理I&#x2F;O 接口本身。这种可能没有对应的设备文件。除了串口和并口以外的所有通用I&#x2F;O 接口上连接的外部设备都需要扩展支持。</li>
+</ul>
+<h2 id="字符设备驱动程序"><a href="#字符设备驱动程序" class="headerlink" title="字符设备驱动程序"></a>字符设备驱动程序</h2><h2 id="块设备驱动程序"><a href="#块设备驱动程序" class="headerlink" title="块设备驱动程序"></a>块设备驱动程序</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" data-id="cm6yz33di001h8zlv47mx5z3v" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (十九章)linux进程通信
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(十二章)linux文件系统</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(十一章)linux信号 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="信号是一个很短的消息，可以发送给一个进程或一组进程。发送给进程的唯一信息通常是一个数，以此来标识信号。标准信号中，只关注此数字。信号的目的：  让进程知道已经发生了一个特定的事件。 强迫进程执行它自己代码中的信号处理程序。linux 1-31 为常规信号（regular signal）: 多次发送信号，进程只会收到一个。linux 32-64为实时信号（real-time signal）: 多次发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(十一章)linux信号">
+<meta property="og:url" content="http://yoursite.com/2022/09/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="信号是一个很短的消息，可以发送给一个进程或一组进程。发送给进程的唯一信息通常是一个数，以此来标识信号。标准信号中，只关注此数字。信号的目的：  让进程知道已经发生了一个特定的事件。 强迫进程执行它自己代码中的信号处理程序。linux 1-31 为常规信号（regular signal）: 多次发送信号，进程只会收到一个。linux 32-64为实时信号（real-time signal）: 多次发">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86%E7%9B%B8%E5%85%B3%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png">
+<meta property="article:published_time" content="2022-09-27T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86%E7%9B%B8%E5%85%B3%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(十一章)信号" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/" class="article-date">
+  <time datetime="2022-09-27T10:00:00.000Z" itemprop="datePublished">2022-09-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (十一章)linux信号
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>信号是一个很短的消息，可以发送给一个进程或一组进程。发送给进程的唯一信息通常是一个数，以此来标识信号。标准信号中，只关注此数字。<br>信号的目的：</p>
+<ul>
+<li>让进程知道已经发生了一个特定的事件。</li>
+<li>强迫进程执行它自己代码中的信号处理程序。<br>linux 1-31 为常规信号（regular signal）: 多次发送信号，进程只会收到一个。<br>linux 32-64为实时信号（real-time signal）: 多次发送信号，信号进行排队。</li>
+</ul>
+<p>信号传递分为两个阶段：</p>
+<ul>
+<li>信号产生<br>内核更新目标进程的数据结构以表示一个新信号已被发送。</li>
+<li>信号传递<br>内核强迫目标进程通过以下方式对信号做出反应：或改变目标进程的执行状态，或开始特定的信号处理程序，或者两者都是。</li>
+</ul>
+<p>每个信号至多被传递一次。信号是可消费资源；一旦被传递，数据结构中的对应信号信息就会被取消。 已经产生但是还没有传递的信号被称为挂起信号，被挂起的常规信号只能同时存在一个，实时信号可以有多个。</p>
+<p>信号可能会被挂起，考虑以下因素：</p>
+<ul>
+<li>信号通常只被当前正在运行的进程传递（current进程）</li>
+<li>信号可以由进程选择性地阻塞（blocked）</li>
+<li>进程信号处理过程中会自动阻塞对应信号直到处理程序结束。正在处理的信号的又一次出现不会中断当前的这个处理程序。</li>
+</ul>
+<p>POSIX信号和多线程<br>POSIX 1003.1 标准对多线程应用的信号处理有一些严格要求：</p>
+<ul>
+<li>信号处理程序必须再多线程应用的所有线程间共享；不过，每个线程必须有自己的挂起掩码信号和阻塞信号</li>
+<li>POSIX库函数kill()和sigqueue()必须向所有的多线程应用而不是某个特殊线程发送信号。所有由内核产生的信号同样如此</li>
+<li>每个发送给多线程应用的信号仅仅传送给一个线程，此线程由内核在不阻塞该信号的线程中随意挑选的。</li>
+<li>如果向多线程应用发送了一个致命信号，内核将杀死该应用的所有线程，而不是仅仅杀死接受信号的那个线程。</li>
+</ul>
+<p><code>线程组</code> 这里指的是任意一种线程组，包含单进程线程组。当kill时</p>
+<p><code>最初版本linux 不支持多线程程序，只支持多进程。linux 为了支持多线程程序，提供了轻量级进程方案，轻量级进程=课本上的线程。组成的线程组=进程。轻量级进程也是基本的调度单位，同一线程组可以共享一部分资源：打开的文件、地址空间等。</code></p>
+<p>(例外：不可能给0号进程（swapper）发送信号。发送给1 （init）的总是被丢弃。)</p>
+<h1 id="信号相关数据结构"><a href="#信号相关数据结构" class="headerlink" title="信号相关数据结构"></a>信号相关数据结构</h1><p><img src="/./static/%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86%E7%9B%B8%E5%85%B3%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/" data-id="cm6yz33dh001f8zlv31zw3yg3" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/11/26/linux/%E5%86%85%E6%A0%B8%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          内核常用数据结构
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(十九章)linux进程通信</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

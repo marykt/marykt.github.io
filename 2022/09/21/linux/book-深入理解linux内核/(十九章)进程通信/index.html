@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(十九章)linux进程通信 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="进程通信 深入理解linux 内核： 第十九章 进程通信keywords： 进程通信、IPC、FIFO、管道进程通信常用手段：锁保护的磁盘文件、管道和FIFO（命名管道）、IPC 信号量、IPC 消息、IPC 共享内存、套接字。  锁保护的磁盘文件代价很高，不推荐。 管道适合进程之间生产者消费者模型交互，一些进程写入，一些进程读取数据。一个进程写入管道的数据都由内核重定向到另一个进程，另一个进程就">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(十九章)linux进程通信">
+<meta property="og:url" content="http://yoursite.com/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="进程通信 深入理解linux 内核： 第十九章 进程通信keywords： 进程通信、IPC、FIFO、管道进程通信常用手段：锁保护的磁盘文件、管道和FIFO（命名管道）、IPC 信号量、IPC 消息、IPC 共享内存、套接字。  锁保护的磁盘文件代价很高，不推荐。 管道适合进程之间生产者消费者模型交互，一些进程写入，一些进程读取数据。一个进程写入管道的数据都由内核重定向到另一个进程，另一个进程就">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png">
+<meta property="article:published_time" content="2022-09-21T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(十九章)进程通信" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" class="article-date">
+  <time datetime="2022-09-21T10:00:00.000Z" itemprop="datePublished">2022-09-21</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (十九章)linux进程通信
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="进程通信"><a href="#进程通信" class="headerlink" title="进程通信"></a>进程通信</h1><ul>
+<li>深入理解linux 内核： 第十九章 进程通信<br>keywords： 进程通信、IPC、FIFO、管道<br>进程通信常用手段：锁保护的磁盘文件、管道和FIFO（命名管道）、IPC 信号量、IPC 消息、IPC 共享内存、套接字。</li>
+</ul>
+<h1 id="锁保护的磁盘文件"><a href="#锁保护的磁盘文件" class="headerlink" title="锁保护的磁盘文件"></a>锁保护的磁盘文件</h1><p>代价很高，不推荐。</p>
+<h1 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h1><p>适合进程之间生产者消费者模型交互，一些进程写入，一些进程读取数据。一个进程写入管道的数据都由内核重定向到另一个进程，另一个进程就可以从管道中读取数据。  </p>
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><p>POSIX只定义了半双工的管道，如果需要双向数据流则需要定义两个不同的管道<br>有些unix系统，例如System V Releas 4 ,实现了全双工。linux则可以通过不关闭另一个描述符来实现全双工。</p>
+<p>linux shell 中的<code>ls | more</code> 就是使用的管道。 在这个场景下首先执行：  </p>
+<ol>
+<li>调用pipe()系统调用；假设返回文件描述符3（管道的读）和4（管道的写）</li>
+<li>两次fork()系统调用，分别创建用于执行ls和more。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+</ol>
+<p>对于执行ls的子进程：</p>
+<ol>
+<li>调用dup2(4,1),把描述符4拷贝到1的位置，替换掉默认写描述符。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+<li>调用execve()系统调用来执行ls程序。</li>
+</ol>
+<p>对于执行more的子进程：</p>
+<ol>
+<li>调用dup2(3,0),把描述符3拷贝到0的位置，替换掉默认读描述符。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+<li>调用execve()系统调用来执行more程序。</li>
+</ol>
+<h2 id="pipefs"><a href="#pipefs" class="headerlink" title="pipefs"></a>pipefs</h2><p>管道使用的是特殊文件系统pipefs，这个文件系统没有安装点，所以用户看不到。而对应的操作又可以通过pipefs进行整合。<br>init_pipe_fs() 函数：注册pipefs文件系统并安装它</p>
+<h2 id="管道创建过程"><a href="#管道创建过程" class="headerlink" title="管道创建过程"></a>管道创建过程</h2><p>管道创建在pipefs文件系统上，返回两个文件描述符。其中管道对象内部包含readers计数器和writers计数器，在非命名管道只能由此进程和子进程使用的这个情况下，其计数器的值不会大于1。这是由于fork 出的进程复制了文件描述符表，只会造成对应的文件条目内部的计数+1，子进程关闭文件时，也是将系统文件表条目内部的计数减一，当计数值减为0时，才将其删除。只有对应的文件对象被释放，计数器才会减一。</p>
+<h2 id="管道读数据过程"><a href="#管道读数据过程" class="headerlink" title="管道读数据过程"></a>管道读数据过程</h2><p><img src="/./static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png"></p>
+<h2 id="管道写数据过程"><a href="#管道写数据过程" class="headerlink" title="管道写数据过程"></a>管道写数据过程</h2><p><img src="/./static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png"></p>
+<h1 id="FIFO"><a href="#FIFO" class="headerlink" title="FIFO"></a>FIFO</h1><p>解决任意两个进程需要共享管道的问题。</p>
+<ol>
+<li>FIFO索引节点出现在系统目录树上而不是pipefs特殊文件系统中</li>
+<li>FIFO是一种双向通信管道；可以以读写方式打开一个FIFO。</li>
+</ol>
+<h1 id="System-V-IPC"><a href="#System-V-IPC" class="headerlink" title="System V IPC"></a>System V IPC</h1><p>IPC 是进程间通信的的缩写，通常指允许用户态程序执行下列操作的一组机制：</p>
+<ul>
+<li>通过信号量与其他进程进行同步（IPC 信号量）</li>
+<li>向其他进程发送消息或从其他进程接受消息（IPC 消息）</li>
+<li>和其他进程共享内存（IPC 共享内存）</li>
+</ul>
+<h1 id="POSIX-消息队列"><a href="#POSIX-消息队列" class="headerlink" title="POSIX 消息队列"></a>POSIX 消息队列</h1><p>相比systemV IPC 消息队列，有许多优点：</p>
+<ul>
+<li>更简单的基于文件的应用接口</li>
+<li>完全支持消息优先级</li>
+<li>完全支持消息到达的异步通知，通过信号或线程创建实现。</li>
+<li>用于阻塞发送与接受操作的超时机制</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" data-id="cm6yz33dk001l8zlv0d2i8z6r" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/09/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (十一章)linux信号
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(十三章)linux IO体系结构和设备驱动</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

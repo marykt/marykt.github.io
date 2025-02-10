@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>linux pci驱动 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="PCIPCI(Peripheral Component Interconnect, 外围组件互联) 是一种适用范围很广的I&#x2F;O总线。  PCI总线是一种32位总线，它的数据总线宽度为32位，工作频率为33MHz&#x2F;66MHZ，理论上的带宽为133MB&#x2F;s或266MB&#x2F;s。 minipci 是一种小型的PCI接口，主要用于笔记本电脑。工作频率为33MHz，理论带">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux pci驱动">
+<meta property="og:url" content="http://yoursite.com/2023/05/13/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/pci%E9%A9%B1%E5%8A%A8/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="PCIPCI(Peripheral Component Interconnect, 外围组件互联) 是一种适用范围很广的I&#x2F;O总线。  PCI总线是一种32位总线，它的数据总线宽度为32位，工作频率为33MHz&#x2F;66MHZ，理论上的带宽为133MB&#x2F;s或266MB&#x2F;s。 minipci 是一种小型的PCI接口，主要用于笔记本电脑。工作频率为33MHz，理论带">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-05-13T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="linux驱动">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/精通linux设备驱动开发/pci驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/05/13/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/pci%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2023-05-13T10:00:00.000Z" itemprop="datePublished">2023-05-13</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      linux pci驱动
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="PCI"><a href="#PCI" class="headerlink" title="PCI"></a>PCI</h1><p>PCI(Peripheral Component Interconnect, 外围组件互联) 是一种适用范围很广的I&#x2F;O总线。</p>
+<ul>
+<li>PCI总线是一种32位总线，它的数据总线宽度为32位，工作频率为33MHz&#x2F;66MHZ，理论上的带宽为133MB&#x2F;s或266MB&#x2F;s。</li>
+<li>minipci 是一种小型的PCI接口，主要用于笔记本电脑。工作频率为33MHz，理论带宽为133MB&#x2F;s。</li>
+<li>pci-x 扩展数据位宽到64位，工作频率为133MHz，理论带宽为1GB&#x2F;s。最新版本的pci-x 2.0，工作频率为533MHz，理论带宽为4GB&#x2F;s。</li>
+<li>pci-e 是一种新型的总线，采用串行传输,最大支持32个串行，每个连接传输方向速度250MB&#x2F;s,理论带宽为8GB&#x2F;s。PCI-E 2.0的带宽为16GB&#x2F;s。 minipcie 也替换掉了minipci。<br>对开发人员来说PCI具有设备自动配置的优势，启动时，BIOS类的固件会遍历PCI总线并分配资源。</li>
+</ul>
+<h2 id="寻址和识别"><a href="#寻址和识别" class="headerlink" title="寻址和识别"></a>寻址和识别</h2><p>PCI设备的地址由总线号、设备号和功能号组成。分别称为：厂家ID、设备ID和设备类代码。<br>使用lspci的输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)</span><br><span class="line">00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]</span><br><span class="line">00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]</span><br><span class="line">00:01.3 Bridge: Intel Corporation 82371AB/EB/MB PIIX4 ACPI (rev 03)</span><br><span class="line">00:02.0 VGA compatible controller: InnoTek Systemberatung GmbH VirtualBox Graphics Adapter</span><br><span class="line">00:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 02)</span><br><span class="line">00:04.0 System peripheral: InnoTek Systemberatung GmbH VirtualBox Guest Service</span><br></pre></td></tr></table></figure>
+<p>第一列是总线号、设备号和功能号，第二列是设备的厂家ID和设备ID，第三列是设备的类代码。其中，总线号、设备号和功能号的格式为：总线号:设备号.功能号。例如，00:01.0表示总线号为0，设备号为1，功能号为0的设备。<br>其中一个PCI域能容纳256个总线（PCI总线），每个总线最多可以容纳32个设备，每个设备最多可以容纳8个功能。因此，PCI域最多可以容纳256<em>32</em>8&#x3D;65536个设备。<br>PCI总线上有一个PCI桥的设备上，使用lspci -t 的输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">-[0000:00]-+-00.0  Intel Corporation 440FX - 82441FX PMC [Natoma]</span><br><span class="line">           +-01.0  Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]</span><br><span class="line">           +-01.1  Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]</span><br><span class="line">           +-01.3  Intel Corporation 82371AB/EB/MB PIIX4 ACPI</span><br><span class="line">           +-02.0  </span><br><span class="line">           +-1e.0-[0000:02-05]--+-[0000:03]--+-00.0  InnoTek Systemberatung GmbH VirtualBox Graphics &lt;--</span><br><span class="line">           |                    |            \-00.1  InnoTek Systemberatung GmbH VirtualBox Guest</span><br><span class="line">           |                    \-[0000:04]--+-00.0  Intel Corporation 82540EM Gigabit Ethernet</span><br><span class="line">           |+-1f.0  Intel Corporation 82801AA 8xx/9xx Series IDE Controller  </span><br></pre></td></tr></table></figure>
+<p>如上：要找到设备03:00.0,首先要经过PCI-PCI桥0000:00:1e.0,最后经过地址0000:03:00.0,找到设备。<br>PCI设备具有256B的空间，用于存放配置寄存器，可以通过lspci -x 查看：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)</span><br><span class="line">00: 86 80 22 04 07 00 10 02 02 00 00 06 00 00 00 00</span><br><span class="line">10: 0</span><br><span class="line">20:</span><br><span class="line">30:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>PCI 设备的空间是小端字节序的，前64B是PCI设备的配置空间，后192B是PCI设备的扩展配置空间。PCI 配置空间的含义：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">偏移地址：含义</span><br><span class="line">00-01h：厂商ID  对应上面的 0x8086</span><br><span class="line">02-03h：设备ID </span><br><span class="line">设备类型代码：00-05h：PCI设备，06-0Bh：PCI-PCI桥，0C-0Fh：CardBus桥</span><br><span class="line">基址寄存器</span><br><span class="line">子厂家ID</span><br><span class="line">子设备ID</span><br><span class="line">扩展ROM基址</span><br></pre></td></tr></table></figure>
+<h2 id="访问PCI"><a href="#访问PCI" class="headerlink" title="访问PCI"></a>访问PCI</h2><p>PCI设备包括三个可寻址空间：配置空间、IO端口和设备内存。</p>
+<ol>
+<li>配置区：<code>pci_[read/write]_config_[byte|word|dword](struct pci_dev *pdev,int offset,int [*/ ]value)</code>。配置区前64B是PCI设备的配置空间，后192B是PCI设备的扩展配置空间。通过offset进行操作。</li>
+<li>IO和内存区域：PCI设备共有6个IO或内存区域，IO存放寄存器，内存区域存放数据。IO功能和设备有关系，内存区域由设备决定存在与否。<code>unsigned long pci_resource_[start|len|end|flags](struct pci_dev *pdev,int bar)</code><br>为了操作IO区域，如PCI视频卡设备控制寄存器，驱动器需要完成以下事情：</li>
+<li>从配置区相应基址寄存器里得到IO区域的基址： iobase &#x3D; pci_resouce_satrt(pdev,bar)</li>
+<li>用内核的request_region()常规机制获得这个IO区域，并标明它对应的设备 :request_region(iobase,length,”my_deriver”)</li>
+<li>用寄存器手册上的偏移地址加上第一步的基址，然后用inb()和outb()函数访问这些寄存器: inl(io_base+REGISTER_OFFSET)<br>为了操作内存区域：</li>
+<li>获得基址、内存区域长度和相关标志：pci_resource_xxx</li>
+<li>用内核的request_mem_region()常规基址标记这片内存的拥有者</li>
+<li>使用lib&#x2F;iomap.c中定义的pci_iomap() 来获取指针。buffer &#x3D; pci_iomap(pdev,bar,mmio_length)</li>
+</ol>
+<h2 id="DMA"><a href="#DMA" class="headerlink" title="DMA"></a>DMA</h2><p>DMA可以同步传送数据也可以异步传送数据。</p>
+<ul>
+<li>同步传输示例：用DMA从系统帧缓冲到LCD控制器传送数据，用户程序通过&#x2F;dev&#x2F;fbX 设备节点把像素数据写入到DMA帧缓冲区，同时LCD控制器用DMA同步方式取出数据。</li>
+<li>异步传输示例：网络数据传输等IO占用缓冲区时间长的工作</li>
+</ul>
+<p>DMA缓冲区是DMA传送时用作源地址和目的地址的内存区，受限于总线的寻址的位数24位ISA（16MB ZONE_DMA）、PCI 32位(32位系统无限制)，占用系统底部的部分内存空间。可以通过下面函数告诉内核系统中可用作DMA缓冲区的地址的特殊要求：</p>
+<p>dma_set_mask(struct device *dev,u64 mask)</p>
+<p>如果函数成功返回，就可以在mask指定的范围内进行DMA操作。</p>
+<p>内核提供一些API函数来屏蔽DMA的细节：include&#x2F;asm&#x2F;-genetic&#x2F;pci-dma-compat.h。内核为PCI驱动程序提供两类DMA服务：</p>
+<ul>
+<li>一致性DMA访问方法。pci_alloc_consistent。当cpu和PCI设备都有可能干预DMA缓冲区时，保证数据一致性</li>
+<li>流式DMA访问。当不太需要CPU和IO设备共享DMA缓冲区时使用，速度快，如网络 。函数为：<code>pci_[map|umap|dma_sync]_single</code>（单一缓冲区） 和<code>pci_[map|umap|dma_sync]_sg</code>(缓冲区链)</li>
+</ul>
+<h2 id="设备实例：以太网-调制解调卡"><a href="#设备实例：以太网-调制解调卡" class="headerlink" title="设备实例：以太网-调制解调卡"></a>设备实例：以太网-调制解调卡</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2023/05/13/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/pci%E9%A9%B1%E5%8A%A8/" data-id="cm6yz33dz002i8zlvfjhp72jd" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/05/14/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/helloworld%E9%A9%B1%E5%8A%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          helloworld驱动
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/05/10/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/usb%E9%A9%B1%E5%8A%A8/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">linux usb驱动</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

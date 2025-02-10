@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(六章)linux定时测量 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="定时测量 深入理解linux 内核： 第六章 定时测量keywords： 定时器、时钟  linux内核必须完成两种主要的定时测量：  保存当前的时间和日期，可以通过time() ftime()和gettimeofday()系统调用把它们返回给用户程序。 维持定时器，这种机制能告诉内核或用户程序，某一时间间隔过去了。  时钟和定时器电路定时时钟（RTC）所有PC都包含一个叫实时时钟（Real Ti">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(六章)linux定时测量">
+<meta property="og:url" content="http://yoursite.com/2022/12/04/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="定时测量 深入理解linux 内核： 第六章 定时测量keywords： 定时器、时钟  linux内核必须完成两种主要的定时测量：  保存当前的时间和日期，可以通过time() ftime()和gettimeofday()系统调用把它们返回给用户程序。 维持定时器，这种机制能告诉内核或用户程序，某一时间间隔过去了。  时钟和定时器电路定时时钟（RTC）所有PC都包含一个叫实时时钟（Real Ti">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/timer_opts%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E5%AD%97%E6%AE%B5.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%AE%9A%E6%97%B6%E5%99%A8%E4%BC%98%E5%85%88%E6%8E%92%E5%BA%8F.png">
+<meta property="og:image" content="http://yoursite.com/static/%E4%B8%8EPOSIX%E5%AE%9A%E6%97%B6%E5%99%A8%E5%92%8C%E6%97%B6%E9%92%9F%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png">
+<meta property="article:published_time" content="2022-12-04T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/timer_opts%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E5%AD%97%E6%AE%B5.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(六章)定时测量" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/04/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/" class="article-date">
+  <time datetime="2022-12-04T10:00:00.000Z" itemprop="datePublished">2022-12-04</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (六章)linux定时测量
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="定时测量"><a href="#定时测量" class="headerlink" title="定时测量"></a>定时测量</h1><ul>
+<li>深入理解linux 内核： 第六章 定时测量<br>keywords： 定时器、时钟</li>
+</ul>
+<p>linux内核必须完成两种主要的定时测量：</p>
+<ul>
+<li>保存当前的时间和日期，可以通过time() ftime()和gettimeofday()系统调用把它们返回给用户程序。</li>
+<li>维持定时器，这种机制能告诉内核或用户程序，某一时间间隔过去了。</li>
+</ul>
+<h2 id="时钟和定时器电路"><a href="#时钟和定时器电路" class="headerlink" title="时钟和定时器电路"></a>时钟和定时器电路</h2><h3 id="定时时钟（RTC）"><a href="#定时时钟（RTC）" class="headerlink" title="定时时钟（RTC）"></a>定时时钟（RTC）</h3><p>所有PC都包含一个叫实时时钟（Real Time Clock RTC）的时钟，它独立于CPU和其他芯片。PC电源即使被切断，它仍在依靠电池运行。</p>
+<p>RTC能在IRQ8上发出周期性的中断，频率在2-8192Hz 之间。也可以对RTC进行编程以作为闹钟使用。</p>
+<p>Linux只用RTC来获取日期和时间，可以通过&#x2F;dev&#x2F;rtc 设备文件进行操作，也允许进程对RTC编程。内核通过0x70和0x71 I&#x2F;O 端口访问RTC。系统管理员通过Unix时钟程序可以设置时钟（通过0x70和0x71 I&#x2F;O 端口）。</p>
+<h3 id="时间戳计数器（TSC）"><a href="#时间戳计数器（TSC）" class="headerlink" title="时间戳计数器（TSC）"></a>时间戳计数器（TSC）</h3><p>所有的8086处理器都包含一条CLK输入引线，它接受外部震荡时钟信号。8086处理器内部包含一个64位计数器（Time Stamp Counter TSC），时钟到来计数器就+1。与RTC相比，Linux利用这个寄存器可以获得更精确的时间测量。linux会在初始化的时候确定此时钟信号的频率。</p>
+<p>calibrate_tsc()通过计算一个大约在5ms的事件间隔所产生的TSC信号个数来计算CPU的实际频率。</p>
+<h3 id="可编程间隔定时器（PIT）"><a href="#可编程间隔定时器（PIT）" class="headerlink" title="可编程间隔定时器（PIT）"></a>可编程间隔定时器（PIT）</h3><p>可编程间隔定时器（Programmable Interval Timer PIT），作用类似微波炉的闹钟，设备到时间会发出一个特殊的中断，叫做时钟中断（timer interrupt）来通知内核一个时间间隔过去了。PIT永远以内核确定的固定的时间频率不停地发出中断信号。</p>
+<p>每个IBM兼容CPU至少包含一个PIT，PIT通常是使用0x40-0x43 I&#x2F;O 端口的一个8254 CMOS芯片。</p>
+<p>Linux给PC的第一个PIT进行编程，使他以大约1000Hz的频率向IRQ0发送时钟中断，也就是每1ms产生一次中断，也叫此时间间隔为一个节拍（tick）。它的长度以纳秒为单位存放在 tick_nsec变量中，通常为999848ns(时钟信号频率为1000.15hz)。</p>
+<p>时钟中断频率取决于硬件体系结构，慢的机器节拍大约为10ms（每秒100次），较快的约为1ms（每秒产生1000或1024次）。</p>
+<p>Linux代码中，有几个宏产生决定时钟中断频率的常量：</p>
+<ul>
+<li>HZ产生每秒时钟中断的近似个数，也就是时钟中断的频率。IBM PC上 值为1000</li>
+<li>CLOCK_TICK_RATE 产生的值为 1193182 这个值是8254芯片内部的振荡器频率</li>
+<li>LATCH 产生CLOCK_TICK_RATE和HZ的比值再四舍五入后的整数，这个值用来对PIT进行编程</li>
+</ul>
+<h3 id="CPU本地定时器"><a href="#CPU本地定时器" class="headerlink" title="CPU本地定时器"></a>CPU本地定时器</h3><p>最新8086的本地APIC（第四章 中断和异常一节中）中，还提供了另一种定时测量设备：CPU本地定时器。</p>
+<p>CPU本地定时器是一种能够单步中断或周期性中断的设备，它类似于PIT，但是还有一些区别：</p>
+<ul>
+<li>APIC计数器是32位，PIC计数器是16位；因此可以对本地定时器编程来产生频率很低的中断（计数器中存放的是中断发生前必须经过的节拍数）</li>
+<li>本地APIC定时器把中断只发送给自己的处理器，而PIT产生一个全局中断，系统中任一CPU都可以对其进行处理。</li>
+<li>APIC定时器是基于总线时钟信号的。每隔1,2,4,8,16,32,64或128总线时钟信号到来时对该定时器递减可以实现对其编程的目的。相反PIT有自己的内部时钟振荡器，可以更灵活的编程。</li>
+</ul>
+<h3 id="高精度事件定时器（HPET）"><a href="#高精度事件定时器（HPET）" class="headerlink" title="高精度事件定时器（HPET）"></a>高精度事件定时器（HPET）</h3><p>下一代PIT，未来可期。</p>
+<h3 id="ACPI-电源管理定时器"><a href="#ACPI-电源管理定时器" class="headerlink" title="ACPI 电源管理定时器"></a>ACPI 电源管理定时器</h3><p>ACPI电源管理定时器或ACPI PMT 是另一种时钟设备，包含在几乎所有基于ACPI的主板上。时钟信号大约 3.58MHz 固定频率。该设备是一个简单的计数器，每个时钟节拍到来增加一次。为了读取计数器的当前值内核需要访问某个IO端口，端口地址由BIOS确定。</p>
+<p>在支持动态CPU频率的设备上，ACPI比TSC更稳定。TSC计数器的高频率非常便于测量特别小的时间间隔。</p>
+<p>如果系统中存在HPET，内核优先使用HPET。</p>
+<h2 id="linux-计时体系结构"><a href="#linux-计时体系结构" class="headerlink" title="linux 计时体系结构"></a>linux 计时体系结构</h2><p>linux 执行与定时相关的操作。例如，内核周期性地：</p>
+<ul>
+<li>更新自系统启动以来所经过的事件</li>
+<li>更新事件和日期</li>
+<li>确定当前进程在每个CPU上已经运行了多长时间，如果已经超过了分配给它的事件，则抢占他。（时间片轮转）</li>
+<li>更新资源使用统计数</li>
+<li>检查每个软定时器的事件间隔是否已到</li>
+</ul>
+<p>linux的计时体系结构（timekeeping architecture）是一组与时间流相关的内核数据结构和函数。8086和单处理器机器稍有不同：</p>
+<ul>
+<li>在单处理器系统上，所有的计时活动都是由全局定时器（可以是可编程间隔定时器PIT或高精度事件定时器HPET）产生的中断触发的。</li>
+<li>在多处理器系统上，所有的普通的活动（像软定时器的处理）都是由全局定时器产生的中断触发的。而具体的CPU的活动（比如监控当前进程的执行时间）是由本地APIC定时器产生的中断触发的。</li>
+</ul>
+<p>以上两种情况的区别比较模糊。一些情况使用的计时方式比较特殊。为了简化，我们考虑两种“纯”的计时体系结构</p>
+<p>linux2.6 的计时体系结构使用了大量的数据结构。</p>
+<ol>
+<li>定时器对象：用于处理定时器资源。包含定时器名称和四个标准方法组成。<br><img src="/./static/timer_opts%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E5%AD%97%E6%AE%B5.png"></li>
+</ol>
+<p>其中 mark_offset 和 get_offset 被时钟中断处理程序用于精确计算定时器时间。内核能够以比节拍周期更高的精度来测定当前的时间（定时插补time interpolation）<br>2. cur_timer 变量：存放当前最好的定时器对象的地址。<br><img src="/./static/%E5%AE%9A%E6%97%B6%E5%99%A8%E4%BC%98%E5%85%88%E6%8E%92%E5%BA%8F.png"><br>3. jiffies变量：用于存放系统启动以来产生的节拍总数。时钟中断发生时（每个节拍）它就会+1。32位的变量。每隔大约50天就会回绕一次。内核使用time_after,time_after_eq,time_before和time_before_eq四个宏来处理溢出。且初始化值为0xfffb6c20会在5分钟内溢出，以在开发阶段排查出不对溢出作处理的代码。<br>4. jiffies_64变量：存储系统启动以来总的节拍数目。以1ms一个节拍的情况下，需要数10亿年才会溢出。（此数据低32位就是jiffies变量）<br>5. xtime 变量：存放当前时间和日期；每个节拍更新一次。由x_time_lock顺序锁保护，用户程序和内核经常使用它。它是一个timespec 类型的数据结构，他有两个字段：</p>
+<ul>
+<li>tv_sec: 存放UTC 0 以来经过的秒数</li>
+<li>tv_nsec： 存放自上一秒开始经过的纳秒数（0-999999999）</li>
+</ul>
+<h3 id="单处理器上的计时体系结构"><a href="#单处理器上的计时体系结构" class="headerlink" title="单处理器上的计时体系结构"></a>单处理器上的计时体系结构</h3><p>单处理系统上，所有与定时有关的活动都是由IRQ线0上的可编程间隔定时器产生的中断触发的。<br>初始化阶段：</p>
+<p>time_init() 函数用于建立计时体系结构：</p>
+<ol>
+<li>初始化xtime变量：利用get_cmos_time()函数从实时时钟上读取从UTC0开始的秒数。设置xtime的tv_nsec字段。</li>
+<li>初始化wall_to_monotonic变量。这个变量和xtime一样是timespec类型只不过存放的是将要加到xtime上的秒数和纳秒数，是一个单向递增的时间流。xtime则可能因为事件同步的原因导致时间跳跃。</li>
+<li>如果内核支持HPET 则使用hpet_enable() 设置其中断频率和中断位置为IRQ0。否则使用PIT</li>
+<li>调用select_timer() 挑选合适的定时器以设置cur_timer 指向它。</li>
+<li>调用set_irq(0,&amp;irq0)来创建与IRQ0相应的中断门。struct irqaction irq0&#x3D;(timer_interrupt,SA_INTERRUPT,0,”timer”,NULL,NULL)，从这时起 timer_interrupt()函数将在每个节拍到来时被调用，而中断被禁止（IRQ0 主描述符中SA_INTERRUPT标志被置位）。</li>
+</ol>
+<p>时钟中断处理程序：</p>
+<p>timer_interrupt()函数是PIT或HPET的中断服务例程（ISR）,它执行以下步骤：</p>
+<ol>
+<li>在x_time_lock顺序锁上产生一个write_seqlock()来保护与定时相关的内核变量。</li>
+<li>执行cur_timer 定时器对象的mark_offset 方法。</li>
+<li>调用do_timer_interrupt() 函数，修改jiffies_64，调用update_times() update_process_times() profile_tick() 检查是否需要使用外部时钟来同步时间。</li>
+<li>释放锁</li>
+<li>返回1，表明中断已经处理</li>
+</ol>
+<h3 id="多处理器上的计时体系结构"><a href="#多处理器上的计时体系结构" class="headerlink" title="多处理器上的计时体系结构"></a>多处理器上的计时体系结构</h3><p>初始化阶段：</p>
+<p>全局时钟和单处理器一致<br>linux内核为本地时钟保留239号（0xep）中断向量。在内核初始化阶段，函数apic_intr_init() 根据第239号向量和低级中断处理程序apic_timer_interrupt() 的地址设置IDT的中断门。函数calibrate_APIC_clock()通过正在启动的CPU的本地APIC来计算一个节拍对应多少总线时钟信号，来确定如何对APIC编程。这是由setup_APIC_timer()函数完成。该函数每个CPU都执行一次。</p>
+<p>所有本地APIC定时器都是同步的，因为他们都基于公共总线时钟信号。这意味引导CPU计算出的APIC参数对所有CPU有效。</p>
+<p>全局时钟中断处理程序：</p>
+<p>SMP版本的timer_interrupt()处理程序与UP版本的该处理程序在几个地方有差异：</p>
+<ul>
+<li>timer_interrupt()调用函数 do_timer_interrupt() 向IO APIC芯片的一个端口写入，以应答定时器的中断请求？</li>
+<li>update_process_times 函数不被调用，因为与特定cpu相关</li>
+<li>profile_tick() 不被调用，因为与特定cpu相关</li>
+</ul>
+<p>本地时钟中断处理程序：</p>
+<p>该处理程序执行系统中与特定CPU相关的计时互动，即监管内核代码并检测当前进程在特定CPU上已经运行了多长时间。smp_apic_timer_interrupt()的高级中断处理函数执行如下步骤：</p>
+<ol>
+<li>获得CPU逻辑号N</li>
+<li>使用irq_stat数组中第N项的apic_timer_irqs()字段+1</li>
+<li>应答本地APIC上的中断</li>
+<li>调用irq_enter()函数</li>
+<li>调用smp_local_timer_interrupt()函数</li>
+<li>调用irq_exit()函数</li>
+</ol>
+<p>smp_local_timer_interrupt() 函数执行每个CPU的计时活动，其中调用profile_tick和update_process_times()函数</p>
+<p>系统管理员可以通过写入&#x2F;etc&#x2F;profile文件可以修改内核代码监管器的抽样频率。为实现修改，内核改变本地时钟中断频率。smp_local_timer_interrupt()函数保证每个节拍精确调用update_process_times()函数一次。</p>
+<h2 id="更新事件和日期"><a href="#更新事件和日期" class="headerlink" title="更新事件和日期"></a>更新事件和日期</h2><p>用户程序从xtime变量获取当前日期和时间，内核必须周期性地更新该变量，才能使它的值保持精确。<br>全局中断处理沉痼调用 update_times() 函数更新xtime的值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">void update_times(void)</span><br><span class="line">&#123;</span><br><span class="line">    unsigned long ticks;</span><br><span class="line">    ticks = jiffies - wall_jiffies;</span><br><span class="line">    if (ticks)&#123;</span><br><span class="line">        wall_jiffies += ticks;</span><br><span class="line">        update_wall_time(ticks);</span><br><span class="line">    &#125;</span><br><span class="line">    calc_load(ticks);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>wall_jiffies变量存放xtime变量最后更新的时间，当中断被禁止很长时间时，内核不必每个时钟更新xtime 变量。 </p>
+<p>update_wall_time 更新xtime.tv_nsec 共ticks次，每次+1000000，如果需要更新xtime.tv_nec则会更新它。</p>
+<h2 id="更新系统统计数"><a href="#更新系统统计数" class="headerlink" title="更新系统统计数"></a>更新系统统计数</h2><p>内核在与定时相关的其他任务中必须周期性地收集若数据用于：</p>
+<ul>
+<li>检查进行进程的CPU资源限制 (通过 signal-&gt;rlim[RLIMIT_CPU].rlim_cur 控制的，达到限制则向进程发送SIGXCPU和SIGKILL信号。)</li>
+<li>更新与本地CPU工作负载有关的统计数 （process.utime process.stime）</li>
+<li>计算平均系统负载（calc_load() 函数用于计算处于TASK_RUNNING 或 TASK_UNINTERRUPTIBLE状态的进程数，更新统计出的平均负载）</li>
+<li>监管内核代码（profile_tick()函数为代码监管起采集数据。）</li>
+</ul>
+<p>linux内核包含一个叫做 readprofiler 的最低要求的代码监管器，linux开发者用其发现内核在内核态的什么地方花费事件。监管器确定内核的“热点”，用于指出需要优化的内核函数。</p>
+<p>为了激活代码监管器，linux内核启动时必须传字符串参数“profile&#x3D;N” 这里2^N表示要监管的代码段的大小。采集的数据可以从&#x2F;proc&#x2F;profile文件中读取。</p>
+<p>linux2.6包含另一个监管器，叫做oprofile。profile_tick() 调用timer_notify()函数用于收集这个监管器使用的数据。</p>
+<h2 id="软定时器和延迟函数"><a href="#软定时器和延迟函数" class="headerlink" title="软定时器和延迟函数"></a>软定时器和延迟函数</h2><p>定时器是一种软件功能，允许将来的某个时刻，函数在给定的事件间隔用完时被调用。超时表示与定时器相关的时间间隔已经用完的那个时刻。</p>
+<p>内核和进程广泛使用定时器。Linux考虑两种类型的定时器，即动态定时器（dynamic timer）和间隔定时器（interval timer）。第一种由内核使用，间隔定时器可以由进程在用户态创建。</p>
+<p>动态定时器应用之一：nanosleep()系统调用</p>
+<p>延迟函数：当内核需要等待一个较短的时间间隔，比如不超过几毫秒时，就无需使用软定时器：内核使用udelay()和ndelay()函数。</p>
+<h2 id="与定时测量相关的系统调用"><a href="#与定时测量相关的系统调用" class="headerlink" title="与定时测量相关的系统调用"></a>与定时测量相关的系统调用</h2><p>有几个调用允许用户态下的进程读取及修改时间和日期，以及创建定时器。<br>time()         获取utc0开始的秒数<br>gettimeofday() 获取utc0开始的秒数和微秒数<br>adjtimex()     用于调整时间，for NTP<br>setitimer()    激活间隔定时器，第一个参数为： ITIMER_REAL 真正过去的时间+SIGALRM信号，ITIMER_VIRTUAL 用户态时间+SIGALRM信号，ITIMER_PROF 用户态+内核态时间+SIGPROF信号。其他参数再说<br>alarm()        会在一个指定的时间间隔用完时向调用的进程发送一个SIGALRM信号。</p>
+<p>POSIX 1003.1b标准为用户态程序引入了一种新型软定时器，被称为POSIX定时器。<br><img src="/./static/%E4%B8%8EPOSIX%E5%AE%9A%E6%97%B6%E5%99%A8%E5%92%8C%E6%97%B6%E9%92%9F%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"><br>POSIX定时器比传统间隔定时器更灵活、更可靠。他们之间的区别：</p>
+<ul>
+<li>传统定时器到期时吗，内核发送SIGALRM信号给进程来激活定时器。POSIX定时器到期时内核可以发送多种信号给整个多线程应用程序，也可以发送给单个指定的线程。</li>
+<li>传统定时器到期很多次时，用户态程序不接受信号时，只有第一个信号被接受，其他都被丢弃。POSIX则可以通过timer_getoverrun()系统调用来获取第一次以来到期的次数。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/04/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/" data-id="cm6yz33df001c8zlvg015b00l" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/12/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%83%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (七章)linux进程调度
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/12/03/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/P6.ARM64%E5%A4%84%E7%90%86%E5%99%A8%E6%9E%B6%E6%9E%84/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">P6.ARM64处理器架构</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

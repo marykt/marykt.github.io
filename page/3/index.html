@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="小边的博客">
+<meta property="og:url" content="http://yoursite.com/page/3/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="marykt">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-linux/book-深入理解linux内核/(二章)内存寻址" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/01/12/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/" class="article-date">
+  <time datetime="2023-01-12T10:00:00.000Z" itemprop="datePublished">2023-01-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/12/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/">(二章)linux内存寻址</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内存寻址"><a href="#内存寻址" class="headerlink" title="内存寻址"></a>内存寻址</h1><ul>
+<li>深入理解linux 内核： 第二章 内存寻址<br>keywords： 内存、MMU、寻址、物理地址、线性地址、逻辑地址<br><a href="https://linux-mm.org/">https://linux-mm.org/</a></li>
+</ul>
+<h1 id="内存地址"><a href="#内存地址" class="headerlink" title="内存地址"></a>内存地址</h1><ul>
+<li>逻辑地址 （logical address）<br>  在机器语言指令中用来指定操作数或一条指令的地址，例如在汇编中，程序有若干段，每一个逻辑地址由段（segment）+偏移量(offset或displacement)组成。</li>
+<li>线性地址 (linear address) &#x2F;虚拟地址（vartual address）<br>  是一个32位无符号整数，可以用来表达4GB的地址，线性地址通常用十六进制数字表示，范围从<code>0x00000000</code> 到 <code>0xffffffff</code>。代表程序能够使用的地址范围。</li>
+<li>物理地址 (physical address)<br>  用于内存芯片级内存单元寻址，与CPU的引脚发送到内存总线上的信号相对应。物理地址由32位或36位无符号整数表示。</li>
+</ul>
+<p>内存控制单元（MMU）通过一种称为分段单元的硬件电路把逻辑地址转换为线性地址；接着第二个称为分页单元的硬件电路把线性地址转成物理地址。<br><img src="/./static/%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80-%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png"><br>在多处理器或单处理器+DMA的结构中存在一个内存仲裁器的结构（memory arbiter）。此结构用于处理同时多个内存请求的问题，对于操作系统来说，此结构是透明的。</p>
+<h1 id="硬件中的分段"><a href="#硬件中的分段" class="headerlink" title="硬件中的分段"></a>硬件中的分段</h1><pre><code>  INTEL 1982年推出80286芯片，该芯片相比8086和8088有了飞跃式发展，虽然它仍是16位结构，但在CPU内部含有13.4万个晶体管，时钟频率由最初6MHz逐步提高到20MHz。内部和外部数据总线皆为16位，地址总线24位，可寻址16MB内存。80286兼容了8086所有功能，并且是8086的向上兼容的微处理器，使8086的汇编语言程序可以不做任何修改地在80286上运行。同时80286的推出也是实模式和保护模式CPU的分水岭。80286微处理器内部有4个功能部件，即地址部件AU，指令部件IU，执行部件EU和总线部件BU。这四个部件的并行操作，提高了吞吐率，加快了处理速度
+  
+  计算机必须具备自举能力将自己所与的元件激活，以便能完成加载操作系统这一目的，然后再由操作系统承担起那些单靠自举代码无法完成的更复杂的任务。自举只有两个功能：加电自检和磁盘引导。
+</code></pre>
+<p>从80286开始，intel CPU 使用两种不同的方式执行地址转换，这两种方式分为称为实模式(real mode)和保护模式（protected mode）。实模式存在主要是为了维持处理器与早期模型兼容，并让操作系统自举。</p>
+<h2 id="段选择符和段寄存器"><a href="#段选择符和段寄存器" class="headerlink" title="段选择符和段寄存器"></a>段选择符和段寄存器</h2><p>一个逻辑地址由两部分组成：段标识符（也叫选择符 Segment Setlector）+ 段内偏移地址。段标识符是一个16位字段。如下图所示。偏移量则是一个32位长的字段。<br><img src="/./static/%E6%AE%B5%E5%AF%84%E5%AD%98%E5%99%A8%E5%86%85%E5%AE%B9.png"><br>为了快速找到段选择符，处理器提供段寄存器，段寄存器存在的唯一目的是存放段选择符。这些段寄存器被称为cs,ss,ds,es,fs,和gs。尽管只有6个段寄存器，但是程序可以把一个段寄存器用于不同目的，可以将其值先保存在内存中，用完再恢复。<br>其中三个段寄存器有专门用途：</p>
+<ul>
+<li>cs 代码段寄存器，程序指令段。</li>
+<li>ss 栈寄存器，程序栈段</li>
+<li>ds 数据段寄存器，静态数据或全局数据。</li>
+</ul>
+<p>其他三个可以指向任意数据段。</p>
+<h3 id="段选择索引号（选择子）"><a href="#段选择索引号（选择子）" class="headerlink" title="段选择索引号（选择子）"></a>段选择索引号（选择子）</h3><p>表示段的地址处在段描述符表中的序号。</p>
+<h3 id="TI-表指示器"><a href="#TI-表指示器" class="headerlink" title="TI 表指示器"></a>TI 表指示器</h3><p>表指示器(在IDT位为0时才有意义?)</p>
+<ol>
+<li>1,段选择子的索引部分指向LDT（对应ldtr控制寄存器声明的段描述符表）</li>
+<li>0,段选择子的索引部分指向GDT（对应gdtr控制寄存器声明的段描述符表）</li>
+</ol>
+<h3 id="CPL、DPL、RPL："><a href="#CPL、DPL、RPL：" class="headerlink" title="CPL、DPL、RPL："></a>CPL、DPL、RPL：</h3><p>CPL是当前执行的程序或任务的特权级。它被存储在CS和SS的第0位和第1位上。通常情况下，CPL代表代码所在的段的特权级。当程序转移到不同特权级的代码段时，处理器将改变CPL。linux系统中只有0和3两个值，分别表示用户态和内核态。</p>
+<p>DPL表示段或门的特权级。它被存储在段描述符或者门描述符的DPL字段中（《操作系统篇-分段机制与GDT|LDT》中有提到），当当前代码段试图访问一个段或者门（这里大家先把门看成跟段一样，下面我们会介绍），DPL将会和CPL以及段或者门选择子的RPL相比较，根据段或者门类型的不同，DPL将会区别对待。</p>
+<p>RPL是通过段选择子的第0和第1位表现出来的。RPL是代码中根据不同段跳转而确定，以动态刷新CS里的CPL，在代码段选择符中。而且RPL对每个段来说不是固定的，两次访问同一段时的RPL可以不同。操作系统往往用RPL来避免低特权级应用程序访问高特权级段内的数据，即便提出访问请求的段有足够的特权级，如果RPL不够也是不行的，当RPL的值比CPL大的时候，RPL将起决定性作用。也就是说，RPL相当于附加的一个权限控制，只有当RPL&gt;DPL的时候，才起到实际的限制作用。</p>
+<h2 id="段描述符"><a href="#段描述符" class="headerlink" title="段描述符"></a>段描述符</h2><p>每个段由一个8字节（64位）的段描述符表示，它描述了段特征。其存放于全局描述符表（GDT）或局部描述符表（LDT）中。<br>当进程除了GDT中的段还需要创建其他段时，就可以有自己的LDT。<br><img src="/./static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br>有几种不同类型的段以及和他们对应的段描述符。下面列出了linux中被广泛采用的类型：</p>
+<ul>
+<li>代码段描述符<br>代表代码段，可以放在GDT或LDT中。该描述符S标志为1（非系统段）。</li>
+<li>数据段描述符<br>代表数据段，可以放在GDT或LDT中。该描述符S标志为1（非系统段）。</li>
+<li>任务状态段描述符（TSSD）<br>代表任务状态段（Task State Segment,TSS），也就是说这个段用于保存处理器寄存器的内容，只能出现在GDT中。根据相应的进程是否在CPU上运行，其type字段的值分别为11或9。该描述符S标志为0。</li>
+<li>局部描述符表描述符（LDTD）<br>代表一个包含LDT的段，只能出现在GDT中。其type字段的值为2,该描述符S标志为0。</li>
+</ul>
+<p><img src="/./static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E6%A0%BC%E5%BC%8F.png"></p>
+<h2 id="快速访问段描述符"><a href="#快速访问段描述符" class="headerlink" title="快速访问段描述符"></a>快速访问段描述符</h2><p>逻辑地址由16位段选择符+32位偏移量组成，段寄存器仅仅存放段选择符。<br>为了加速从逻辑地址到线性地址的转换，80x86处理器提供了一种附加的非编程的寄存器，供6个可编程的段寄存器使用。当段选择符被装入段寄存器时，相应的段描述符就由内存装入到对应的非编程CPU寄存器，从这时起针对这个段的访问就可以不访问主存中的GDT或LDT，处理器直接使用此非编程寄存器即可。仅当段寄存器内容改变时，才有必要访问GDT和LDT。</p>
+<ul>
+<li>段选择符和段描述符：<br><img src="/./static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%92%8C%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6.png"></li>
+<li>段选择符字段：<br><img src="/./static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%AD%97%E6%AE%B5.png"></li>
+</ul>
+<h2 id="分段单元"><a href="#分段单元" class="headerlink" title="分段单元"></a>分段单元</h2><p>分段单元（segmentation unit ）主要执行以下动作：</p>
+<ul>
+<li>检查TI字段判断是哪个描述符表，GDT：从gdtr找到gdt的线性基地址，LDT：从ldtr中找到线性基地址。</li>
+<li>段选择符的index字段计算偏移地址</li>
+<li>描述符表的线性基地址+计算出的偏移地址&#x3D;最终的段描述符线性地址。<br><img src="/./static/%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png"></li>
+</ul>
+<h1 id="linux-中的分段"><a href="#linux-中的分段" class="headerlink" title="linux 中的分段"></a>linux 中的分段</h1><p>8086堆分段的支持是希望程序员把程序划分为逻辑上相关的实体，例如子程序或全局与局部数据区。。linux以非常有限的方式使用分段，实际上分段和分页的作用非常相似。linux更喜欢使用分页方式，原因如下：</p>
+<ul>
+<li>所有进程使用相同的段寄存器值时，内存管理变得更简单，也就是说它们能共享同样一组线性地址。</li>
+<li>linux为了适配多种不同架构(risc体系结构对分段支持很有限)</li>
+</ul>
+<p>2.6版本linux只在8086结构下才需要使用分段<br>运行在用户态的所有linux进程都使用一对相同的段来对指令和数据寻址，这两个段就是所谓的用户代码段和用户数据段。类似的，运行在内核态的所有linux进程都使用一对相同的段对质量和数据寻址，分别叫内核代码段和内核数据段。</p>
+<p><img src="/./static/%E5%9B%9B%E4%B8%AA%E4%B8%BB%E8%A6%81%E7%9A%84linux%E6%AE%B5%E7%9A%84%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5%E5%80%BC.png"></p>
+<p>相应的段选择符由__USER_CS,__USER_DS,__KERNEL_CS,__KERNEL_DS分别定义，例如为了对内核代码段进行寻址，只需要把__KERNEL_CS宏产生的值装入cs段寄存器就可以。<br>从上图中可知 四个段的起始位置均为0x00000000 且可以达到2^23-1的寻址限长，可知linux下逻辑分段的逻辑地址和线性地址是相等的。偏移量字段就对应着实际内存位置。<br>CPU的当前特权级（CPL）反应了进程是在用户态还是内核态，并由CS寄存器中的RPL字段指定，只要当前特权级被改变，一些段寄存器必须相应的更新。例如CPL&#x3D;3（用户态）时，DS寄存器必须含有用户数据段的段选择符，例如CPL&#x3D;0（内核态）时，DS寄存器必须含有内核数据段的段选择符。 类似的还有SS寄存器。<br>当对指向指令或者数据结构的指针进行保存时，内核根本不需要为其设置逻辑地址的段选择符，因为CS寄存器已经包含了，且在内核态的执行的段仅有一种，所以只要cpu在切换到内核态时把__KERNEL_CS装入CS就可以了。指向内核数据结构的指针隐含的使用ds寄存器，指向用户数据结构的指针显式地使用es寄存器。<br>除了那四个段，内核还有其他几个专门的段。在下面说明linux GDT时介绍。</p>
+<h2 id="linux-GDT"><a href="#linux-GDT" class="headerlink" title="linux GDT"></a>linux GDT</h2><p>在单处理系统中只有一个GDT，而在多处理器系统中每个CPU都对应一个GDT。所有的GDT都存放在cpu_gdt_table 数组中，而所有GDT的地址和他们的大小（初始化gdtr寄存器时使用）被存放在cpu_gdt_descr数组中。这些符号都在文件arch&#x2F;i386&#x2F;kernel&#x2F;head.S 中被定义。  </p>
+<p>每个GDT包含18个段描述符和14个空的，未使用的，或保留的项。插入未使用项的目的时为了使经常一起访问的描述符能够处于同一个32字节的硬件高速缓存中。</p>
+<p>每一个GDT中包含的18个段描述符指向下面的段：</p>
+<ul>
+<li>用户态和内核态下的代码段和数据段 共4个</li>
+<li>任务状态段（TSS），每个处理器一个。</li>
+<li>1个包括缺省布局描述符的段，通常为共享</li>
+<li>3个局部线程存储（Thread-Local Storage,TLS）段。</li>
+<li>与高级电源管理（AMP）相关的3个段</li>
+<li>与支持即插即用（PnP）功能的bios服务程序相关的5个段</li>
+<li>被内核用来处理<code>双重错误</code>异常的特殊TSS段。</li>
+</ul>
+<p>系统中每个处理器都有一个GDT副本。除了少数几种情况，所有GDT副本都存放相同的表项。首先TSS段是每个处理器自己的。其次GDT中只有少数项依赖于CPU正在执行的进程（LDT和TLS段描述符）。最后 某些情况处理器可能临时修改GDT中某个项目，例如调用APM的BIOS例程时可能发生这种情况。</p>
+<h2 id="linux-LDT"><a href="#linux-LDT" class="headerlink" title="linux LDT"></a>linux LDT</h2><p>大多数用户态下的linux程序不使用局部描述符表，内核定义了一个缺省的LDT供大多数进程共享。缺省的局部描述符表存放在default_ldt数组中。它包含5个项，内核仅有效地使用了其中两个：用于ibcs执行文件的调用门和solaris&#x2F;x86可执行文件的调用门（<code>执行域</code>相关内容）调用门是8086提供的一种机制，用于在调用预定义函数时改变cpu的特权级。</p>
+<p>某些情况进程需要创建自己的LDT。比如wine那样的程序，它们执行面向段的windows应用程序。modify_ldt()系统调用用来创建进程自己的ldt。</p>
+<h1 id="硬件中的分页"><a href="#硬件中的分页" class="headerlink" title="硬件中的分页"></a>硬件中的分页</h1><p>分页单元(paging unit)把线性地址转换成物理地址。<br>为了效率，线性地址被分成以固定长度为单位的组，称为页，页内部连续的线性地址被映射到连续的物理地址中，这样内核可以以页为单位管理其权限。<br>分页单元把所有的RAM分为固定长度的页框（page frame）(有时也叫物理页)。页：只是一个数据块，可以存放在任何页框或磁盘中。<br>线性地址到物理地址的数据结构称为页表（page table）。页表存放在主存中，在启用分页之前必须由内核对页表进行初始化。<br>从80386开始 所有的8086处理器就支持分页，设置cr0寄存器的PG标志启用，当PG&#x3D;0时，线性地址就被解释成物理地址。<br>        CR0<br>        是系统内的控制寄存器之一。控制寄存器是一些特殊的寄存器，它们可以控制CPU的一些重要特性。<br>        0位是保护允许位PE(Protedted Enable)，用于启动保护模式，如果PE位置1，则保护模式启动，如果PE&#x3D;0，则在实模式下运行。<br>        1 位是监控协处理位MP(Moniter coprocessor)，它与第3位一起决定：当TS&#x3D;1时操作码WAIT是否产生一个“协处理器不能使用”的出错信号。第3位是任务转换位(Task Switch)，当一个任务转换完成之后，自动将它置1。随着TS&#x3D;1，就不能使用协处理器。<br>        CR0的第2位是模拟协处理器位 EM (Emulate coprocessor)，如果EM&#x3D;1，则不能使用协处理器，如果EM&#x3D;0，则允许使用协处理器。<br>        第4位是微处理器的扩展类型位 ET(Processor Extension Type)，其内保存着处理器扩展类型的信息，如果ET&#x3D;0，则标识系统使用的是287协处理器，如果 ET&#x3D;1，则表示系统使用的是387浮点协处理器。<br>        CR0的第31位是分页允许位(Paging Enable)，它表示芯片上的分页部件是否允许工作。<br>        CR0的第16位是写保护未即WP位(486系列之后)，只要将这一位置0就可以禁用写保护，置1则可将其恢复。</p>
+<h2 id="常规分页"><a href="#常规分页" class="headerlink" title="常规分页"></a>常规分页</h2><p>8086开始，intel处理器的分页单元处理4KB的页。<br>32位线性地址被分为三个域：</p>
+<ul>
+<li>Directory(目录) 高10位，第一转换表(页目录表),页目录表的物理地址存放在控制寄存器cr3。</li>
+<li>Table(页表) 中间10位，第二转换表（页表） 一个页表项代表4k。页目录的物理地址存放在页目录表。</li>
+<li>Offset(偏移量) 最低12位 2^12&#x3D;4k （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p>每个活动进程必须有一个分配给它的页目录，页表按需分配。</p>
+<p><img src="/./static/8086%E5%A4%84%E7%90%86%E5%99%A8%E7%9A%84%E5%88%86%E9%A1%B5.png"></p>
+<p>页目录项和页表项具有相同的结构，每项都含有以下字段：</p>
+<ol>
+<li>Present标志：页是否在主存中</li>
+<li>包含页框物理地址最高20位的字段 （因为每个页狂有4k容量。4k对齐，后12位内容可以忽略。）</li>
+<li>Accessed标志：寻址时标志，由操作系统设置</li>
+<li>Dirty标志：写操作标记，由操作系统设置</li>
+<li>read&#x2F;write标志： 权限标记</li>
+<li>PCD和PWT标志：控制硬件高速缓存处理页或页表的方式</li>
+<li><code>Page size 标志</code>： 只用于页目录项，&#x3D;1时，页目录项指的是2MB或4MB的页框</li>
+<li>Global 标志：只用于页表项，此标志在Pentium Pro 中引入，防止常用页被高速缓存刷新出去，cr4 PGE标志控制是否启用</li>
+</ol>
+<h2 id="扩展分页"><a href="#扩展分页" class="headerlink" title="扩展分页"></a>扩展分页</h2><p>Pentium模型开始 8086引入扩展分页，允许页框大小为4MB。在这些情况下内核可以不使用中间页进行地址转换。从而节省内存并保留TLB（转换后援缓冲器）项。<br>32位线性地址被分为二个域：</p>
+<ul>
+<li>Directory(目录) 高10位，第一转换表(页目录表),页目录表的物理地址存放在控制寄存器cr3。</li>
+<li>Offset(偏移量) 其余22位 2^22&#x3D;4M （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p><img src="/./static/%E6%89%A9%E5%B1%95%E5%88%86%E9%A1%B5.png"></p>
+<ul>
+<li><code>Page size 标志</code>必须设置</li>
+<li>rc4 处理器寄存器的PSE标志能使扩展分页和常规分页共存。</li>
+</ul>
+<h2 id="硬件保护方案"><a href="#硬件保护方案" class="headerlink" title="硬件保护方案"></a>硬件保护方案</h2><p>页的存取权限只有两种 read&#x2F;write标志:<code>只读</code>或者<code>可读写</code></p>
+<h2 id="物理地址扩展（PAE）分页地址"><a href="#物理地址扩展（PAE）分页地址" class="headerlink" title="物理地址扩展（PAE）分页地址"></a>物理地址扩展（PAE）分页地址</h2><p>处理器支持的RAM容量受到连接到地址总线上的地址管脚数量限制，早期8086到pentium使用32位物理地址，共4GB RAM。但是对服务器来说不够，所以从Pentium  Pro 开始，intel处理器寻址能力达到2^36&#x3D;64GB。不过需要新的分页机制来把32位线性地址转成36位物理地址。<br>设置cr4控制寄存器的物理地址扩展（PAE）标志以启用。页目录项中的页大小标志PS启动大尺寸页（PAE启动时为2MB）<br>intel为支持PAE改变分页机制：</p>
+<ul>
+<li>64GB RAM 被分为2^24个页框，页表项的物理地址字段由20位扩展到24位</li>
+<li>PDPT页表，新级别，由4个64位表项组成。存放在前4GB中，32（2^5）字节对齐的起始位置。</li>
+<li>CR3包含27位PDPT基地址字段。</li>
+</ul>
+<p>4K常规分页，32位线性地址按照下列方式解释：</p>
+<ul>
+<li>cr3 指向一个PDPT。</li>
+<li>31-30 指向PDPT 4个项中的一个</li>
+<li>29-21 页目录项索引 （2^9&#x3D;512）</li>
+<li>20-12 页表项索引 （2^9&#x3D;512）</li>
+<li>11-0  Offset(偏移量) 最低12位 2^12&#x3D;4k （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p>2MB扩展分页，32位线性地址按照下列方式解释：</p>
+<ul>
+<li>cr3 指向一个PDPT。</li>
+<li>31-30 指向PDPT 4个项中的一个</li>
+<li>29-21 页目录项索引 （2^9&#x3D;512）</li>
+<li>20-0  Offset(偏移量) 最低21位 2^21&#x3D;2M</li>
+</ul>
+<p>实际线性地址仍然是32位长，如果希望对更多RAM寻址，必须在cr3中放置一个新值，或改变PDPT的内容。只有内核能够改变进程的页表，所以在用户态下运行的进程不能使用大于4GB的物理地址空间。PAE允许内核使用，从而显著增加了系统中的进程数量。</p>
+<h2 id="64位系统分页"><a href="#64位系统分页" class="headerlink" title="64位系统分页"></a>64位系统分页</h2><p>普遍用于32位系统的两级分页机制对64位系统不适用，寻址项数量太多。<br>所有64位处理器的硬件分页系统都使用了额外的分页级别，使用的级别数量取决于处理器的类型。下表为一些linux所支持的64位平台使用的硬件分页系统的主要特征。</p>
+<p><img src="/./static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png"></p>
+<p>linux提供了一种通用分页模型，它适合绝大多数所支持的硬件分页系统。</p>
+<h2 id="硬件高速缓存"><a href="#硬件高速缓存" class="headerlink" title="硬件高速缓存"></a>硬件高速缓存</h2><p>为了缩小cpu和ram之间的速度不匹配，引入了硬件高速缓存。即cpu的L1,L2,L3缓存。8086开始引进了一个叫行（line）的新单位。行由几十个连续的字节组成，它们以脉冲突发模式（burst mode）在慢速DRAM和快速的用来实现高速缓存的片上静态RAM（SRAM）之间传送，以实现高速缓存。</p>
+<p>理论上，在一个极端情况下，高速缓存是可以直接映射的，这时主存中的一个行总是存放在高速缓存完全相同的位置。在另一个极端情况下，主存中的一个行可以放到高速缓存的任意位置。大多数高速缓存在某种程度上是N路组关联的（N-way set associative）,如下图所示：<br><img src="/./static/%E7%BB%84%E7%9B%B8%E8%81%94%E6%98%A0%E5%B0%84.png"><br>在n路组相联映像方式中，高速缓存（Cache）被分为若干组，每一组的块数是n（路）。主存中一个区的大小&#x3D;Cache的组数，主存中第0块对应第0组的任意一块，主存的地址结构为区-块-块内地址</p>
+<p>高速缓存单元插在分页单元和主内存之间。它包含一个硬件高速缓存内存（hardware cache memory）和一个高速缓存控制器（cache controller）。高速缓存内存存放内存中真正的行。高速缓存控制器中存放一个表数组项，每个表项对应高速缓存内存中的一个行。每个表项有一个标签（tag）和描述高速缓存行状态的几个标志（flag）。这个标签由一些位组成，这些位让高速缓存控制器能够辨别由这个行当前所映射的内存单元。<br>这种内存物理地址通常分为三组：</p>
+<ul>
+<li>最高几位对应标签</li>
+<li>中间几位对应高速缓存控制器的子集索引</li>
+<li>最低几位对应行内偏移量</li>
+</ul>
+<p><img src="/./static/%E5%A4%84%E7%90%86%E5%99%A8%E7%A1%AC%E4%BB%B6%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png"></p>
+<ul>
+<li>命中判断： 当访问一个RAM单元时，cpu从物理地址中提取子集的索引号（对应上图的组编号），并把子集中所有行的标签与这个物理地址的高位进行比较（对应上图中的cache标记） ，如果某个相同则命中，否则不命中</li>
+<li>更新机制：通写（write-through）+回写(write-back)，取决于存取类型。</li>
+</ul>
+<p>没有命中时高速缓存行被写回到内存，有必要的话会添加到缓存项中。</p>
+<p>多处理器的情况下，每个cpu都有一个单独的硬件高速缓存，因此需要额外硬件在多个高速缓存间同步数据。需要的情况下会通知其他cpu更新其缓存。这种活动叫高速缓存侦听（cache snooping）。这种行为会在硬件级处理，内核无需关心。</p>
+<p><img src="/./static/%E5%8F%8C%E5%A4%84%E7%90%86%E5%99%A8%E4%B8%AD%E7%9A%84%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png"></p>
+<p>多级高速缓存（L1-cache L2-cache等）主要是硬件实现，不需要软件管理。被内核视为一个单独的高速缓存。<br>处理器cr0寄存器的CD标志位用来启用或禁用高速缓存电路，NW标志为指明是使用通写还是回写策略。<br>linux 对于所有页框都启用高速缓存，对于写操作总是采用写回策略。</p>
+<h2 id="转换后援缓冲器（TLB）"><a href="#转换后援缓冲器（TLB）" class="headerlink" title="转换后援缓冲器（TLB）"></a>转换后援缓冲器（TLB）</h2><p>除了通用硬件高速缓存用于加快内存块的访问速度以外，8086处理器还包含了另一个称为转换后援缓冲器（Translation Lookaside Buffer）的高速缓存用于加快线性地址转化。</p>
+<p>当一个线性地址第一次使用时，慢速访问Ram中的页表计算出相应的物理地址。同时物理地址被放在一个TLB表项中。以便以后对同一个线性地址的引用可以快速转换。</p>
+<p>多处理器情况下，每个cpu都有自己的TLB，这叫cpu的本地TLB。TLB无需同步，因为运行在现有cpu上的进程可以使用同一线性地址与不同的物理地址发生联系，</p>
+<p>当CPU的cr3控制寄存器被修改时，硬件自动使得本地TLB的所有表项无效，这是因为新的页表被启用而TLB指向的是旧数据。</p>
+<h2 id="缓冲器和进程切换"><a href="#缓冲器和进程切换" class="headerlink" title="缓冲器和进程切换"></a>缓冲器和进程切换</h2><p>前提条件：</p>
+<ul>
+<li>对于多核CPU，每个processor core都有自己的TLB。</li>
+<li>对于进程来说，地址空间包含共享的内核地址空间和自己的用户地址空间。<br><img src="/./static/%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%92%8C%E7%BC%93%E5%AD%98.png"><br>因此，在进程切换的时候，需要有tlb的操作，以便清除旧进程的影响，具体怎样做呢？</li>
+</ul>
+<h3 id="直接清除或清除部分"><a href="#直接清除或清除部分" class="headerlink" title="直接清除或清除部分"></a>直接清除或清除部分</h3><p>当系统发生进程切换，从进程A切换到进程B，从而导致地址空间也从A切换到B，这时候，我们可以认为在A进程执行过程中，所有TLB和Cache的数据都是for A进程的，一旦切换到B，整个地址空间都不一样了，因此需要全部flush掉。</p>
+<p>这种方案当然没有问题，当进程B被切入执行的时候，其面对的CPU是一个干干净净，从头开始的硬件环境，TLB和Cache中不会有任何的残留的A进程的数据来影响当前B进程的执行。当然，稍微有一点遗憾的就是在B进程开始执行的时候，TLB和Cache都是冰冷的（空空如也），因此，B进程刚开始执行的时候，TLB miss和Cache miss都非常严重，从而导致了性能的下降。我们管这种空TLB叫做cold TLB，它需要随着进程的运行warm up起来才能慢慢发挥起来效果，而在这个时候有可能又会有新的进程被调度了，而造成TLB的颠簸效应。</p>
+<p>地址翻译有global（各个进程共享）和local（进程特定的）的概念，因而tlb entry也有global和local的区分。如果不区分这两个概念，那么进程切换的时候，直接flush该cpu上的所有残余。这样，当进程A切出的时候，留给下一个进程B一个清爽的tlb，而当进程A在其他cpu上再次调度的时候，它面临的也是一个全空的TLB（其他cpu的tlb不会影响）。当然，如果区分global 和local，那么tlb操作也基本类似，只不过进程切换的时候，不是flush该cpu上的所有tlb entry，而是flush所有的tlb local entry就OK了。</p>
+<h3 id="PCID机制"><a href="#PCID机制" class="headerlink" title="PCID机制"></a>PCID机制</h3><p>PCID（进程上下文标识符）是在Westmere架构引入的新特性。简单来说，在此之前，TLB是单纯的VA到PA的转换表，进程1和进程2的VA对应的PA不同，不能放在一起。加上PCID后，转换变成VA + 进程上下文ID到PA的转换表，放在一起完全没有问题了。这样进程1和进程2的页表可以和谐的在TLB中共处，进程在它们之前切换完全不需要预热了！<br>所以新的加载cr3的过程变成了：如果CR4的PCID&#x3D;1，加载CR3就不需要Flush TLB。</p>
+<h1 id="linux-中的分页"><a href="#linux-中的分页" class="headerlink" title="linux 中的分页"></a>linux 中的分页</h1><p>linux采用了一种同时适用于32位和64位的普通分页模型。直到2.6.10版本，linux采用了三级分页模型。从2.6.11版本开始，采用了4级分页模型。<br>图中展示的4中页表分别称为：</p>
+<ul>
+<li>页全局目录(Page Global Directory)</li>
+<li>页上级目录(Page Upper Directory)</li>
+<li>页中间目录(Page middle Directory)</li>
+<li>页表(Page Table)<br>每一部分的大小与具体的计算机体系结构有关。对于没有启用物理地址扩展的32位系统，两级页表就够用，这时linux使页上级目录和页中间目录flag都为0，从根本上取消页上级目录和页中间目录字段。这是通过把对应目录项数设置为1，并把这两个目录项映射到页全局目录的一个适当的目录项实现的。</li>
+</ul>
+<p><img src="/./static/linux%E5%88%86%E9%A1%B5%E6%A8%A1%E5%BC%8F.png"><br>对于启用物理地址扩展的32位系统，linux 的全局目录对应8086的页目录指针表（PDPT），取消页上级目录，页中间目录对应8086的页目录，页表对应8086的页表</p>
+<p>对于64位系统使用三级还是四级取决于硬件对线性地址的划分。如图：<br><img src="/./static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png"></p>
+<p>linux的进程处理很大程度上依赖于分页机制。事实上线性地址到物理地址的自动转换使得下面的设计变得可行。</p>
+<ul>
+<li>每个进程分配一块不同的物理地址空间，这确保了可以有效地防止寻址错误。</li>
+<li>区别页（一组数据）和页框（主存中的物理地址）之不同。这就允许存放在某个页框中一个页可以保存到磁盘上，然后后面重新装入。这就是虚拟内存机制的基本要素。</li>
+</ul>
+<p>每个进程有它自己的页全局目录和自己的页表集。进程切换时，linux把cr3控制寄存器的内容保存在前一个执行进程的描述符中，然后把要执行进程的描述符中的值装入cr3中。</p>
+<h2 id="物理内存布局"><a href="#物理内存布局" class="headerlink" title="物理内存布局"></a>物理内存布局</h2><p> 在初始化阶段，内核必须建立一个物理地址映射来指定哪些物理地址范围对内核可用而哪些不可用（或者是用于映射硬件设备I&#x2F;O的共享内存，或者相应的页框包含BIOS数据）</p>
+<p> 内核将下列页框标记为保留：</p>
+<ul>
+<li>在不可用物理地址范围内的页框</li>
+<li>含有内核代码和已初始化的数据结构的页框</li>
+</ul>
+<p>保留页框中的数据不会被动态分配或交换到磁盘上</p>
+<p>一般来说，linux安装在RAM中从内存物理地址0x00100000（1MB）开始的地方，所需的页框总数依赖于内核的配置方案：典型配置可以被安装在小于3M的ram中。</p>
+<p>最开始的地方被保留的原因：</p>
+<ul>
+<li>页框0由bios使用，存放加电自检找到的系统硬件配置</li>
+<li>物理地址0x000a0000-0x000fffff范围通常留给BOIS例程，并映射ISA图形卡上的内部内存。这个区域就是所有IBM兼容PC上从640KB到1MB之间著名的洞：物理地址存在但被保留，对应的页框不能被操作系统使用</li>
+<li>第一个1MB内的其他页框可能由特定的计算机模型保留，例如，IBM Thinkpnd 把0xa0页框映射到0x9f页框。</li>
+</ul>
+<p>在启动的开始阶段，内核会询问bios并了解物理内存的大小。在新近计算机中，内核也调用bios过程建立一组物理地址范围和其对应的内存类型</p>
+<p>随后，内核执行machine_specific_memory_setup()函数，该函数建立物理地址映射。如果此表可以从bios获取到，内核就基于bios构建；如果不能获取内核按照保守的缺省设置进行构建：从0x9f(LOWMEMSIZE())到0x100(HIGH_MEMORY)号的所有页框都标记为保留。<br><img src="/./static/bios%E6%8F%90%E4%BE%9B%E7%9A%84%E7%89%A9%E7%90%86%E5%9C%B0%E5%9D%80%E6%98%A0%E5%B0%84%E4%B8%BE%E4%BE%8B.png"></p>
+<p>上图中显示了128MB RAM计算机的典型配置。从0x07ff3000到0x07ffffff的物理地址范围被标记为保留，因为它被硬件映射到BIOS的ROM芯片。</p>
+<p>为了避免把内核装入一组不连续的页框里，linux更愿意跳过RAM的第一个RAM。明确的说，linux用PC体系结构未保留的页框来动态存放所分配的页。<br><img src="/./static/linux2.6%E7%9A%84%E5%89%8D768%E4%B8%AA%E9%A1%B5%E6%A1%86%EF%BC%883MB%EF%BC%89.png"><br>图中出现的符号并没有在linux源码中定义，它们是编译内核时产生的（见System.map）。符号_text 对应于物理地址0x00100000,表示内核代码第一个字节的地址。内核代码的结束位置由_etext表示。</p>
+<h2 id="进程页表"><a href="#进程页表" class="headerlink" title="进程页表"></a>进程页表</h2><ul>
+<li>从0x00000000到0xbfffffff的线性地址，无论进程运行在用户态还是内核态都可以寻址 （进程自己的空间）</li>
+<li>从0xc0000000(PAGE_OFFSET)到0xffffffff的线性地址，只有内核态的进程才可以寻址。（共享内核空间）<br>页全局目录的第一部分表项映射的线性地址小于0xc0000000(PAE未启用为前768项，启用后为前三项–1&#x2F;4) 第二部分对所有进程来说应该是相同的，它等于内核页全局目录的对应表项</li>
+</ul>
+<h2 id="内核页表"><a href="#内核页表" class="headerlink" title="内核页表"></a>内核页表</h2><p>内核维护着一组自己使用的页表，驻留在所谓的主内核页全局目录（master kernel Page Global Directory）中。系统初始化后，这组页表还从未被任何进程或任何内核线程直接使用；<code>主内核页全局目录的最高目录项作为参考模型，为系统中每个普通进程对应的也全局目录提供参考模型</code><br>内核如何初始化自己的页表： 这个过程分两个阶段：（内核刚装入内存，CPU处于实模式）</p>
+<ol>
+<li>内核创造一个有限的地址空间，包括内核的代码段和数据段、初始页表和用于存放动态数据结构的128K大小的空间。这个最小限度的地址空间仅能够将内核装入RAM和对其初始化核心的数据结构。</li>
+<li>内核重新利用剩余的RAM并适当地建立分页表。</li>
+</ol>
+<h3 id="临时内核页表"><a href="#临时内核页表" class="headerlink" title="临时内核页表"></a>临时内核页表</h3><p>临时页全局目录表是在内核编译过程静态初始化的，临时页表是由arch&#x2F;i386&#x2F;kernel&#x2F;head.S–&gt;<code>startup_32()</code>汇编语言函数初始化的。（这里页上级目录和页中间目录项都相当于页全局目录项）。</p>
+<p>临时页全局目录放在<code>swapper_pg_dir</code>变量中。临时页表在pg0变量出开始存放。紧接在内核未初始化的数据段后面。</p>
+<p>假设：内核使用的段、临时页表和128K的内存范围能容纳于RAM前8M空间里，为了映射前8M空间，需要用到两个页表。</p>
+<p>分页的第一个阶段目标是允许实模式和保护模式下都能很容易地对这8M寻址。因此内核必须创建一个映射，把0x00000000到0x007fffff的线性地址（<code>实模式支持</code>）和0xc0000000到0xc07fffff的线性地址（<code>保护模式支持</code>）映射到从0x00000000到0x007fffff的物理地址。</p>
+<p>内核通过把<code>swapper_pg_dir</code>所有项都填充为0来创建期望的映射，0、1、0x300(十进制768)、0x301(十进制769)这四项除外，这四项初始化方式如下：</p>
+<ul>
+<li>0项和0x300的地址字段设置为pg0的物理地址，1项和0x301项设置为紧随pg0后页框的物理地址。</li>
+<li>把这四个项中的 Present、Read&#x2F;Write和User&#x2F;Supervisor标志置位。</li>
+<li>把这四个项中的Accessed、Dirty、PCD、PWD和Page Size 标志清零。</li>
+</ul>
+<p>startup_up() 也启用分页单元，通过向cr3控制寄存器装入  <code>swapper_pg_dir</code>的地址及设置cr0控制寄存器的PG标志来达到这个目的。(__PAGE_OFFSET &#x3D; Oxc0000000)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line"> * Enable paging</span><br><span class="line"> */</span><br><span class="line">	movl $swapper_pg_dir-__PAGE_OFFSET,%eax</span><br><span class="line">	movl %eax,%cr3		/* set the page table pointer.. */</span><br><span class="line">	movl %cr0,%eax</span><br><span class="line">	orl $0x80000000,%eax</span><br><span class="line">	movl %eax,%cr0		/* ..and set paging (PG) bit */</span><br><span class="line">	ljmp $__BOOT_CS,$1f	/* Clear prefetch and normalize %eip */</span><br><span class="line">1:</span><br><span class="line">	/* Set up the stack pointer */</span><br><span class="line">	lss stack_start,%esp</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="当RAM小于896MB时的最终内核页表"><a href="#当RAM小于896MB时的最终内核页表" class="headerlink" title="当RAM小于896MB时的最终内核页表"></a>当RAM小于896MB时的最终内核页表</h2><p>由内核页表所提供的最终映射必须把从0xc0000000开始的线性地址转换为从0开始的物理地址</p>
+<p>宏__pa 用于把从PAGE_OFFSET开始的线性地址转为相应的物理地址而宏__va做相反的转化。</p>
+<p>主内核页全局目录仍然保存在swaper_pg_dir变量中。它由<code>paging_init()</code> 函数初始化。该函数进行如下操作：</p>
+<ol>
+<li>调用pagetable_init()适当地建立页表项。</li>
+<li>把swapper_pg_dir的物理地址写入cr3控制寄存器中</li>
+<li>如果CPU支持PAE并且编译时内核支持PAE，则将cr4寄存器的PAE标志位置位</li>
+<li>调用__flush_tlb_all() 使TLB的所有项无效</li>
+</ol>
+<p>小于896MB时32位物理地址足够对所有可用RAM进行寻址，没必要激活PAE机制。<br>swaper_pg_dir 初始化如下：<br><img src="/./static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-1.png"><br>假定CPU支持4MB页和“全局（global）”TLB表项的8086处理器。如果全局目录项对应的是0xc000000之上的线性地址，则把所有这些项的User&#x2F;Supervisor标志清0，以拒绝用户态进程访问内核地址空间。还要注意Page Size被置位使得内核可以通过大型页来对RAM进行寻址（扩展分页）</p>
+<p>starup_32()函数创建的物理内存前8MB的恒等映射用来完成内核的初始化。映射不需要时，内核调用zap_low_mappings()函数清除对应的页表项。后面<code>固定映射的线性地址</code>一节会详细说明内核如何调整</p>
+<h2 id="当RAM在896MB和8096MB之间时的最终内核页表"><a href="#当RAM在896MB和8096MB之间时的最终内核页表" class="headerlink" title="当RAM在896MB和8096MB之间时的最终内核页表"></a>当RAM在896MB和8096MB之间时的最终内核页表</h2><p>这种情况下，并不把RAM全部映射到内核地址空间。<br>内核使用前一种情况初始化</p>
+<p>线性地址的最高128M留给几种映射（固定映射的线性地址、非连续内存区的线性地址）去用。因此映射RAM所剩空间为1GB-128MB&#x3D;896MB</p>
+<h2 id="当RAM大于8096MB时的最终内核页表"><a href="#当RAM大于8096MB时的最终内核页表" class="headerlink" title="当RAM大于8096MB时的最终内核页表"></a>当RAM大于8096MB时的最终内核页表</h2><p>以下情况出现时采用此情况进行初始化：</p>
+<ul>
+<li>CPU模型支持物理地址扩展（PAE）</li>
+<li>RAM容量大于4GB</li>
+<li>内核以PAE支持来编译</li>
+</ul>
+<p>与前一种情况的主要差异是使用了三级分页模型。<br><img src="/./static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-2.png"><br>页全局目录中的前三项与用户线性地址空间相对应，内核用一个空页（empty_zero_page）的地址对这三项进行初始化。第四项用页中间目录（pmd）的地址初始化，该页中间目录是通过调用<code>alloc_bootmem_low_pages()</code>分配的。页中间目录的前448项（共512项，后64留给非连续内存分配;在第8章）用RAM前896MB的物理地址填充。</p>
+<p>注意：支持PAE的CPU也支持大型2MB页和全局页。只要可能，linux使用大型页来减少页表数。</p>
+<p>然后页全局目录的第四项被拷贝到第一项，这样好为线性地址空间的前896MB中的低物理内存映射作镜像。为了完成对SMP系统的初始化，此映射是必须的；当这个映射不再需要时，内核调用zap_low_mappings()函数清除对应的页表项，和前面一样。</p>
+<h2 id="固定映射的线性地址"><a href="#固定映射的线性地址" class="headerlink" title="固定映射的线性地址"></a>固定映射的线性地址</h2><p>在前面写过，内核线性地址的第四个GB（0xc0000000）的初始部分映射的是系统的物理内存。另外，至少128MB的线性地址总是留作他用，因为内核使用这些线性地址实现非连续内存分配和固定映射的线性地址。</p>
+<p>非连续内存分配是动态分配和释放内存页的一种特殊方式，在第八章（非连续内存区的线性地址）进行说明。</p>
+<p>固定映射的线性地址（fix-mapped linear address）基本上是一种类似于0xffffc000这样的常量线性地址，其对应的物理地址不必等于线性地址减去0xc000000，而是可以以任意方式建立。每个固定映射的线性地址都映射一个物理内存的页框。内核使用固定映射的线性地址来代替指针变量，因为这些指针变量的值从不改变。<br><img src="/./static/%E5%86%85%E6%A0%B8%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83.png"><br>每个固定映射的线性地址都存放在线性地址第四个GB的末端。</p>
+<h2 id="硬件高速缓存和TLB"><a href="#硬件高速缓存和TLB" class="headerlink" title="硬件高速缓存和TLB"></a>硬件高速缓存和TLB</h2><p>为了使得 硬件高速缓存和TLB的效果最大化。内核在下列决策中考虑体系结构：</p>
+<ul>
+<li>数据结构中最常使用的字段放在该数据结构的低偏移部分，以便它们能够处于高速缓存的同一行中。</li>
+<li>当为一大组数据结构分配空间时，内核试图把它们都存放在内存中，以便所有高速缓存行按照同一方式使用。</li>
+</ul>
+<h3 id="处理TLB"><a href="#处理TLB" class="headerlink" title="处理TLB"></a>处理TLB</h3><p>处理器不能自动同步它们自己的TLB高速缓存，因为决定线性地址和物理地址之间映射何时有效的是内核， 而不是硬件。<br>linux 提供了几种在合适时机刷新TLB的方法。</p>
+<p>一般来说，任何进程切换都会暗示着更换活动页表集合。相对于过期页表，本地TLB表项必须刷新；在这个过程中是把新的页全局目录地址写入cr3寄存器时自动完成的。不过内核在特殊情况会避免刷新。</p>
+<ul>
+<li>共享相同页表集的普通进程之间</li>
+<li>普通进程和内核线程之间<br>原因：内核线程并不拥有自己的页表集，它使用的是一个普通进程的页表集。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2023/01/12/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/" data-id="cm6yz33dd00168zlvc8zhf3yp" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(二十章)程序的执行-未完成" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E5%8D%81%E7%AB%A0)%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C-%E6%9C%AA%E5%AE%8C%E6%88%90/" class="article-date">
+  <time datetime="2022-12-29T10:00:00.000Z" itemprop="datePublished">2022-12-29</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E5%8D%81%E7%AB%A0)%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C-%E6%9C%AA%E5%AE%8C%E6%88%90/">(二十章)linux程序的执行-未完成</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="程序的执行"><a href="#程序的执行" class="headerlink" title="程序的执行"></a>程序的执行</h1><ul>
+<li>深入理解linux 内核： 第二十章 程序的执行<br>keywords： 程序的执行</li>
+</ul>
+<h2 id="可执行文件"><a href="#可执行文件" class="headerlink" title="可执行文件"></a>可执行文件</h2><p><img src="/./static/%E7%94%A8%E6%88%B7%E6%80%81%E5%A0%86%E6%A0%88%E7%9A%84%E5%BA%95%E9%83%A8%E5%8D%95%E5%85%83.png"></p>
+<p>静态库：链接时复制代码库的内容到可执行文件<br>动态库：当程序被装入内存执行时，一个名为动态链接器（dynamic linker,也叫ld.so）的程序分析可执行文件中的库名，确定所需库在系统中的位置。进程也可以使用dlopen()库函数来动态加载库。</p>
+<p>unix程序的线性地址空间传统上被划分为几个叫做段的区间：</p>
+<ul>
+<li>正文段：包含程序的可执行代码</li>
+<li>已初始化数据段：包含已初始化数据，也就是初值放在可执行文件中的所有静态变量和全局变量。</li>
+<li>未初始化数据段(bss段)：包含未初始化数据，也就是初值未被放在可执行文件中的所有全局变量。</li>
+<li>堆栈段：包含程序的堆栈，堆栈中包含返回地址，参数和被执行函数的局部变量</li>
+</ul>
+<p>mm_struct 内存描述符包含一些字段来标识相应进程特定线性区的作用。<br><img src="/./static/mm_struct%E4%B8%AD%E5%8C%85%E5%90%AB%E7%9A%84%E8%BF%9B%E7%A8%8B%E7%89%B9%E5%AE%9A%E7%BA%BF%E6%80%A7%E5%8C%BA%E7%9B%B8%E5%85%B3%E5%AD%97%E6%AE%B5.png"></p>
+<p>灵活线性布局（flexible memory region lagout） 在内核版本2.6.9中引入；</p>
+<p><img src="/./static/8086%E7%BB%93%E6%9E%84%E7%9A%84%E7%BA%BF%E6%80%A7%E5%8C%BA%E5%B8%83%E5%B1%80.png"></p>
+<p>当RLIMIT_STACK资源限制可以确定用户态堆栈大小时，通常使用灵活布局。<br>当RLIMIT_STACK值为无线(infinity)或者sysctl_legacy_va_layout&#x3D;1时，内核无法确定用户态堆栈大小，仍使用经典布局。</p>
+<p>灵活布局的优点：进程可以更好地使用用户态线性地址空间，经典：堆限制为1GB其他的可以使用约2GB，灵活：堆和其他线性区自由扩展。</p>
+<h3 id="执行跟踪-execution-tracing"><a href="#执行跟踪-execution-tracing" class="headerlink" title="执行跟踪(execution tracing)"></a>执行跟踪(execution tracing)</h3>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E5%8D%81%E7%AB%A0)%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C-%E6%9C%AA%E5%AE%8C%E6%88%90/" data-id="cm6yz33db00128zlvgytnhvks" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十章)系统调用-未完成" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E7%AB%A0)%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E6%9C%AA%E5%AE%8C%E6%88%90/" class="article-date">
+  <time datetime="2022-12-29T10:00:00.000Z" itemprop="datePublished">2022-12-29</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E7%AB%A0)%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E6%9C%AA%E5%AE%8C%E6%88%90/">(十章)linux系统调用-未完成</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="系统调用"><a href="#系统调用" class="headerlink" title="系统调用"></a>系统调用</h1><ul>
+<li>深入理解linux 内核： 第十章 系统调用<br>keywords： 系统调用、system call</li>
+</ul>
+<p>unix系统通过向内核发出系统调用（system call）实现了用户态进程和硬件设置之间的大部分接口。</p>
+<h2 id="POSIX-API-和系统调用"><a href="#POSIX-API-和系统调用" class="headerlink" title="POSIX API 和系统调用"></a>POSIX API 和系统调用</h2><p>POSIX API ：指的是用户态程序所引用的库函数。例如linux 的libc库提供的malloc calloc所提供的能力<br>系统调用：系统提供给用户程序的内核态代码调用接口，用户态库函数不属于内核。</p>
+<p>大多数封装例程返回一个整数，其值的含义依赖于相应的系统调用。返回值-1 通常表示内核不能满足进程请求。libc库中定义的error变量包含特定的出错码。<br>每个出错码都定义为一个常量宏。posix标准指定了很多出错码的宏名，8086系统调用的错误返回码在 include&#x2F;asm&#x2F;error.h 的头文件中定义。</p>
+<h2 id="系统调用处理程序及服务例程"><a href="#系统调用处理程序及服务例程" class="headerlink" title="系统调用处理程序及服务例程"></a>系统调用处理程序及服务例程</h2><p>当用户态进程调用一个系统调用时，CPU切换到内核态并开始执行一个内核函数。</p>
+<p>在8086体系结构中，可以用两种不同的方式调用linux的系统调用。两种方式的最终结果都是跳转到所谓系统调用处理程序的汇编语言函数。</p>
+<p>所有的系统调用都返回一个整数值，这些返回值和封装例程返回值的约定是不同的。在内核中，正数或0表示系统调用成功结束，负数表示一个出错条件。在后一种情况下，这个值就是被存放在error中必须返回给应用程序的负出错码。</p>
+<p>系统调用处理程序与其他异常处理程序的结构类似，执行以下操作：</p>
+<ol>
+<li>在内核态堆栈保存大多数寄存器的内容（对所有系统调用通用，并使用汇编实现）</li>
+<li>调用名为系统调用服务例程（system call service routine）的相应C函数来处理系统调用</li>
+<li>退出系统调用处理程序：用保存在内核栈中的值加载寄存器，CPU从内核态切换回用户态（对所有系统调用通用，并使用汇编实现）</li>
+</ol>
+<p>xyz() 系统调用对应的服务例程的名字通常是 sys_xyz()。 不过有一些例外。</p>
+<p>下图显示了使用系统调用的应用程序、相应的封装例程、系统调用处理程序及系统调用服务例程之间的关系。占位符“SYSTEMCALL” 和 “SYSTEMEXIT”是真正的汇编语言指令，它们执行用户态和内核态之间的切换。<br><img src="/./static/%E8%B0%83%E7%94%A8%E4%B8%80%E4%B8%AA%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"></p>
+<p>为了把系统调用号和相应的服务例程关联起来，内核使用了系统调用分派表（dispatch table）。这个表存放在sys_call_table数组中，有NR_syscalls个表项。剩余位置对应的是 sys_ni_syscall()函数（仅返回错误码-ENOSYS）地址。</p>
+<h3 id="进入和退出系统调用"><a href="#进入和退出系统调用" class="headerlink" title="进入和退出系统调用"></a>进入和退出系统调用</h3><p>本地应用可以通过两种不同的方式调用系统调用：</p>
+<ul>
+<li>执行 int $0x80 汇编语言指令。在linux老版本中，这是用户态切换到内核态的唯一方式</li>
+<li>执行 sysenter 汇编语言指令。在Intel Pentium II 芯片引入了这条指令，linux&gt;2.6支持这条指令</li>
+</ul>
+<p>内核可以通过两种方式从系统调用退出，从而使CPU切换到用户态：</p>
+<ul>
+<li>执行iret汇编语言指令</li>
+<li>执行sysexit 汇编语言指令，和sysenter 一起引入</li>
+</ul>
+<p>支持进入内核的两种方式并不简单，因为：</p>
+<ul>
+<li>内核必须支持仅使用int $0x80 指令的旧函数库，同时支持sysenter 的新函数库</li>
+<li>使用 sysenter 指令的标准库必须能处理仅支持 int $0x80 指令的旧内核</li>
+<li>内核和标准库必须技能运行在不含  sysenter指令的旧处理器上，也能运行在包含它的新处理器上</li>
+</ul>
+<h3 id="通过-int-0x80-发出系统调用"><a href="#通过-int-0x80-发出系统调用" class="headerlink" title="通过  int $0x80 发出系统调用"></a>通过  int $0x80 发出系统调用</h3><p>向量 128（十六禁止0x80）对应于内核入口点。在内核初始化时调用的函数trap_init():</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set_system_gate(0x80,&amp;system_call)</span><br></pre></td></tr></table></figure>
+<p>该调用设置一些门描述符字段：</p>
+<p><img src="/./static/0x80%E4%B8%AD%E6%96%AD%E9%97%A8%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5%E8%AE%BE%E7%BD%AE.png"></p>
+<p>system_call() 函数处理过程：</p>
+<ol>
+<li>把系统调用号和这个异常处理程序用到的所有CPU寄存器保存到相应的栈</li>
+<li>在ebx中存放当前进程的thread_info数据结构的地址</li>
+<li>通过检查thread_info的flag字段的标志判断是否有调试程序，如果是，则进入和退出时调用do_syscall_trace()函数（停止current，并因此允许调试进程收集数据）</li>
+<li>对系统调用号进行有效性检查，如果无效，返回-ENOSYS</li>
+<li>调用系统调用号对应的服务例程。</li>
+<li>从eax获取服务例程返回值，并写入到保存用户态eax的位置的值。</li>
+<li>关中断并检查thread_info的flag字段，根据标志进行处理</li>
+<li>调用iret返回</li>
+</ol>
+<h3 id="通过-sysenter-指令发出的系统调用"><a href="#通过-sysenter-指令发出的系统调用" class="headerlink" title="通过 sysenter 指令发出的系统调用"></a>通过 sysenter 指令发出的系统调用</h3><p>因为int指令需要执行几个一致性和安全性检查，所以速度较慢。intel文档中提供了“快速系统调用”sysenter指令，提供了一种从用户态到内核态的快速切换方法。</p>
+<p>汇编指令 sysenter 使用三种特殊寄存器，它们必须提前装入下列信息：</p>
+<ul>
+<li>SYSTENTER_CS_MSR: 内核代码的段选择符</li>
+<li>SYSTENTER_EIP_MSR：内核入口点的线性地址</li>
+<li>SYSTENTER_ESP_MSR：内核堆栈指针<br>当执行sysenter指令时,CPU会使用上述寄存器的值替换 cs,eip,esp,ss(SYSTENTER_CS_MSR+8)。因此CPU会切换到内核态并开始执行内核入口点第一条指令。</li>
+</ul>
+<p>退出时的情况和int $0x80 发出系统调用类似，返回时使用的是sysexit指令。</p>
+<ol>
+<li>把 SYSENTER_CS_MSR寄存器中的值加16所得到的结果加载到cs寄存器。</li>
+</ol>
+<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E7%AB%A0)%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E6%9C%AA%E5%AE%8C%E6%88%90/" data-id="cm6yz33do001u8zlv9ab3dmk5" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(九章)进程地址空间" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/26/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4/" class="article-date">
+  <time datetime="2022-12-26T10:00:00.000Z" itemprop="datePublished">2022-12-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/26/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4/">(九章)linux进程地址空间</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="进程地址空间"><a href="#进程地址空间" class="headerlink" title="进程地址空间"></a>进程地址空间</h1><ul>
+<li>深入理解linux 内核： 第九章 进程地址空间<br>keywords： 内存管理</li>
+</ul>
+<p>内核可以通过以下方式获得动态内存空间：</p>
+<ul>
+<li>__get_free_pages()或alloc_pages() 从分区页框获得页框</li>
+<li>kmem_cache_alloc()或kmalloc()使用slab分配器为专用或通用对象分配块</li>
+<li>vmalloc()或vmalloc_32()获得一块非连续的内存区</li>
+</ul>
+<p>当用户态进程分配内存时，因为优先级没有内核高所以：</p>
+<ul>
+<li>进程对动态内存的请求被认为时不紧迫的，内核总是尽量推迟给用户态进程分配动态内存。</li>
+<li>由于用户进程不可被信任，内核必须能捕获用户态进程引起的所有寻址错误</li>
+</ul>
+<p>内核使用线性地址区间使用权+缺页异常来实现对用户态内存推迟分配。</p>
+<h2 id="进程的地址空间"><a href="#进程的地址空间" class="headerlink" title="进程的地址空间"></a>进程的地址空间</h2><p>内核使用线性区资源来给进程分配动态内存。<br>当进程引用内存，触发缺页异常时，有两种情况：</p>
+<ul>
+<li>不在线性区资源内，无效地址</li>
+<li>在线性区资源内，待分配</li>
+</ul>
+<p><img src="/./static/%E4%B8%8E%E5%88%9B%E5%BB%BA%E3%80%81%E5%88%A0%E9%99%A4%E7%BA%BF%E6%80%A7%E5%8C%BA%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"></p>
+<h2 id="内存描述符"><a href="#内存描述符" class="headerlink" title="内存描述符"></a>内存描述符</h2><p>与进程地址空间相关的全部信息包含在一个叫内存描述符（memory descriptor）的数据结构中，这个结构的类型为mm_struct,进程描述符的mm字段指向这个结构。</p>
+<p><img src="/./static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B5.png"><br><img src="/./static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B52.png"><br><img src="/./static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B53.png"></p>
+<p>mmlist： 所有的内存描述符存放在一个双向链表中。每个描述符在mmlist存放相邻元素的地址。链表的第一个元素是init_mm的mmlist字段，init_mm是初始化阶段进程0所使用的描述符。mmlist_lock自旋锁用于保护此链表<br>mm_users:次使用计数器，存放共享mm_struct 数据结构的轻量级进程数量。<br>mm_count:内存描述符的主使用计数器，次使用计数器中的个数在这里只作为1单位使用。当mm_count&#x3D;0时解除这个描述符。</p>
+<h3 id="内核线程的内存描述符"><a href="#内核线程的内存描述符" class="headerlink" title="内核线程的内存描述符"></a>内核线程的内存描述符</h3><p>内核线程仅运行在内核态，因此，它们永远不会访问低于TASK_SIZE(等于PAGE_OFFSET,通常为0xc0000000),内核线程不用线性区，所以内存描述符的很多字段没有意义。</p>
+<p>因为大于TASK_SIZE线性地址的页表项应该都是相同的，为了避免无用的TLB和高速缓存刷新，内核线程总是使用一组最近运行的普通进程的页表。在每个进程描述符中包含了两种内存描述符指针：mm(进程拥有的内存)和active_mm(进程正在使用的内存)</p>
+<p>对于普通进程来说 mm&#x3D;active_mm，对于内核进程来说mm&#x3D;null,active_mm&#x3D;前一个进程的active_mm</p>
+<p>当内核态进程修改了页表项,那么就需要更新系统中所有进程页表集合中的对应表项目。linux采用了一种延迟的方式进行修改。（vmalloc&#x2F;vfree -&gt; swapper_pg_dir -&gt; pgd 从而影响init_mm）</p>
+<h2 id="线性区"><a href="#线性区" class="headerlink" title="线性区"></a>线性区</h2><p>linux 通过vm_area_struct的对象实现线性区：<br><img src="/./static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%AD%97%E6%AE%B5.png"></p>
+<ul>
+<li>vm_start 字段包含区间的第一个线性地址</li>
+<li>vm_end字段包含区间以外的第一个线性地址。</li>
+<li>vm_mm字段指向拥有这个区间的进程的mm_struct内存描述符</li>
+<li>增加或删除时会进行合并、拆分、创建等操作，以实现线性地址范围不重复</li>
+</ul>
+<h3 id="线性区数据结构"><a href="#线性区数据结构" class="headerlink" title="线性区数据结构"></a>线性区数据结构</h3><p>进程所拥有的线性区是通过一个简单链表连接在一起的。按照地址顺序排列。</p>
+<p><img src="/./static/%E4%B8%8E%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E7%9B%B8%E5%85%B3%E7%9A%84%E6%8F%8F%E8%BF%B0%E7%AC%A6.png"></p>
+<p>内核使用红黑树来实现快速确定含有指定地址的线性区，使用链表来遍历。</p>
+<h3 id="线性区访问权限"><a href="#线性区访问权限" class="headerlink" title="线性区访问权限"></a>线性区访问权限</h3><p>每个线性区都是由一组号码连续的页组成。<br>页相关的权限标志：</p>
+<ul>
+<li>页表项中的标志：Read&#x2F;Wirte、Present或User&#x2F;Supervisor （8086硬件检查）</li>
+<li>页描述符中的flags字段中的一组标志  （linux使用）</li>
+</ul>
+<p>线性区相关的标志（vm_area_struct描述符的vm_flags字段中）：<br><img src="/./static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E6%A0%87%E5%BF%97.png"></p>
+<p><img src="/./static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E6%A0%87%E5%BF%972.png"></p>
+<h2 id="缺页异常"><a href="#缺页异常" class="headerlink" title="缺页异常"></a>缺页异常</h2><p>缺页异常处理程序会区分两种情况：</p>
+<ul>
+<li>由编程错误引起的异常</li>
+<li>引用属于进程地址空间但还未分配物理页框的页所引起的异常</li>
+</ul>
+<p>do_page_fault函数是8086上的缺页中断处理服务程序，其主要逻辑如下：</p>
+<p><img src="/./static/%E7%BC%BA%E9%A1%B5%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%80%BB%E4%BD%93%E6%96%B9%E6%A1%88.png"></p>
+<p>详细流程图如下：</p>
+<p><img src="/./static/%E7%BC%BA%E9%A1%B5%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E6%B5%81%E7%A8%8B%E5%9B%BE.png"></p>
+<h2 id="创建和删除进程的地址空间"><a href="#创建和删除进程的地址空间" class="headerlink" title="创建和删除进程的地址空间"></a>创建和删除进程的地址空间</h2><p>除了进程主动获取线性区以外，首先要考虑的就是fork调用要求为子进程创建一个完整的新地址空间。相反，当进程结束时，内核撤销它的地址空间。</p>
+<h3 id="创建进程的地址空间"><a href="#创建进程的地址空间" class="headerlink" title="创建进程的地址空间"></a>创建进程的地址空间</h3><p>创建新进程时通过调用copy_mm() 函数。这个函数建立新建成的所有页表和内存描述符。</p>
+<ul>
+<li>传统进程继承父进程的地址空间，并且写时复制。</li>
+<li>轻量级进程使用父进程的地址空间。完全共享。</li>
+</ul>
+<h3 id="删除进程的地址空间"><a href="#删除进程的地址空间" class="headerlink" title="删除进程的地址空间"></a>删除进程的地址空间</h3><p>内核调用exit_mm函数释放进程的地址空间。</p>
+<ol>
+<li>首先判断是不是内核线程，是则直接返回</li>
+<li>检查mm-&gt;waiters标志是否置位，是则生成转储文件</li>
+<li>函数递增内存描述符的主使用计数器，重新设置进程描述符的mm字段，并使处理器处于懒惰TLB模式</li>
+<li>调用mmput() 函数释放局部描述符表、线性区描述符和页表。因为主使用计数器已经递增，所以不释放内存描述符（当要把正在被终止的进程从本地CPU撤销时 由finish_task_switch() 函数释放内存描述符。）。</li>
+</ol>
+<h2 id="堆的管理"><a href="#堆的管理" class="headerlink" title="堆的管理"></a>堆的管理</h2><p>每个unix进程都有一个特殊的线性区,这个线性区就是堆（heap），堆用于满足进程的动态内存请求，内存描述符的start_brk与brk字段分别限定了这个区的开始地址和结束地址。</p>
+<p>进程使用一些API来请求和释放动态内存：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">malloc(size)</span><br><span class="line">calloc(n,size)</span><br><span class="line">realloc(ptr,size):改变前面的malloc calloc 分配的内存区字段大小</span><br><span class="line">free(addr)</span><br><span class="line">brk(addr):直接修改堆的大小，addr参数指定 current-&gt;mm-&gt;brk 的新值，返回值是线性区新的结束地址。</span><br><span class="line">sbrk(incr)：类似brk(),incr是增加或减少指定字节的堆大小。</span><br></pre></td></tr></table></figure>
+<p>brk函数和以上列出的函数有所不同，它是唯一一个以系统调用方式实现的函数，其他所有的函数都是使用brk() 和 mmap()系统调用实现的C语言库函数。</p>
+<h1 id="补一个数据结构图，看不懂了"><a href="#补一个数据结构图，看不懂了" class="headerlink" title="补一个数据结构图，看不懂了"></a>补一个数据结构图，看不懂了</h1><p><img src="/./static/drawio/%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%B1%BB%E5%9B%BE.drawio.svg"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/26/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4/" data-id="cm6yz33d9000y8zlv3wwd61ei" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(八章)内存管理" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AB%E7%AB%A0)%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" class="article-date">
+  <time datetime="2022-12-19T10:00:00.000Z" itemprop="datePublished">2022-12-19</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AB%E7%AB%A0)%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">(八章)linux内存管理</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h1><ul>
+<li>深入理解linux 内核： 第八章 内存管理<br>keywords： 内存管理、内核映射、伙伴系统、slab高速缓存</li>
+</ul>
+<p>RAM的某些地址永久分配给内核，用来存放内核代码和静态内核数据结构，其余部分称为动态内存：<br><img src="/./static/%E5%8A%A8%E6%80%81%E5%86%85%E5%AD%98.png"></p>
+<h2 id="页框管理（固定大小页框）"><a href="#页框管理（固定大小页框）" class="headerlink" title="页框管理（固定大小页框）"></a>页框管理（固定大小页框）</h2><p>linux 采用4KB页框大小作为标准的内存分配单元。</p>
+<h3 id="页描述符"><a href="#页描述符" class="headerlink" title="页描述符"></a>页描述符</h3><p>内核必须区分哪些页框是属于进程的页，哪些页框包含的是内核代码或内核数据。那些空闲那些不空闲。<br>内核使用页描述符（page）来描述页框，所有的页描述符存放在mem_map数组中。每个描述符长度为32字节，32&#x2F;4k&#x3D;0.0078125 所以mem_map所需要空间小于整个RAM的1%。<br>virt_to_page(addr)宏产生线性地址addr对应的页描述符地址。pfn_to_page(pfn)宏产生与页框号pfn对应的页描述符地址。<br><img src="/./static/%E9%A1%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br>其中 _count字段： 如果为-1 则页框空闲。大于或等于零时，说明分配给了一个或多个进程。page_count 返回 _count+1&#x3D; 使用者的数目。<br>flags: 包含32个用来描述页框状态的标志。如下图：<br><img src="/./static/%E6%8F%8F%E8%BF%B0%E9%A1%B5%E6%A1%86%E7%8A%B6%E6%80%81%E7%9A%84%E6%A0%87%E5%BF%97.png"></p>
+<h3 id="非一致内存访问（NUMA）"><a href="#非一致内存访问（NUMA）" class="headerlink" title="非一致内存访问（NUMA）"></a>非一致内存访问（NUMA）</h3><p>在非一致内存访问情况下，给定CPU对不同内存单元的访问时间可能不一样。</p>
+<p>每个节点中的物理内存又可以划分为几个管理区（Eone）每个节点都有一个类型为pg_data_t的描述符。所有的节点描述符存放在一个单向链表中，它的第一个元素由pgdat_list变量指向。</p>
+<p><img src="/./static/%E8%8A%82%E7%82%B9%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"></p>
+<p>当NUMA编译不选择时，linux使用单独一个节点，包含所有物理内存。内核假定所有体系结构中物理内存都被划分为一个或多个节点。</p>
+<h3 id="内存管理区"><a href="#内存管理区" class="headerlink" title="内存管理区"></a>内存管理区</h3><p>在实际的计算机系统中，页框的使用是有硬件的制约。在8086体系中的两种硬件约束：</p>
+<ul>
+<li>ISA总线的直接内存存取（DMA）处理器有一个严格的限制：只能对RAM的前16MB寻址。</li>
+<li>在具有大容量RAM的现代32位计算机中，CPU不能直接访问所有的物理内存，因为线性地址空间太小。</li>
+</ul>
+<p>为了处理上面的情况，linux2.6把每个内存节点的物理内存划分为三个管理区（zone）。在8086 UMA体系结构中的管理区为：</p>
+<ul>
+<li>ZONE_DMA: 包含低于16MB的内存页框</li>
+<li>ZONE_NORMAL: 包含高于16MB且低于896MB的内存页框</li>
+<li>ZONE_HIGHMEM: 包含从896MB开始高于896MB的内存页框，在64位系统上 总是为空。</li>
+</ul>
+<p>每个内存管理区都有自己的描述符，字段如下图：<br><img src="/./static/%E7%AE%A1%E7%90%86%E5%8C%BA%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br><img src="/./static/%E7%AE%A1%E7%90%86%E5%8C%BA%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B52.png"></p>
+<ul>
+<li>管理区中许多字段用于回收页框（十七章）。</li>
+<li>每个页框描述符都有到内存界面和内存节点管理区的链接。</li>
+<li>当内核调用一个内存分配函数时，必须指明请求页框所在的管理区。</li>
+</ul>
+<h3 id="保留的页框池"><a href="#保留的页框池" class="headerlink" title="保留的页框池"></a>保留的页框池</h3><p>为了减少内核申请内存失败的几率，内核为原子分配请求保留了一个页框池，只有在内存不足时使用。<br>保留内存的数量（kb）存放在min_free_kbytes变量中。其大小取决于ZONE_DMA和ZONE_NORMAL内存管理区的页框数目，且大于等于128小于等于65536。</p>
+<h3 id="分区页框分配器"><a href="#分区页框分配器" class="headerlink" title="分区页框分配器"></a>分区页框分配器</h3><p>分区页框分配器（zoned page frame allocator）子系统用于处理对连续页框组的内存分配请求。</p>
+<p><img src="/./static/%E5%88%86%E5%8C%BA%E9%A1%B5%E6%A1%86%E5%88%86%E9%85%8D%E5%99%A8%E7%9A%84%E7%BB%84%E6%88%90.png"></p>
+<p>为了更好的系统性能，一小部分页框保留在高速缓存中用于快速地满足对单个页框的分配请求。</p>
+<h3 id="高端内存页框的内核映射"><a href="#高端内存页框的内核映射" class="headerlink" title="高端内存页框的内核映射"></a>高端内存页框的内核映射</h3><p>在32位系统上，为了兼容PAE机制，896MB边界以上的页框并不映射在内核线性地址空间的第4个GB，因此内核不能直接访问他们。所以：</p>
+<ul>
+<li>高端内存页框分配只能使用allco_pages() 和 它的快捷函数 alloc_page() 这样返回第一个分配页框的页描述符的线性地址。因为页框的线性地址根本不存在。</li>
+<li>内核线性地址空间中的后128MB中的一部分专门用于映射高端内存页框。使用方式是重复临时使用，这样整个高端内存可以在不同时间被访问。</li>
+</ul>
+<p>内核可以采用三种机制将页框映射到高端内存：</p>
+<ol>
+<li>永久内核映射：不能用于中断处理程序和可延迟函数，阻塞。建立高端内核页框到内核地址空间的长期映射。</li>
+<li>临时内核映射：可用于中断处理程序和可延迟函数，使用此必须保证没有其他的内核控制路径使用同样的映射，不阻塞。</li>
+<li>非连续内存分配：见 非连续内存管理区 一节</li>
+</ol>
+<h3 id="伙伴系统算法"><a href="#伙伴系统算法" class="headerlink" title="伙伴系统算法"></a>伙伴系统算法</h3><p>解决频繁申请和释放大小不同的一组连续页框，解决存在的<code>页框碎片</code>问题（<code>外碎片</code> <code>external fragmentation</code>）。防止剩余空间总量够但是无法申请大块连续页框的问题。<br>理论上解决方案有两个：</p>
+<ol>
+<li>利用分页单元把一组非连续的空闲页框映射到连续的内存空间（见 非连续内存区管理 一节）</li>
+<li>使用一种适当的方法记录现存的空闲连续页框块的情况，避免为满足小块请求而分割大的空闲块（本章节）<br>基于下面三种原因，内核首选第二种方法：</li>
+<li>连续的页框确实是必要的，比如DMA传送几个磁盘扇区的数据时。</li>
+<li>修改页表会导致平均访问内存次数的增加，CPU会频繁刷新转换后援缓冲器TLB</li>
+<li>内核通过4MB的页可以访问大块连续的物理内存。</li>
+</ol>
+<p>linux采用伙伴系统（buddy system）算法来解决外碎片问题。</p>
+<ul>
+<li>把所有的空闲页框分为11个链表，每块链表分别包含大小为1,2,4,8…1024个连续的页框，对1024个页框的请求对应着4MB大小的连续的RAM块。每个块的第一个页框的物理地址是该块大小的整数倍（按块大小对齐）</li>
+<li>获取时，对应长度获取不到就拆分更大长度的。</li>
+<li>释放时，尝试将连续的且符合对齐条件的合并为更大的。</li>
+</ul>
+<h3 id="每CPU页框高速缓存"><a href="#每CPU页框高速缓存" class="headerlink" title="每CPU页框高速缓存"></a>每CPU页框高速缓存</h3><p>高速缓存分为以下两种：<br>热高速缓存：位于硬件高速缓存中，适合获取后写入的操作。<br>冷高速缓存：不涉及写入，适用于DMA外设访问。</p>
+<p>实现CPU页框高速缓存的主要数据结构是：内存管理区描述符的pageset 字段中的一个per_cpu_pageset数组数据结构。其中每个元素由两个（热、冷）per_cpu_pages描述符组成。<br>per_cpu_pages描述符字段如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">类型</th>
+<th align="left">名称</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">int</td>
+<td align="left">count</td>
+<td align="left">高速缓存中的页框个数</td>
+</tr>
+<tr>
+<td align="left">int</td>
+<td align="left">low</td>
+<td align="left">下界，表示高速缓存需要补充</td>
+</tr>
+<tr>
+<td align="left">int</td>
+<td align="left">high</td>
+<td align="left">上界，表示高速缓存用尽</td>
+</tr>
+<tr>
+<td align="left">int</td>
+<td align="left">batch</td>
+<td align="left">在高速缓存中将要添加或被删去的页框个数</td>
+</tr>
+<tr>
+<td align="left">struct list_head</td>
+<td align="left">list</td>
+<td align="left">页框描述符表</td>
+</tr>
+</tbody></table>
+<ul>
+<li>如果页框个数低于下界low，内核通过伙伴系统中分配batch个单一页框来补充对应的高速缓存</li>
+<li>如果页框个数超过high，内核从高速缓存中释放batch个页框到伙伴系统</li>
+</ul>
+<p>buffered_rmqueue()函数在指定的内存管理区中分配页框。它使用页框高速缓存来处理单一页框请求。根据参数判断取冷还是热缓存。<br>free_hot_page() free_cold_page() free_hot_cold_page() 用来释放高速缓存。</p>
+<h3 id="管理区分配器"><a href="#管理区分配器" class="headerlink" title="管理区分配器"></a>管理区分配器</h3><p>管理区分配器是内核页框分配器的前端。其必须满足几个目标：</p>
+<ol>
+<li>保护保留的页框池</li>
+<li>内存不足且允许阻塞当前进程时，应当触发页框回收算法；一旦某些页框被释放，管理区分配器将再次尝试分配</li>
+<li>如果可能，应当保存小而珍贵的zone_dma内存管理区。比如对其他内存区的请求，尽量不分配zone_dam 管理区中的页框</li>
+</ol>
+<h2 id="内存区管理（连续物理地址、任意长度内存）"><a href="#内存区管理（连续物理地址、任意长度内存）" class="headerlink" title="内存区管理（连续物理地址、任意长度内存）"></a>内存区管理（连续物理地址、任意长度内存）</h2><p>本节关注内存区（memory area），也就是说具有连续的物理地址和任意长度的内存单元序列。</p>
+<p>伙伴系统算法采用页框作为基本内存区，这适合对大块内存的请求，那怎么处理小块内存的请求呢?</p>
+<p>为了存放很少的字节而分配整个页框，是没有效率的做法。正确的方式是引入一种新的数据结构来描述在统一页框中如何分配小内存区，但这样会引出一个新问题，即<code>内碎片</code> (<code>internal fragmentation</code>).</p>
+<p>一个典型的方法是早期linux使用的：</p>
+<ul>
+<li>提供按几何分布的内存区大小：内存区大小取决于2的幂而不是所存放数据的大小。</li>
+<li>可保证内碎片小于50%</li>
+<li>内核建立13个按照几何分布的空闲内存区链表，从32字节 到131072字节。</li>
+</ul>
+<h3 id="slab分配器"><a href="#slab分配器" class="headerlink" title="slab分配器"></a>slab分配器</h3><p>在伙伴算法之上运行内存区分配算法没有显著的效率。一种更好的算法来自slab分配器模式，算法基于下列前提：</p>
+<ul>
+<li>存放数据的类型可以影响内存区的分配方式。slab把内存区看作对象（object），对象由一组数据结构和几个构造或析构函数组成。为了避免重复初始化对象，slab分配器并不丢弃已分配的对象，而是释放但把它们保存在内存中。</li>
+<li>内核倾向于反复请求同一类型的内存区。例如进程创建，就需要创建一些固定大小的表。反复的进程创建和删除时，slab分配器可以把回收的页框保存在高速缓存中，并很快地重新使用它。</li>
+<li>对于内存区的请求可以根据它们发生的频率来分类。对于预期频繁请求特定大小的内存区，可以创建一组具有适当大小的专用对象来高效处理。</li>
+<li>在引入对象的大小不是几何分布的情况下，利用处理器硬件高速缓存可以达到更好的性能。</li>
+<li>使用伙伴系统分配器会导致处理器硬件高速缓存的效果下降。</li>
+</ul>
+<p>slab把对象分组放进高速缓存。每个高速缓存都是同种类型对象的一种储备。</p>
+<p>包含高速缓存的主内存其被划分为多个slab，每个slab由一个或多个连续的页框组成，这些页框既包含已分配的对象，也包含空闲的对象。</p>
+<p><img src="/./static/slab%E5%88%86%E9%85%8D%E5%99%A8%E7%9A%84%E7%BB%84%E6%88%90.png"></p>
+<p>内核周期性地扫描高速缓存并释放空slab对应的页框。</p>
+<h4 id="高速缓存描述符"><a href="#高速缓存描述符" class="headerlink" title="高速缓存描述符"></a>高速缓存描述符</h4><p>每个高速缓存是由 kmem_cache_t (等于 struct kmem_cache_s 类型)类型的数据结构来描述的。<br><img src="/./static/kmem_cache_t%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%9A%84%E5%AD%97%E6%AE%B5.png"><br><img src="/./static/kmem_list3%E7%BB%93%E6%9E%84.png"></p>
+<h4 id="slab描述符"><a href="#slab描述符" class="headerlink" title="slab描述符"></a>slab描述符</h4><p>高速缓存中的每个slab都有自己的类型为slab的描述符。<br><img src="/./static/slab%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%9A%84%E5%AD%97%E6%AE%B5.png"></p>
+<p>这里不详细分析slab分配器细节，原文讲了很多。</p>
+<h2 id="非连续内存区管理"><a href="#非连续内存区管理" class="headerlink" title="非连续内存区管理"></a>非连续内存区管理</h2><p>如果对内存区的请求不是很频繁，内核也支持通过连续的线性地址来访问非连续的页框。这个模式的主要优点是避免了外碎片，缺点是必须打乱内核页表。<br>linux在几个方面使用非连续内存区：</p>
+<ul>
+<li>为活动的交换区分配数据结构（第十七章）</li>
+<li>为模块分配空间（附录2）</li>
+<li>给某些IO驱动程序分配缓冲区</li>
+</ul>
+<h3 id="非连续内存区的线性地址"><a href="#非连续内存区的线性地址" class="headerlink" title="非连续内存区的线性地址"></a>非连续内存区的线性地址</h3><p><img src="/./static/%E4%BB%8EPAGE_OFFSET%E5%BC%80%E5%A7%8B%E7%9A%84%E7%BA%BF%E6%80%A7%E5%9C%B0%E5%9D%80%E5%8C%BA%E9%97%B4.png"></p>
+<p>为非连续内存区保留的线性地址空间的起始地址由VMALLOC_SATART宏定义，而末尾地址由VMALLOC_END定义。</p>
+<h3 id="非连续内存区的描述符"><a href="#非连续内存区的描述符" class="headerlink" title="非连续内存区的描述符"></a>非连续内存区的描述符</h3><p>每个非连续内存区都对应着一个类型为vm_struct 的描述符，下表列出了它的字段：</p>
+<p><img src="/./static/vm_struct%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%9A%84%E5%AD%97%E6%AE%B5.png"></p>
+<ul>
+<li>size（可用空间）+4096（内存区之间的安全区间大小）是实际使用的空间</li>
+<li>flags表示类型，VM_ALLOC表示使用vmalloc得到的页，VM_MAP是使用vmap 已分配的页，VM_IOREMAP 表示使用ioremap映射的硬件设备的板上内存。<br>通过next字段，这些描述符被插入到一个简单链表中，链表第一个元素地址在vmlist变量中。对vmlist 的访问靠vmlist_lock 读&#x2F;写自旋锁保护.</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AB%E7%AB%A0)%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" data-id="cm6yz33de00198zlvajzodiyc" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(四章)中断和异常-未完成" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/" class="article-date">
+  <time datetime="2022-12-19T10:00:00.000Z" itemprop="datePublished">2022-12-19</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/">(四章)linux中断和异常-未完成</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="中断和异常"><a href="#中断和异常" class="headerlink" title="中断和异常"></a>中断和异常</h1><ul>
+<li>深入理解linux 内核： 第四章 中断和异常<br>keywords： 中断、异常</li>
+</ul>
+<h2 id="中断和异常-1"><a href="#中断和异常-1" class="headerlink" title="中断和异常"></a>中断和异常</h2><p>中断：</p>
+<ul>
+<li>可屏蔽中断（maskable interrupt）：IO设备发出的所有中断请求（IRQ）。可屏蔽中断可处于两种状态（屏蔽的（masked）或非屏蔽的（unmasked））</li>
+<li>非屏蔽中断(nonmaskable interrupt)：只有几个危急事件（如硬件故障）才引起非屏蔽中断。</li>
+</ul>
+<p>异常：</p>
+<ul>
+<li><p>处理器探测异常（processor-detected exception）</p>
+<ul>
+<li>故障（fault）:通常可以纠正，保存在eip中的值是引起故障的指令地址， 例如<code>缺页异常</code>.</li>
+<li>陷阱（trap）：在陷阱指令执行后立刻报告；保存在eip中的值是一个随后要执行的指令地址。陷阱的主要用途是为了<code>调试程序时下断点</code></li>
+<li>异常终止（abort）：发生一个严重错误；控制单元出问题，不能在eip寄存器中保存异常指令确切位置。如<code>硬件故障</code>或系<code>统表中无效的值或不一致的值</code>,控制权切换到异常终止处理程序，强制终止受影响的进程。</li>
+</ul>
+</li>
+<li><p>编程异常（programmed exception）：在编程者发出请求时发生。由int或int3 指令触发；当into（检查溢出）和bound（检查地址出界）指令检查的条件不为真时，也引发编程异常。控制单元把它当作<code>陷阱（trap）</code>处理。编程异常通常也叫做<code>软中断（software interrupt）</code>:用于执行<code>系统调用</code>以及给调试程序通报一个特定的事件</p>
+</li>
+</ul>
+<p>每个中断或异常是由0-255之间的一个数来标识。intel把这个8位的无符号证书叫做一个向量（vector）.非屏蔽中断的向量和异常的向量是固定的，而可屏蔽中断的向量可以通过对中断控制器进行编程来实现</p>
+<h3 id="IRQ和中断"><a href="#IRQ和中断" class="headerlink" title="IRQ和中断"></a>IRQ和中断</h3><p>IRQ(interrupt ReQuest)：能发出中断的设备对外提供IRQ线。所有的IRQ线都与一个名为可编程中断控制器（Programmable Interrpt Controuer,PIC）的硬件电路的输入引脚相连。可编程中断控制器执行下列动作：</p>
+<ol>
+<li>监视IRQ线，检查产生的信号（raised signal）. 如果同时有多条IRQ线上产生信号，就选择引脚编号较小的IRQ线(IRQ0 用于定时测量)</li>
+<li>如果一个引发信号出现在IRQ线上：<ol>
+<li>把收到的引发信号转成对应的向量</li>
+<li>把这个向量存放在中断控制器的一个I&#x2F;O端口，从而允许CPU通过数据总线读取此向量。</li>
+<li>把引发信号发送到处理器的INTR引脚，即产生一个中断。</li>
+<li>等待，直到CPU把这个中断信号写进可编程中断控制器的一个I&#x2F;O 端口来确认它被处理；这种情况发生时，清INTR线。</li>
+</ol>
+</li>
+<li>返回第一步</li>
+</ol>
+<p>第一条IRQ线通常表示成IRQ0。与IRQn关联的Intel的缺省向量是n+32。通过向中断控制器端口发布合适的指令，就可以修改IRQ和向量之间的映射。<br>禁止的中断是不会丢失的，一旦再被激活又会被发送到CPU，因此中断处理程序可以依赖此特性来依次处理多个中断。</p>
+<p>传统PIC由两片8259A风格的外部芯片“级联”的，每个芯片可以处理8个不同的IRQ输入线。因此可用IRQ线数量为15.</p>
+<h3 id="高级可编程中断控制器"><a href="#高级可编程中断控制器" class="headerlink" title="高级可编程中断控制器"></a>高级可编程中断控制器</h3><p>前面的可编程中断控制器是在单CPU情况下使用的，主PIC的输出直接连接到CPU的INTR引脚。如果系统中包含多个CPU，这种方法就不再有效，需要更复杂的PIC。</p>
+<p>高级可编程控制器（I&#x2F;O Advanced Programmable Interrupt Controller,I&#x2F;O APIC）用于替代老式的8259A可编程中断控制器。新主板为了兼容性都包含这两种芯片。另外8086处理器当前所有的CPU都含有一个本地APIC，每个本地APIC都有32位的寄存器、一个内部时钟、一个本地定时设备及为本地APIC中断保留的两条额外的IRQ线 LINT0 和 LINT1.所有本地APIC都连接到一个外部APIC，形成一个多APIC的系统。</p>
+<p><img src="/./static/%E5%A4%9AAPIC%E7%B3%BB%E7%BB%9F.png"></p>
+<p>I&#x2F;O APIC的组成为：</p>
+<ul>
+<li>一组24条IRQ线：中断优先级并不与引脚号相关联</li>
+<li>一张24项的中断重定向表（Interrupt Redirection Table）：中断重定向表中每一项都可以被单独编程以指明中断向量和优先级、目标处理器及选择处理器的方式</li>
+<li>可编程寄存器</li>
+<li>通过APIC总线发送和接受APIC信息的一个信息单元：重定向表中的信息用于把每个外部IRQ信号转换为一条消息，通过APIC总线把消息发送给一个或多个本地APIC单元。</li>
+</ul>
+<p>来自外部硬件设备的中断请求以两种方式在可用CPU之间分发：</p>
+<ul>
+<li>静态分发： 通过在中断重定向表中定义的方式进行静态分发。</li>
+<li>动态分发：通过判断多个CPU各自的可编程任务优先级寄存器（task priority register,TPR）来仲裁是由哪个CPU处理。通过动态调整仲裁优先级来实现中断的轮转分配。</li>
+</ul>
+<p>另外多APIC系统还允许CPU之间产生处理器间中断（interprocessor interrupt）。当需要发送时，CPU就在本地APIC的中断指令寄存器（Interrupt Command Register,ICR）中存放这个中断消息和目标本地APIC的标识符，也可以向自己发送。</p>
+<p>处理器间中断（简称IPI）是SMP体系结构至关重要的组成部分，并由linux有效地用来在CPU之间交换消息。</p>
+<p>目前大部分单处理器系统都包含一个IO APIC芯片，可以使用下面两种方式对这种芯片进行配置：</p>
+<ol>
+<li>作为8259A方式使用，本地APIC被禁止，LINT0和LINT1 本地IRQ被配置为INTR和NMI引脚</li>
+<li>作为标准外部IO APIC使用。本地APIC被激活，所有外部中断通过IO APIC接受。</li>
+</ol>
+<h3 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h3><p>8086处理器定义了大约20种不同的异常。内核必须为每一种异常提供一个专门的异常处理程序。</p>
+<p>编号20-31这些值由intel留作将来开发。下图中列出了用到的异常处理程序，它们通常把一个Unix信号发送到引起异常的进程。</p>
+<p><img src="/./static/%E7%94%B1%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E5%8F%91%E9%80%81%E7%9A%84%E4%BF%A1%E5%8F%B7.png"></p>
+<h3 id="中断描述符表"><a href="#中断描述符表" class="headerlink" title="中断描述符表"></a>中断描述符表</h3><p>中断描述符表（Interrupt Descriptor Table,IDT）是一个系统表，他和每一个中断或异常向量相联系，每一个向量在标准共有相应的中断或异常处理程序的入口地址。内核在允许中断前，必须适当地初始化IDT。</p>
+<p>IDT的格式和GDT、LDT非常相似，表中的每一项对应一个中断或异常向量,每个向量由8字节组成，因此最多需要256*8&#x3D;2048字节来存放IDT。</p>
+<p>idtr寄存器使得IDT可以位于内存的任何地方，它指定IDT的线性基地址及其限制。允许中断前必须使用lidt汇编指令初始化idtr。</p>
+<p>IDT包含三种类型的描述符，其中40-43位的Type字段的值表示每种描述符的类型。</p>
+<p><img src="/./static/%E9%97%A8%E6%8F%8F%E8%BF%B0%E7%9A%84%E6%A0%BC%E5%BC%8F.png"></p>
+<p>这些描述符是：</p>
+<ul>
+<li>任务门（task gate）：中断发生时，必须取代当前进程的那个进程的TSS选择符存放在任务门中。</li>
+<li>中断门（interrupt gate）:包含段选择符和中断或异常处理程序的段内偏移量。当控制权转移到一个适当的段时，处理器清IF标志，从而关闭将来会发生的可屏蔽中断。</li>
+<li>陷阱门（Trap gate）: 与中断门相似，只是控制权转移后,处理器不清理IF标志。</li>
+</ul>
+<p>linux 利用中断门处理中断，陷阱门处理异常。</p>
+<h3 id="中断和异常的硬件处理（保护模式）"><a href="#中断和异常的硬件处理（保护模式）" class="headerlink" title="中断和异常的硬件处理（保护模式）"></a>中断和异常的硬件处理（保护模式）</h3><p>执行了一条指令后，CS和eip这对寄存器包含下一条将要执行的指令的逻辑地址.在 处理那条指令之前，控制单元会检查在运行前一条指令时是否已经发生了一个中断或异常。如果发生了一个中断或异常，那么控制单元执行下列操作:<br>    1）确定与中断或异常关联的向量i (0 ≤ i ≤ 255)<br>    2） 读由idtr寄存器指向的IDT表中的第i项(在下面的描述中，我们假定IDT表项 中包含的是一个中断门或一个陷阱门)。<br>    3） 从gdtr寄存器获得GDT的基地址，并在GDT中查找，以读取IDT表项中的选 择符所标识的段描述符.这个描述符指定中断或异常处理程序所在段的基地址.<br>    4） 确信中断是由授权的(中断)发生源发出的。 首先将当前特权组CPL(存放在cs寄 存器的低两位)与段描述符(存放在GDT中)的描述符特权级DPL比较，如果CPL 小于DPL. 就产生一个”Generalprotection” 异常.因为中断处理程序的特权不能<br>低于引起中断的程序的特权.对于编程异常，则做进一步的安全检查:比较CPL与 处于IDT中的门描述符的DPL，如果DPL小于CPL，就产生一个”General protection” 异常。这最后一个检查可以避免用户应用程序访问特殊的陷阱门或中断门.<br>    5） 检查是否发生了特权级的变化，也就是说，CPL是否不同于所选择的段描述符的 DPL.  如果是，控制单元必须开始使用与新的特权级相关的栈。通过执行以下步骤 来做到这点:<br>          a.  读tr寄存器，以访问运行进程的TSS段.<br>          b.  用与新特权级相关的钱段和战指针的正确值装载ss和esp寄存器。这些值可 以在TSS中找到<br>          c.  在新的栈中保存ss和esp以前的值. 这些值定义了与旧特权级相关的梭的逻 辑地址.<br>    6） 如果故障已发生，用引起异常的指令地址装载cs和elp客存器，从而使得这条指令 能再次被执行。<br>    7） 在战中保存eflags、 cs及eip的内容.<br>    8） 如果异常产生了一个硬件出错码，则将它保存在战中.<br>    9） 装载cs和eip寄存器，其值分别是IDT表中第i项门描述符的段选择符和偏移量 字段.这些值给出了中断或者异常处理程序的第一条指令的逻辑地址。</p>
+<p>控制单元所执行的最后一步就是跳转到中断或者异常处理程序.换句话说.处理完中断<br>信号后.控制单元所执行的指令就是被选中处理程序的第一条指令.<br>中断或异常被处理完后，相应的处理程序必须产生一条iret指令，把控制权转交给被<br>中断的进程，这将迫使控制单元:<br>    l） 用保存在校中的值装载cs、 eip或eflags寄存器。如果一个硬件出错码曾被压入校 中，并且在eip内容的上面，那么，执行iret指令前必须先弹出这个硬件出错码.<br>    2）检查处理程序的CPL是否等于cs中最低两位的值(这意味着被中断的进程与处理 程序运行在同一特权级). 如果是，iret终止执行， 否则，转入下一步.<br>    3）从战中装载ss和esp寄存器，因此，返回到与旧特权级相关的钱。<br>    4）  检查ds、 es、 fs，&amp;gs段寄存器的内容，如果其中一个寄存器包含的选择符是一 个段描述符，并且其DPL值小子CPL，那么，清相应的段寄存器.控制单元这么做 是为了禁止用户态的程序(CPL&#x3D;3)利用内核以前所用的段客存器(DPL&#x3D;O).如果 不清这些寄存器，怀有恶意的用户态程序就可能利用它们采访问内核地址空间.</p>
+<h2 id="中断和异常处理的嵌套执行"><a href="#中断和异常处理的嵌套执行" class="headerlink" title="中断和异常处理的嵌套执行"></a>中断和异常处理的嵌套执行</h2><h2 id="初始化中断描述符表"><a href="#初始化中断描述符表" class="headerlink" title="初始化中断描述符表"></a>初始化中断描述符表</h2><h2 id="异常处理"><a href="#异常处理" class="headerlink" title="异常处理"></a>异常处理</h2><p>cpu产生的大部分异常都由linux解释为出错条件。当其中一个异常发生时，内核就向引起异常的进程发送一个信号向他通知一个反常条件。<br>例如除0错误，CPU就产生一个”Divide error”异常,并由对应的异常处理程序给当前进程发送一个SIGFPE信号，这个进程将使用默认或自定义的信号处理程序来恢复或终止执行。</p>
+<p>在两种情况下，linux利用异常更有效地管理硬件资源。：</p>
+<ul>
+<li>第一种情况在第三章”保存和加载FPU、MMX及XMM寄存器”一节描述过，“Device not availeble”异常与CR0寄存器的TS标志一起用来把新值装入浮点寄存器</li>
+<li>第二种就是“Page Fault” 缺页异常。相应的处理程序可能表示一个错误条件，也可能不是一个错误条件。</li>
+</ul>
+<h2 id="中断处理"><a href="#中断处理" class="headerlink" title="中断处理"></a>中断处理</h2><h2 id="软中断和tasklet"><a href="#软中断和tasklet" class="headerlink" title="软中断和tasklet"></a>软中断和tasklet</h2><h2 id="工作队列"><a href="#工作队列" class="headerlink" title="工作队列"></a>工作队列</h2><h2 id="从中断和异常中返回"><a href="#从中断和异常中返回" class="headerlink" title="从中断和异常中返回"></a>从中断和异常中返回</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/" data-id="cm6yz33dq001y8zlv20v7f7y1" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(五章)内核同步" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/16/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/" class="article-date">
+  <time datetime="2022-12-16T10:00:00.000Z" itemprop="datePublished">2022-12-16</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/16/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/">(五章)linux内核同步</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内核同步"><a href="#内核同步" class="headerlink" title="内核同步"></a>内核同步</h1><ul>
+<li>深入理解linux 内核： 第五章 内核同步<br>keywords： 内核同步</li>
+</ul>
+<ul>
+<li>CPU上的进程或中断会随时对内核发起请求</li>
+<li>内核以交错方式执行，处理这些请求</li>
+<li>内核需要处理好内核抢占和临界区问题。</li>
+</ul>
+<h2 id="内核抢占"><a href="#内核抢占" class="headerlink" title="内核抢占"></a>内核抢占</h2><p>抢占内核的主要特点：一个在内核态运行的进程，可能在执行内核函数期间被另外一个进程取代。<br>linux内核在以下情况时禁止内核抢占（标志为current_thread_info()-&gt;erempt_count&gt;0）：</p>
+<ol>
+<li>内核正在执行中断服务例程。</li>
+<li>可延迟函数被禁止（当内核正在执行软中断或tasklet时经常如此）</li>
+<li>通过把抢占计数器设置为正数显式禁用内核抢占。</li>
+</ol>
+<p>下面一些宏用于处理抢占计数器子字段：</p>
+<table>
+<thead>
+<tr>
+<th align="left">宏</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">preempt_count</td>
+<td align="left">在thread_info描述符中选择preempt_count字段</td>
+</tr>
+<tr>
+<td align="left">preempt_disable</td>
+<td align="left">preempt_count+1</td>
+</tr>
+<tr>
+<td align="left">preempt_enable_no_resched</td>
+<td align="left">preempt_count-1</td>
+</tr>
+<tr>
+<td align="left">preempt_enable</td>
+<td align="left">preempt_count-1并在thread_info中TIF_NEED_RESCHED标志为1的情况下调用preempt_schedule</td>
+</tr>
+<tr>
+<td align="left">get_cpu</td>
+<td align="left">&#x3D;preempt_disable 并返回本地CPU数量</td>
+</tr>
+<tr>
+<td align="left">put_cpu</td>
+<td align="left">&#x3D;preempt_enable</td>
+</tr>
+<tr>
+<td align="left">put_cpu_no_resched</td>
+<td align="left">&#x3D;preempt_enable_no_resched</td>
+</tr>
+</tbody></table>
+<p>preempt_schedule的作用是检查是否允许本地中断和preempt_count是否为0 如果都为真则调用schedule() 来选择另一个进程执行。</p>
+<p>linux 内核允许在编译时开启或禁用内核抢占。</p>
+<h2 id="同步"><a href="#同步" class="headerlink" title="同步"></a>同步</h2><ul>
+<li>中断处理程序和tasklet不必编写成可重入的函数</li>
+<li>仅被软中断和tasklet访问的每CPU变量不需要同步。</li>
+<li>仅被一种tasklet访问的数据结构不需要同步</li>
+</ul>
+<h2 id="同步原语"><a href="#同步原语" class="headerlink" title="同步原语"></a>同步原语</h2><p><img src="/./static/%E5%86%85%E6%A0%B8%E4%BD%BF%E7%94%A8%E7%9A%84%E5%90%84%E7%A7%8D%E5%90%8C%E6%AD%A5%E6%8A%80%E6%9C%AF.png"></p>
+<p>每CPU变量（pre_cpu）：内核抢占可能使它产生竞争条件，应在禁用内核抢占的情况下访问。<br>原子操作（lock&#x2F;atomic&#x2F;test_and）:对值的操作是原子操作。<br>内存屏障(mb)：保证在原语之后的操作执行之前，原语之前的操作已经完成。主要防止编译器优化。<br>自旋锁（spinlock）：获取锁之前一直循环，spin_lock相关的宏基于原子操作进行，用于保护锁。<br>顺序锁（seqlock）: 写者不受读者限制。即使有读者也不限制写入。读者有时必须读取多次以获取有效的值。<br>读-拷贝-更新（RCU）：RCU只保护被动态分配并通过指针引用的数据结构，在被RCU保护的临界区中，任何内核控制路径都不能睡眠。写入时对指针指向的数据进行拷贝，然后通过原子操作执行指针值替换。只有在旧副本的所有读者都读完后才能释放旧副本。（在linux2.6中主要用在网络层和虚拟文件系统中）<br>信号量（IPC信号量或内核信号量，mutex）：一个加锁的原语，和自旋锁不一样，等待信号量时进程挂起。<br>禁止本地中断（local_irq_disable）:单处理器可保护数据，多处理器情况下常配合自旋锁一起。<br>禁止和激活可延迟函数（local_bh_disable）:当内核只禁止可延迟函数而不禁止中断时使用。</p>
+<h2 id="对内核数据结构的同步访问"><a href="#对内核数据结构的同步访问" class="headerlink" title="对内核数据结构的同步访问"></a>对内核数据结构的同步访问</h2><p>选择同步原语的的原则：把系统的并发度保持在尽可能高的程度。</p>
+<p>系统中的并发度又取决于两个主要因素：</p>
+<ul>
+<li>同时运转的I&#x2F;O设备数</li>
+<li>进行有效工作的CPU数</li>
+</ul>
+<p><img src="/./static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4.png"><br><img src="/./static/%E5%86%85%E6%A0%B8%E6%8E%A7%E5%88%B6%E8%B7%AF%E5%BE%84%E8%AE%BF%E9%97%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E4%BF%9D%E6%8A%A4-2.png"></p>
+<p>一个中断独占的数据结构可以通过关中断进行保护，在多个中断访问同一个数据结构的情况下需要使用中断+自旋锁。</p>
+<p>使用中断+自旋锁是在多处理器情况下保护数据的常用方法：<br><img src="/./static/%E4%B8%8E%E4%B8%AD%E6%96%AD%E7%9B%B8%E5%85%B3%E7%9A%84%E8%87%AA%E6%97%8B%E9%94%81%E5%AE%8F.png"></p>
+<p>下面仅考虑多处理器系统：</p>
+<table>
+<thead>
+<tr>
+<th align="left">访问方式</th>
+<th align="left">一种类型访问</th>
+<th align="left">多种访问同一数据结构</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">异常</td>
+<td align="left">信号量</td>
+<td align="left">…</td>
+</tr>
+<tr>
+<td align="left">异常-&gt;每CPU变量</td>
+<td align="left">信号量+禁用内核抢占</td>
+<td align="left">…</td>
+</tr>
+<tr>
+<td align="left">中断</td>
+<td align="left">无需同步原语，禁止中断即可</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+<tr>
+<td align="left">可延迟函数-软中断</td>
+<td align="left">自旋锁</td>
+<td align="left">自旋锁</td>
+</tr>
+<tr>
+<td align="left">可延迟函数-tasklet</td>
+<td align="left">无</td>
+<td align="left">自旋锁</td>
+</tr>
+<tr>
+<td align="left">异常+中断</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁&#x2F;信号量</td>
+</tr>
+<tr>
+<td align="left">异常+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+<tr>
+<td align="left">中断+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁，可延迟函数执行时关中断，中断处理程序随意访问 多处理器+自旋锁</td>
+</tr>
+<tr>
+<td align="left">中断+异常+可延迟函数</td>
+<td align="left">×</td>
+<td align="left">禁止中断+自旋锁</td>
+</tr>
+</tbody></table>
+<h2 id="避免竞争的例子"><a href="#避免竞争的例子" class="headerlink" title="避免竞争的例子"></a>避免竞争的例子</h2><h3 id="引用计数器"><a href="#引用计数器" class="headerlink" title="引用计数器"></a>引用计数器</h3><p>广泛地应用来避免资源的并发分配和释放产生的竞争条件。引用计数器是一个atomic_t 计数器，与特定的资源，如内存、页、模块或文件相关。使用时减少计数器的值，使用完就增加计数器的值。当计数器为0时，说明资源未被使用，必要时释放。</p>
+<h3 id="大内核锁"><a href="#大内核锁" class="headerlink" title="大内核锁"></a>大内核锁</h3><p>在早期linux版本中是一个粗粒度的自旋锁。</p>
+<ul>
+<li>2.0中是用来确保每次只有一个进程运行在内核态，后面改用许多自旋锁来保护大量内核数据结构。</li>
+<li>2.6版本的内核中用于保护旧的代码。</li>
+<li>2.6.11版本开始，使用 kernel_sm 信号量用来实现大内核锁。</li>
+</ul>
+<p>每个进程描述符都含有lock_depth 字段，这个字段允许同一个进程多次获取大内核锁。如果未获得过 字段为-1，否则+1.</p>
+<h3 id="内存描述符-读-写信号量"><a href="#内存描述符-读-写信号量" class="headerlink" title="内存描述符 读&#x2F;写信号量"></a>内存描述符 读&#x2F;写信号量</h3><p>mm_struct 类型的内存描述符在mmap_sem 字段中都包含了自己的信号量，由于几个轻量级进程之间可以共享一个内存描述符，因此信号量保护这个描述符来避免可能的竞争条件。</p>
+<p>这个信号量是作为读&#x2F;写信号量实现的，因为一些内核函数，如缺页异常处理程序只需要扫描内存描述符。</p>
+<h3 id="slab-高速缓存链表的信号量"><a href="#slab-高速缓存链表的信号量" class="headerlink" title="slab 高速缓存链表的信号量"></a>slab 高速缓存链表的信号量</h3><p>slab 高速缓存链表是通过cache_chain_sem信号量保护的，这个信号量允许互斥地访问和修改该量表。</p>
+<h3 id="索引节点inode的信号量"><a href="#索引节点inode的信号量" class="headerlink" title="索引节点inode的信号量"></a>索引节点inode的信号量</h3><p>inode中的i_sem信号量，用于防止文件操作的竞争条件。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/16/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/" data-id="cm6yz33dc00148zlv309manip" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(七章)进程调度" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%83%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6/" class="article-date">
+  <time datetime="2022-12-14T10:00:00.000Z" itemprop="datePublished">2022-12-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%83%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6/">(七章)linux进程调度</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="进程通信"><a href="#进程通信" class="headerlink" title="进程通信"></a>进程通信</h1><ul>
+<li>深入理解linux 内核： 第七章 进程调度<br>keywords： 进程、进程调度</li>
+</ul>
+<p>按照书中，以8086结构为例；尤其是，假定系统采用统一内存访问（Uniform Memory Access）模型，而且系统时钟设为1ms。</p>
+<h2 id="调度策略"><a href="#调度策略" class="headerlink" title="调度策略"></a>调度策略</h2><p>调度的目标：</p>
+<ul>
+<li>进程相应时间尽可能快</li>
+<li>后台作业的吞吐量尽可能高</li>
+<li>尽可能避免进程的饥饿现象</li>
+<li>低优先级和高优先级进程尽量调和</li>
+</ul>
+<p>linux基于分时（time sharing）技术也叫时间片轮转，是根据进程优先级进行调度，进程优先级是动态计算的。<br>在调度这个话题上，传统上进程分为两类：</p>
+<ul>
+<li>IO受限类（I&#x2F;O-bound）：频繁使用IO设备，花费很长时间等待IO操作完成</li>
+<li>CPU受限类（CPU-bound）：需要大量CPU时间的数值计算应用程序</li>
+</ul>
+<p>另一种分类法是：</p>
+<ul>
+<li>交互式进程(interactive process):进程经常需要和用户交互，需要花费大量时间等待鼠标和键盘操作。接受操作时又必须尽快被唤醒。</li>
+<li>批处理进程(batch process)：这些进程不需要和用户交互，不需要很快被唤醒。</li>
+<li>实时进程（real-time process）：这些进程有一个很短的响应时间，且响应时间变化很小。比如：音视频应用程序，机器人控制程序，采集数据的程序等。</li>
+</ul>
+<p>linux1.6调度程序采用基于程序行为的启发式算法，将进程归类为交互式进程或批处理进程。<br><img src="/./static/%E8%B0%83%E5%BA%A6%E7%9B%B8%E5%85%B3%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"></p>
+<ul>
+<li>进程的抢占<ul>
+<li>进程处于内核态还是用户态都可能被抢占，抢占发生在高优先级的进程进入task_running状态或者时间片到期后的判定内。</li>
+</ul>
+</li>
+<li>时间片的长度？<ul>
+<li>时间片长度过短会导致cpu将大量时间用在进程切换上，过长会导致多个用户并行执行任务感觉系统响应慢。</li>
+</ul>
+</li>
+</ul>
+<h2 id="调度算法"><a href="#调度算法" class="headerlink" title="调度算法"></a>调度算法</h2><p>早期算法： 遍历可执行任务队列，计算出执行哪一个。<br>linux2.6的算法可以在固定时间（与进程数量无关）选出要运行的进程。每个linux进程按照下面的调度类型被调度：</p>
+<ul>
+<li>SCHED_FIFO:先进先出的实时进程。调度程序把CPU分给进程，如果没有其他更高优先级的实时进程，进程就继续使用CPU，想用多久就多久。</li>
+<li>SCHED_RR：时间片轮转的实时进程。当调度程序把CPU分给进程时，会把该进程描述符放到队列末尾以平均分配CPU时间。</li>
+<li>SCHED_NORMAL ： 普通的分时进程。</li>
+</ul>
+<p>调度算法根据进程是普通的还是实时进程有很大不同：</p>
+<ul>
+<li>普通进程<ul>
+<li>基于静态优先级（100-139，父子继承）决定时间片长度</li>
+<li>基于进程平均睡眠时间计算动态优先级，基于动态优先级和静态优先级 计算进程应该是交互式进程还是批处理进程</li>
+<li>使用活动进程（还没有用完时间片）和过期进程（已经使用完时间片的进程）队列防止进程饥饿</li>
+</ul>
+</li>
+<li>实时进程<ul>
+<li>基于实时优先级（1高-99低），总是让高的执行</li>
+<li>实时进程总是被当成活动进程</li>
+<li>如果几个可运行的实时进程具有相同的最高优先级，那么调度程序选择链表中第一个</li>
+<li>只有下列情况之一出现，实时进程才会被取代：1.更高的实时进程抢占 2.进程执行阻塞操作并进入睡眠 3.进程停止或被杀死 4.进程通过系统调用sched_yield资源放弃CPU 5.进程是基于时间片轮转的进程（SCHED_RR）,并用完了时间片。</li>
+</ul>
+</li>
+</ul>
+<h2 id="调度程序数据结构"><a href="#调度程序数据结构" class="headerlink" title="调度程序数据结构"></a>调度程序数据结构</h2><p>进行链表链接所有的进程描述符<br>运行队列链表链接所有的可运行(TASK_RUNNING)进程的进程描述符，swapper 进程（idle进程）除外。</p>
+<h3 id="进程运行队列：runqueue"><a href="#进程运行队列：runqueue" class="headerlink" title="进程运行队列：runqueue"></a>进程运行队列：runqueue</h3><p>系统中每个CPU都有自己的运行队列，所有的runqueue结构存放在runqueues每CPU变量中。<br>宏this_rq()产生本地CPU运行队列的地址，而宏cpu_rq(n)产生索引为n的cpu队列地址。</p>
+<p>runqueue 数据结构中最重要的是与可运行进程的链表相关的字段。系统中每个可运行进程属于且只属于一个运行队列。只要可运行进程保持在一个运行队列中，它就只可能在拥有该运行队列的CPU上执行。可运行进程会从一个运行队列迁移到另一个运行队列。</p>
+<ul>
+<li><p>arrays字段是一个包含两个(分别对应活动进程和过期进程，active和expired内容会周期性交换)prio_array_t结构的数组。每个数据结构都表示一个可运行进程的集合。包含140个双向链表头，一个优先级位图，和一个集合中所包含进程数量的计时器。</p>
+</li>
+<li><p><img src="/./static/runqueue%E7%BB%93%E6%9E%84%E5%92%8C%E5%8F%AF%E8%BF%90%E8%A1%8C%E8%BF%9B%E7%A8%8B%E7%9A%84%E4%B8%A4%E4%B8%AA%E9%9B%86%E5%90%88.png"></p>
+</li>
+</ul>
+<h3 id="进程描述符"><a href="#进程描述符" class="headerlink" title="进程描述符"></a>进程描述符</h3><p>进程描述符包含几个与调度相关的字段：<br><img src="/./static/%E4%B8%8E%E8%B0%83%E5%BA%A6%E7%A8%8B%E5%BA%8F%E7%9B%B8%E5%85%B3%E7%9A%84%E8%BF%9B%E7%A8%8B%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br><img src="/./static/%E4%B8%8E%E8%B0%83%E5%BA%A6%E7%A8%8B%E5%BA%8F%E7%9B%B8%E5%85%B3%E7%9A%84%E8%BF%9B%E7%A8%8B%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B52.png"></p>
+<ul>
+<li>新进程创建时 copy_process 函数调用 send_fork把父进程的时间片划分为两份，防止进程通过创建子进程来获得无限时间。</li>
+<li>如果子进程在第一个时间片内终止，就把子进程的剩余时间还给父进程。</li>
+</ul>
+<h2 id="调度程序所使用的函数"><a href="#调度程序所使用的函数" class="headerlink" title="调度程序所使用的函数"></a>调度程序所使用的函数</h2><p>调度程序依靠几个函数完成调度工作，其中最重要的函数是：</p>
+<table>
+<thead>
+<tr>
+<th align="left">函数</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">scheduler_tick</td>
+<td align="left">维持当前最新的time_slice计数器，如果当前进程是swapper且除swapper进程，还有可运行的进程，就设置当前进程的TIF_NEED_RESCHED字段，以重新调度。 调用函数处理多处理器队列平衡，递减时间片</td>
+</tr>
+<tr>
+<td align="left">try_to_wake_up</td>
+<td align="left">唤醒睡眠进程，把进程状态修改为TASK_running,并插入到某个CPU的运行队列。</td>
+</tr>
+<tr>
+<td align="left">recalc_task_prio</td>
+<td align="left">更新进程的平均运行时间和动态优先级</td>
+</tr>
+<tr>
+<td align="left">schedule</td>
+<td align="left">选择要被执行的新进程，替换掉current，从运行队列的链表中找到一个进程，将CPU分配给这个进程，可直接调用或延迟（lazy）调用。</td>
+</tr>
+<tr>
+<td align="left">load_balance</td>
+<td align="left">维持多处理器系统中运行队列的平衡</td>
+</tr>
+</tbody></table>
+<p>schedule的直接调用：如果current进程无法获得所需资源，立刻挂起，</p>
+<ol>
+<li>把current进程插入到适当的等待队列</li>
+<li>把current进程的状态改为TASK_INTERRUPTIBLE或TASK_UNINTERRUPTIBLE</li>
+<li>调用schedule()</li>
+<li>检查新找出的进程的资源是否可用，不可用转到第二步。</li>
+<li>一旦资源可用，就从等待队列删除新找出的current进程。</li>
+</ol>
+<p>schedule的延迟调用：把current进程的TIF_NEED_RESCHED标志设置为1，依据此来延迟调用调度程序。在恢复用户态进程的执行检查这个标志的值。例如：</p>
+<ol>
+<li>当current进程用完了它的cpu时间片，由scheduler_tick函数完成schedule的延迟调用。</li>
+<li>当一个被唤醒的进程优先级比当前优先级高时，由try_to_wake_up函数完成schedule的延迟调用。</li>
+<li>当发出系统调用sched_setscheduler时（见：调度相关系统调用）</li>
+</ol>
+<h2 id="多处理器系统队列平衡"><a href="#多处理器系统队列平衡" class="headerlink" title="多处理器系统队列平衡"></a>多处理器系统队列平衡</h2><p>linux一直坚持采用对称多处理器模型，内核不应该对任何一个CPU有任何偏向。我们特别关注以下三种风格的多处理器机器：</p>
+<ul>
+<li>标准多处理器体系结构<ul>
+<li>这些机器共有的RAM芯片集被所有CPU共享</li>
+</ul>
+</li>
+<li>超线程<ul>
+<li>一个超线程的物理CPU可被linux看作几个不同的逻辑CPU</li>
+</ul>
+</li>
+<li>NUMA<ul>
+<li>把CPU和RAM以本地“节点”为单位分组（一个节点包括一个CPU和几个RAM芯片）。</li>
+<li>在NUMA体系结构中，CPU访问组内RAM速度非常快，访问其他节点的远程RAM就比较慢。</li>
+</ul>
+</li>
+</ul>
+<p>linux 使用调度域的概念来平衡多个CPU的任务队列的负载平衡。</p>
+<h3 id="调度域"><a href="#调度域" class="headerlink" title="调度域"></a>调度域</h3><p>调度域（scheduling domain）实际上是一个CPU集合，他们的工作量由内核保持平衡。 调度域采用分层的组织形式：最上层的调度域（通常包括所有CPU）包含多个子调度域，每个子调度域包括一个CPU子集。</p>
+<p>schedule domain分为三个层次，从低到高依次为SMT，MC和ALL Cpu。SMT即：</p>
+<ol>
+<li>single multi thread，level0调度域，同一个物理Core中的所有thread都在该调度域中；</li>
+<li>MC即multi Core，level 1调度域，同一个cluster中的所有物理Core中的CPU都在该调度域中；</li>
+<li>ALL Cpu，level2调度域，也是最高级别的调度域，该调度域包括SoC中所有的CPU。<br><img src="/./static/CPU%E8%B0%83%E5%BA%A6%E5%9F%9F%E5%88%86%E9%85%8D.png"></li>
+</ol>
+<p>Cpu0和Cpu1同属于一个物理Core，所以他们两个属于一级调度域；Cpu0，Cpu1，Cpu2和Cpu3同属于一个Cluster，所以他们四个属于二级调度域；Cpu0-Cpu15属于三级调度域。由此拓扑我们可以归纳出几个特性要点：</p>
+<p>一级调度域中的CPU亲和性最高。高一级的调度域覆盖低一级的调度域。做负载均衡的时候应该先尝试在一级调度域做均衡，一级调度域均衡失败，再考虑二级调度域，二级调度域失败再考虑三级调度域。</p>
+<p>维持队列平衡依赖以下主要函数：</p>
+<table>
+<thead>
+<tr>
+<th align="left">函数</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">rebalance_tick</td>
+<td align="left">每过一次时钟节拍执行一次，更新运行队列的平均工作量，每隔一段时间触发重新平衡操作load_balance</td>
+</tr>
+<tr>
+<td align="left">load_balance</td>
+<td align="left">维持多处理器系统中运行队列的平衡，判断是否平衡，尝试执行迁移操作</td>
+</tr>
+<tr>
+<td align="left">move_tasks</td>
+<td align="left">把进程从源运行队列迁移到本地运行队列</td>
+</tr>
+</tbody></table>
+<h2 id="调度相关系统调用"><a href="#调度相关系统调用" class="headerlink" title="调度相关系统调用"></a>调度相关系统调用</h2><p>一般原则是允许用户降低其进程的优先级。如果想修改属于其他某用户的进程的优先级或者增加优先级，则需要拥有超级用户的特权。</p>
+<table>
+<thead>
+<tr>
+<th align="left">系统调用</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">nice</td>
+<td align="left">允许进程修改它们的基本优先级</td>
+</tr>
+<tr>
+<td align="left">getpriority</td>
+<td align="left">获取组中进程的优先级</td>
+</tr>
+<tr>
+<td align="left">setpriority</td>
+<td align="left">设置组中进程的优先级</td>
+</tr>
+<tr>
+<td align="left">sched_getaffinity</td>
+<td align="left">获取cpu亲和力掩码</td>
+</tr>
+<tr>
+<td align="left">sched_setaffinity</td>
+<td align="left">设置cpu亲和力掩码</td>
+</tr>
+</tbody></table>
+<p>实时进程相关的系统调用：</p>
+<table>
+<thead>
+<tr>
+<th align="left">系统调用</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">sched_getscheduler</td>
+<td align="left">查询进程使用的调度策略，SCHED_FIFO、SCHED_RR或SCHED_NORMAL</td>
+</tr>
+<tr>
+<td align="left">sched_setscheduler</td>
+<td align="left">设置进程使用的调度策略</td>
+</tr>
+<tr>
+<td align="left">sched_getparam</td>
+<td align="left">查询进程实时优先级</td>
+</tr>
+<tr>
+<td align="left">sched_setparam</td>
+<td align="left">设置进程实时优先级</td>
+</tr>
+<tr>
+<td align="left">sched_yield</td>
+<td align="left">允许进程在不被挂起的情况下放弃CPU，这种情况下，相同优先级的其他进程有机会运行</td>
+</tr>
+<tr>
+<td align="left">sched_get_priority_min-sched_get_priority_max</td>
+<td align="left">返回最大实时静态优先级的值，由调度策略使用。如果是实时进程是1-99 否则是0</td>
+</tr>
+<tr>
+<td align="left">sched_rr_get_interval</td>
+<td align="left">获取实时进程的时间片，FIFO实时进程返回0</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%83%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6/" data-id="cm6yz33d7000r8zlv4ga0hy9p" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(六章)定时测量" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/04/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/" class="article-date">
+  <time datetime="2022-12-04T10:00:00.000Z" itemprop="datePublished">2022-12-04</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/04/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/">(六章)linux定时测量</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="定时测量"><a href="#定时测量" class="headerlink" title="定时测量"></a>定时测量</h1><ul>
+<li>深入理解linux 内核： 第六章 定时测量<br>keywords： 定时器、时钟</li>
+</ul>
+<p>linux内核必须完成两种主要的定时测量：</p>
+<ul>
+<li>保存当前的时间和日期，可以通过time() ftime()和gettimeofday()系统调用把它们返回给用户程序。</li>
+<li>维持定时器，这种机制能告诉内核或用户程序，某一时间间隔过去了。</li>
+</ul>
+<h2 id="时钟和定时器电路"><a href="#时钟和定时器电路" class="headerlink" title="时钟和定时器电路"></a>时钟和定时器电路</h2><h3 id="定时时钟（RTC）"><a href="#定时时钟（RTC）" class="headerlink" title="定时时钟（RTC）"></a>定时时钟（RTC）</h3><p>所有PC都包含一个叫实时时钟（Real Time Clock RTC）的时钟，它独立于CPU和其他芯片。PC电源即使被切断，它仍在依靠电池运行。</p>
+<p>RTC能在IRQ8上发出周期性的中断，频率在2-8192Hz 之间。也可以对RTC进行编程以作为闹钟使用。</p>
+<p>Linux只用RTC来获取日期和时间，可以通过&#x2F;dev&#x2F;rtc 设备文件进行操作，也允许进程对RTC编程。内核通过0x70和0x71 I&#x2F;O 端口访问RTC。系统管理员通过Unix时钟程序可以设置时钟（通过0x70和0x71 I&#x2F;O 端口）。</p>
+<h3 id="时间戳计数器（TSC）"><a href="#时间戳计数器（TSC）" class="headerlink" title="时间戳计数器（TSC）"></a>时间戳计数器（TSC）</h3><p>所有的8086处理器都包含一条CLK输入引线，它接受外部震荡时钟信号。8086处理器内部包含一个64位计数器（Time Stamp Counter TSC），时钟到来计数器就+1。与RTC相比，Linux利用这个寄存器可以获得更精确的时间测量。linux会在初始化的时候确定此时钟信号的频率。</p>
+<p>calibrate_tsc()通过计算一个大约在5ms的事件间隔所产生的TSC信号个数来计算CPU的实际频率。</p>
+<h3 id="可编程间隔定时器（PIT）"><a href="#可编程间隔定时器（PIT）" class="headerlink" title="可编程间隔定时器（PIT）"></a>可编程间隔定时器（PIT）</h3><p>可编程间隔定时器（Programmable Interval Timer PIT），作用类似微波炉的闹钟，设备到时间会发出一个特殊的中断，叫做时钟中断（timer interrupt）来通知内核一个时间间隔过去了。PIT永远以内核确定的固定的时间频率不停地发出中断信号。</p>
+<p>每个IBM兼容CPU至少包含一个PIT，PIT通常是使用0x40-0x43 I&#x2F;O 端口的一个8254 CMOS芯片。</p>
+<p>Linux给PC的第一个PIT进行编程，使他以大约1000Hz的频率向IRQ0发送时钟中断，也就是每1ms产生一次中断，也叫此时间间隔为一个节拍（tick）。它的长度以纳秒为单位存放在 tick_nsec变量中，通常为999848ns(时钟信号频率为1000.15hz)。</p>
+<p>时钟中断频率取决于硬件体系结构，慢的机器节拍大约为10ms（每秒100次），较快的约为1ms（每秒产生1000或1024次）。</p>
+<p>Linux代码中，有几个宏产生决定时钟中断频率的常量：</p>
+<ul>
+<li>HZ产生每秒时钟中断的近似个数，也就是时钟中断的频率。IBM PC上 值为1000</li>
+<li>CLOCK_TICK_RATE 产生的值为 1193182 这个值是8254芯片内部的振荡器频率</li>
+<li>LATCH 产生CLOCK_TICK_RATE和HZ的比值再四舍五入后的整数，这个值用来对PIT进行编程</li>
+</ul>
+<h3 id="CPU本地定时器"><a href="#CPU本地定时器" class="headerlink" title="CPU本地定时器"></a>CPU本地定时器</h3><p>最新8086的本地APIC（第四章 中断和异常一节中）中，还提供了另一种定时测量设备：CPU本地定时器。</p>
+<p>CPU本地定时器是一种能够单步中断或周期性中断的设备，它类似于PIT，但是还有一些区别：</p>
+<ul>
+<li>APIC计数器是32位，PIC计数器是16位；因此可以对本地定时器编程来产生频率很低的中断（计数器中存放的是中断发生前必须经过的节拍数）</li>
+<li>本地APIC定时器把中断只发送给自己的处理器，而PIT产生一个全局中断，系统中任一CPU都可以对其进行处理。</li>
+<li>APIC定时器是基于总线时钟信号的。每隔1,2,4,8,16,32,64或128总线时钟信号到来时对该定时器递减可以实现对其编程的目的。相反PIT有自己的内部时钟振荡器，可以更灵活的编程。</li>
+</ul>
+<h3 id="高精度事件定时器（HPET）"><a href="#高精度事件定时器（HPET）" class="headerlink" title="高精度事件定时器（HPET）"></a>高精度事件定时器（HPET）</h3><p>下一代PIT，未来可期。</p>
+<h3 id="ACPI-电源管理定时器"><a href="#ACPI-电源管理定时器" class="headerlink" title="ACPI 电源管理定时器"></a>ACPI 电源管理定时器</h3><p>ACPI电源管理定时器或ACPI PMT 是另一种时钟设备，包含在几乎所有基于ACPI的主板上。时钟信号大约 3.58MHz 固定频率。该设备是一个简单的计数器，每个时钟节拍到来增加一次。为了读取计数器的当前值内核需要访问某个IO端口，端口地址由BIOS确定。</p>
+<p>在支持动态CPU频率的设备上，ACPI比TSC更稳定。TSC计数器的高频率非常便于测量特别小的时间间隔。</p>
+<p>如果系统中存在HPET，内核优先使用HPET。</p>
+<h2 id="linux-计时体系结构"><a href="#linux-计时体系结构" class="headerlink" title="linux 计时体系结构"></a>linux 计时体系结构</h2><p>linux 执行与定时相关的操作。例如，内核周期性地：</p>
+<ul>
+<li>更新自系统启动以来所经过的事件</li>
+<li>更新事件和日期</li>
+<li>确定当前进程在每个CPU上已经运行了多长时间，如果已经超过了分配给它的事件，则抢占他。（时间片轮转）</li>
+<li>更新资源使用统计数</li>
+<li>检查每个软定时器的事件间隔是否已到</li>
+</ul>
+<p>linux的计时体系结构（timekeeping architecture）是一组与时间流相关的内核数据结构和函数。8086和单处理器机器稍有不同：</p>
+<ul>
+<li>在单处理器系统上，所有的计时活动都是由全局定时器（可以是可编程间隔定时器PIT或高精度事件定时器HPET）产生的中断触发的。</li>
+<li>在多处理器系统上，所有的普通的活动（像软定时器的处理）都是由全局定时器产生的中断触发的。而具体的CPU的活动（比如监控当前进程的执行时间）是由本地APIC定时器产生的中断触发的。</li>
+</ul>
+<p>以上两种情况的区别比较模糊。一些情况使用的计时方式比较特殊。为了简化，我们考虑两种“纯”的计时体系结构</p>
+<p>linux2.6 的计时体系结构使用了大量的数据结构。</p>
+<ol>
+<li>定时器对象：用于处理定时器资源。包含定时器名称和四个标准方法组成。<br><img src="/./static/timer_opts%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E5%AD%97%E6%AE%B5.png"></li>
+</ol>
+<p>其中 mark_offset 和 get_offset 被时钟中断处理程序用于精确计算定时器时间。内核能够以比节拍周期更高的精度来测定当前的时间（定时插补time interpolation）<br>2. cur_timer 变量：存放当前最好的定时器对象的地址。<br><img src="/./static/%E5%AE%9A%E6%97%B6%E5%99%A8%E4%BC%98%E5%85%88%E6%8E%92%E5%BA%8F.png"><br>3. jiffies变量：用于存放系统启动以来产生的节拍总数。时钟中断发生时（每个节拍）它就会+1。32位的变量。每隔大约50天就会回绕一次。内核使用time_after,time_after_eq,time_before和time_before_eq四个宏来处理溢出。且初始化值为0xfffb6c20会在5分钟内溢出，以在开发阶段排查出不对溢出作处理的代码。<br>4. jiffies_64变量：存储系统启动以来总的节拍数目。以1ms一个节拍的情况下，需要数10亿年才会溢出。（此数据低32位就是jiffies变量）<br>5. xtime 变量：存放当前时间和日期；每个节拍更新一次。由x_time_lock顺序锁保护，用户程序和内核经常使用它。它是一个timespec 类型的数据结构，他有两个字段：</p>
+<ul>
+<li>tv_sec: 存放UTC 0 以来经过的秒数</li>
+<li>tv_nsec： 存放自上一秒开始经过的纳秒数（0-999999999）</li>
+</ul>
+<h3 id="单处理器上的计时体系结构"><a href="#单处理器上的计时体系结构" class="headerlink" title="单处理器上的计时体系结构"></a>单处理器上的计时体系结构</h3><p>单处理系统上，所有与定时有关的活动都是由IRQ线0上的可编程间隔定时器产生的中断触发的。<br>初始化阶段：</p>
+<p>time_init() 函数用于建立计时体系结构：</p>
+<ol>
+<li>初始化xtime变量：利用get_cmos_time()函数从实时时钟上读取从UTC0开始的秒数。设置xtime的tv_nsec字段。</li>
+<li>初始化wall_to_monotonic变量。这个变量和xtime一样是timespec类型只不过存放的是将要加到xtime上的秒数和纳秒数，是一个单向递增的时间流。xtime则可能因为事件同步的原因导致时间跳跃。</li>
+<li>如果内核支持HPET 则使用hpet_enable() 设置其中断频率和中断位置为IRQ0。否则使用PIT</li>
+<li>调用select_timer() 挑选合适的定时器以设置cur_timer 指向它。</li>
+<li>调用set_irq(0,&amp;irq0)来创建与IRQ0相应的中断门。struct irqaction irq0&#x3D;(timer_interrupt,SA_INTERRUPT,0,”timer”,NULL,NULL)，从这时起 timer_interrupt()函数将在每个节拍到来时被调用，而中断被禁止（IRQ0 主描述符中SA_INTERRUPT标志被置位）。</li>
+</ol>
+<p>时钟中断处理程序：</p>
+<p>timer_interrupt()函数是PIT或HPET的中断服务例程（ISR）,它执行以下步骤：</p>
+<ol>
+<li>在x_time_lock顺序锁上产生一个write_seqlock()来保护与定时相关的内核变量。</li>
+<li>执行cur_timer 定时器对象的mark_offset 方法。</li>
+<li>调用do_timer_interrupt() 函数，修改jiffies_64，调用update_times() update_process_times() profile_tick() 检查是否需要使用外部时钟来同步时间。</li>
+<li>释放锁</li>
+<li>返回1，表明中断已经处理</li>
+</ol>
+<h3 id="多处理器上的计时体系结构"><a href="#多处理器上的计时体系结构" class="headerlink" title="多处理器上的计时体系结构"></a>多处理器上的计时体系结构</h3><p>初始化阶段：</p>
+<p>全局时钟和单处理器一致<br>linux内核为本地时钟保留239号（0xep）中断向量。在内核初始化阶段，函数apic_intr_init() 根据第239号向量和低级中断处理程序apic_timer_interrupt() 的地址设置IDT的中断门。函数calibrate_APIC_clock()通过正在启动的CPU的本地APIC来计算一个节拍对应多少总线时钟信号，来确定如何对APIC编程。这是由setup_APIC_timer()函数完成。该函数每个CPU都执行一次。</p>
+<p>所有本地APIC定时器都是同步的，因为他们都基于公共总线时钟信号。这意味引导CPU计算出的APIC参数对所有CPU有效。</p>
+<p>全局时钟中断处理程序：</p>
+<p>SMP版本的timer_interrupt()处理程序与UP版本的该处理程序在几个地方有差异：</p>
+<ul>
+<li>timer_interrupt()调用函数 do_timer_interrupt() 向IO APIC芯片的一个端口写入，以应答定时器的中断请求？</li>
+<li>update_process_times 函数不被调用，因为与特定cpu相关</li>
+<li>profile_tick() 不被调用，因为与特定cpu相关</li>
+</ul>
+<p>本地时钟中断处理程序：</p>
+<p>该处理程序执行系统中与特定CPU相关的计时互动，即监管内核代码并检测当前进程在特定CPU上已经运行了多长时间。smp_apic_timer_interrupt()的高级中断处理函数执行如下步骤：</p>
+<ol>
+<li>获得CPU逻辑号N</li>
+<li>使用irq_stat数组中第N项的apic_timer_irqs()字段+1</li>
+<li>应答本地APIC上的中断</li>
+<li>调用irq_enter()函数</li>
+<li>调用smp_local_timer_interrupt()函数</li>
+<li>调用irq_exit()函数</li>
+</ol>
+<p>smp_local_timer_interrupt() 函数执行每个CPU的计时活动，其中调用profile_tick和update_process_times()函数</p>
+<p>系统管理员可以通过写入&#x2F;etc&#x2F;profile文件可以修改内核代码监管器的抽样频率。为实现修改，内核改变本地时钟中断频率。smp_local_timer_interrupt()函数保证每个节拍精确调用update_process_times()函数一次。</p>
+<h2 id="更新事件和日期"><a href="#更新事件和日期" class="headerlink" title="更新事件和日期"></a>更新事件和日期</h2><p>用户程序从xtime变量获取当前日期和时间，内核必须周期性地更新该变量，才能使它的值保持精确。<br>全局中断处理沉痼调用 update_times() 函数更新xtime的值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">void update_times(void)</span><br><span class="line">&#123;</span><br><span class="line">    unsigned long ticks;</span><br><span class="line">    ticks = jiffies - wall_jiffies;</span><br><span class="line">    if (ticks)&#123;</span><br><span class="line">        wall_jiffies += ticks;</span><br><span class="line">        update_wall_time(ticks);</span><br><span class="line">    &#125;</span><br><span class="line">    calc_load(ticks);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>wall_jiffies变量存放xtime变量最后更新的时间，当中断被禁止很长时间时，内核不必每个时钟更新xtime 变量。 </p>
+<p>update_wall_time 更新xtime.tv_nsec 共ticks次，每次+1000000，如果需要更新xtime.tv_nec则会更新它。</p>
+<h2 id="更新系统统计数"><a href="#更新系统统计数" class="headerlink" title="更新系统统计数"></a>更新系统统计数</h2><p>内核在与定时相关的其他任务中必须周期性地收集若数据用于：</p>
+<ul>
+<li>检查进行进程的CPU资源限制 (通过 signal-&gt;rlim[RLIMIT_CPU].rlim_cur 控制的，达到限制则向进程发送SIGXCPU和SIGKILL信号。)</li>
+<li>更新与本地CPU工作负载有关的统计数 （process.utime process.stime）</li>
+<li>计算平均系统负载（calc_load() 函数用于计算处于TASK_RUNNING 或 TASK_UNINTERRUPTIBLE状态的进程数，更新统计出的平均负载）</li>
+<li>监管内核代码（profile_tick()函数为代码监管起采集数据。）</li>
+</ul>
+<p>linux内核包含一个叫做 readprofiler 的最低要求的代码监管器，linux开发者用其发现内核在内核态的什么地方花费事件。监管器确定内核的“热点”，用于指出需要优化的内核函数。</p>
+<p>为了激活代码监管器，linux内核启动时必须传字符串参数“profile&#x3D;N” 这里2^N表示要监管的代码段的大小。采集的数据可以从&#x2F;proc&#x2F;profile文件中读取。</p>
+<p>linux2.6包含另一个监管器，叫做oprofile。profile_tick() 调用timer_notify()函数用于收集这个监管器使用的数据。</p>
+<h2 id="软定时器和延迟函数"><a href="#软定时器和延迟函数" class="headerlink" title="软定时器和延迟函数"></a>软定时器和延迟函数</h2><p>定时器是一种软件功能，允许将来的某个时刻，函数在给定的事件间隔用完时被调用。超时表示与定时器相关的时间间隔已经用完的那个时刻。</p>
+<p>内核和进程广泛使用定时器。Linux考虑两种类型的定时器，即动态定时器（dynamic timer）和间隔定时器（interval timer）。第一种由内核使用，间隔定时器可以由进程在用户态创建。</p>
+<p>动态定时器应用之一：nanosleep()系统调用</p>
+<p>延迟函数：当内核需要等待一个较短的时间间隔，比如不超过几毫秒时，就无需使用软定时器：内核使用udelay()和ndelay()函数。</p>
+<h2 id="与定时测量相关的系统调用"><a href="#与定时测量相关的系统调用" class="headerlink" title="与定时测量相关的系统调用"></a>与定时测量相关的系统调用</h2><p>有几个调用允许用户态下的进程读取及修改时间和日期，以及创建定时器。<br>time()         获取utc0开始的秒数<br>gettimeofday() 获取utc0开始的秒数和微秒数<br>adjtimex()     用于调整时间，for NTP<br>setitimer()    激活间隔定时器，第一个参数为： ITIMER_REAL 真正过去的时间+SIGALRM信号，ITIMER_VIRTUAL 用户态时间+SIGALRM信号，ITIMER_PROF 用户态+内核态时间+SIGPROF信号。其他参数再说<br>alarm()        会在一个指定的时间间隔用完时向调用的进程发送一个SIGALRM信号。</p>
+<p>POSIX 1003.1b标准为用户态程序引入了一种新型软定时器，被称为POSIX定时器。<br><img src="/./static/%E4%B8%8EPOSIX%E5%AE%9A%E6%97%B6%E5%99%A8%E5%92%8C%E6%97%B6%E9%92%9F%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"><br>POSIX定时器比传统间隔定时器更灵活、更可靠。他们之间的区别：</p>
+<ul>
+<li>传统定时器到期时吗，内核发送SIGALRM信号给进程来激活定时器。POSIX定时器到期时内核可以发送多种信号给整个多线程应用程序，也可以发送给单个指定的线程。</li>
+<li>传统定时器到期很多次时，用户态程序不接受信号时，只有第一个信号被接受，其他都被丢弃。POSIX则可以通过timer_getoverrun()系统调用来获取第一次以来到期的次数。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/04/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AD%E7%AB%A0)%E5%AE%9A%E6%97%B6%E6%B5%8B%E9%87%8F/" data-id="cm6yz33df001c8zlvg015b00l" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/内核进阶之旅-【官方教学】嵌入式Linux C，内核驱动编程全套教程/P6.ARM64处理器架构" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/03/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/P6.ARM64%E5%A4%84%E7%90%86%E5%99%A8%E6%9E%B6%E6%9E%84/" class="article-date">
+  <time datetime="2022-12-03T10:00:00.000Z" itemprop="datePublished">2022-12-03</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/arm64/">arm64</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/03/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/P6.ARM64%E5%A4%84%E7%90%86%E5%99%A8%E6%9E%B6%E6%9E%84/">P6.ARM64处理器架构</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="P6-ARM64处理器架构"><a href="#P6-ARM64处理器架构" class="headerlink" title="P6.ARM64处理器架构"></a>P6.ARM64处理器架构</h1><ul>
+<li>深入理解linux 内核： 第三章 进程<br>keywords： ARM64、处理器、aarch64</li>
+</ul>
+<h2 id="内核地址空间布局-（linux-6-0-arch-arm64-include-asm-memory-h-33-81）"><a href="#内核地址空间布局-（linux-6-0-arch-arm64-include-asm-memory-h-33-81）" class="headerlink" title="内核地址空间布局 （linux_6.0&#x2F;arch&#x2F;arm64&#x2F;include&#x2F;asm&#x2F;memory.h 33-81）"></a>内核地址空间布局 （linux_6.0&#x2F;arch&#x2F;arm64&#x2F;include&#x2F;asm&#x2F;memory.h 33-81）</h2><p><img src="/./static/%E5%86%85%E6%A0%B8%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4.png"></p>
+<ul>
+<li>线性映射区域部分范围为[PAGE_OFFSET,2^64-1]，其中PAGE_OFFSET&#x3D;(UL(0fffffffffffffff)&lt;&lt;(VA_BITS - 1)),总长度是内核虚拟地址空间的一半。其中线性的原因是：<br>虚拟地址&#x3D;（物理地址-PHYS_OFFSET）+ PAGE_OFFSET</li>
+<li>vmemmap 区域范围为[VMEMMAP_START,PAGE_OFFSET]，长度为VMEMMAP_SIZE&#x3D;(线性映射区域长度&#x2F;页长度*page结构体的长度上限)？</li>
+<li>PCI IO区域用于外部PCI设备</li>
+<li>固定映射会映射到物理地址</li>
+<li>vmalloc区域 ：内核动态内存空间</li>
+<li>KASCAN影子区域 ：KernelAddressSANitizer（KASAN）是一个动态检测内存错误的工具。它为找到use-after-free和out-of-bounds问题提供了一个快速和全面的解决方案。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/03/linux/%E5%86%85%E6%A0%B8%E8%BF%9B%E9%98%B6%E4%B9%8B%E6%97%85-%E3%80%90%E5%AE%98%E6%96%B9%E6%95%99%E5%AD%A6%E3%80%91%E5%B5%8C%E5%85%A5%E5%BC%8FLinux%20C%EF%BC%8C%E5%86%85%E6%A0%B8%E9%A9%B1%E5%8A%A8%E7%BC%96%E7%A8%8B%E5%85%A8%E5%A5%97%E6%95%99%E7%A8%8B/P6.ARM64%E5%A4%84%E7%90%86%E5%99%A8%E6%9E%B6%E6%9E%84/" data-id="cm6yz33dy002g8zlv138m0q75" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+  <nav id="page-nav">
+    <a class="extend prev" rel="prev" href="/page/2/">&laquo; __(&#39;prev&#39;)</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/">__(&#39;next&#39;) &raquo;</a>
+  </nav>
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

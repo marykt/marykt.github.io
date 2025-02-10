@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(九章)linux进程地址空间 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="进程地址空间 深入理解linux 内核： 第九章 进程地址空间keywords： 内存管理  内核可以通过以下方式获得动态内存空间：  __get_free_pages()或alloc_pages() 从分区页框获得页框 kmem_cache_alloc()或kmalloc()使用slab分配器为专用或通用对象分配块 vmalloc()或vmalloc_32()获得一块非连续的内存区  当用户态进">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(九章)linux进程地址空间">
+<meta property="og:url" content="http://yoursite.com/2022/12/26/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="进程地址空间 深入理解linux 内核： 第九章 进程地址空间keywords： 内存管理  内核可以通过以下方式获得动态内存空间：  __get_free_pages()或alloc_pages() 从分区页框获得页框 kmem_cache_alloc()或kmalloc()使用slab分配器为专用或通用对象分配块 vmalloc()或vmalloc_32()获得一块非连续的内存区  当用户态进">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/%E4%B8%8E%E5%88%9B%E5%BB%BA%E3%80%81%E5%88%A0%E9%99%A4%E7%BA%BF%E6%80%A7%E5%8C%BA%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B5.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B52.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B53.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%AD%97%E6%AE%B5.png">
+<meta property="og:image" content="http://yoursite.com/static/%E4%B8%8E%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E7%9B%B8%E5%85%B3%E7%9A%84%E6%8F%8F%E8%BF%B0%E7%AC%A6.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E6%A0%87%E5%BF%97.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E6%A0%87%E5%BF%972.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%BC%BA%E9%A1%B5%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%80%BB%E4%BD%93%E6%96%B9%E6%A1%88.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%BC%BA%E9%A1%B5%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E6%B5%81%E7%A8%8B%E5%9B%BE.png">
+<meta property="og:image" content="http://yoursite.com/static/drawio/%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%B1%BB%E5%9B%BE.drawio.svg">
+<meta property="article:published_time" content="2022-12-26T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/%E4%B8%8E%E5%88%9B%E5%BB%BA%E3%80%81%E5%88%A0%E9%99%A4%E7%BA%BF%E6%80%A7%E5%8C%BA%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(九章)进程地址空间" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/26/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4/" class="article-date">
+  <time datetime="2022-12-26T10:00:00.000Z" itemprop="datePublished">2022-12-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (九章)linux进程地址空间
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="进程地址空间"><a href="#进程地址空间" class="headerlink" title="进程地址空间"></a>进程地址空间</h1><ul>
+<li>深入理解linux 内核： 第九章 进程地址空间<br>keywords： 内存管理</li>
+</ul>
+<p>内核可以通过以下方式获得动态内存空间：</p>
+<ul>
+<li>__get_free_pages()或alloc_pages() 从分区页框获得页框</li>
+<li>kmem_cache_alloc()或kmalloc()使用slab分配器为专用或通用对象分配块</li>
+<li>vmalloc()或vmalloc_32()获得一块非连续的内存区</li>
+</ul>
+<p>当用户态进程分配内存时，因为优先级没有内核高所以：</p>
+<ul>
+<li>进程对动态内存的请求被认为时不紧迫的，内核总是尽量推迟给用户态进程分配动态内存。</li>
+<li>由于用户进程不可被信任，内核必须能捕获用户态进程引起的所有寻址错误</li>
+</ul>
+<p>内核使用线性地址区间使用权+缺页异常来实现对用户态内存推迟分配。</p>
+<h2 id="进程的地址空间"><a href="#进程的地址空间" class="headerlink" title="进程的地址空间"></a>进程的地址空间</h2><p>内核使用线性区资源来给进程分配动态内存。<br>当进程引用内存，触发缺页异常时，有两种情况：</p>
+<ul>
+<li>不在线性区资源内，无效地址</li>
+<li>在线性区资源内，待分配</li>
+</ul>
+<p><img src="/./static/%E4%B8%8E%E5%88%9B%E5%BB%BA%E3%80%81%E5%88%A0%E9%99%A4%E7%BA%BF%E6%80%A7%E5%8C%BA%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png"></p>
+<h2 id="内存描述符"><a href="#内存描述符" class="headerlink" title="内存描述符"></a>内存描述符</h2><p>与进程地址空间相关的全部信息包含在一个叫内存描述符（memory descriptor）的数据结构中，这个结构的类型为mm_struct,进程描述符的mm字段指向这个结构。</p>
+<p><img src="/./static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B5.png"><br><img src="/./static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B52.png"><br><img src="/./static/%E5%86%85%E5%AD%98%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B53.png"></p>
+<p>mmlist： 所有的内存描述符存放在一个双向链表中。每个描述符在mmlist存放相邻元素的地址。链表的第一个元素是init_mm的mmlist字段，init_mm是初始化阶段进程0所使用的描述符。mmlist_lock自旋锁用于保护此链表<br>mm_users:次使用计数器，存放共享mm_struct 数据结构的轻量级进程数量。<br>mm_count:内存描述符的主使用计数器，次使用计数器中的个数在这里只作为1单位使用。当mm_count&#x3D;0时解除这个描述符。</p>
+<h3 id="内核线程的内存描述符"><a href="#内核线程的内存描述符" class="headerlink" title="内核线程的内存描述符"></a>内核线程的内存描述符</h3><p>内核线程仅运行在内核态，因此，它们永远不会访问低于TASK_SIZE(等于PAGE_OFFSET,通常为0xc0000000),内核线程不用线性区，所以内存描述符的很多字段没有意义。</p>
+<p>因为大于TASK_SIZE线性地址的页表项应该都是相同的，为了避免无用的TLB和高速缓存刷新，内核线程总是使用一组最近运行的普通进程的页表。在每个进程描述符中包含了两种内存描述符指针：mm(进程拥有的内存)和active_mm(进程正在使用的内存)</p>
+<p>对于普通进程来说 mm&#x3D;active_mm，对于内核进程来说mm&#x3D;null,active_mm&#x3D;前一个进程的active_mm</p>
+<p>当内核态进程修改了页表项,那么就需要更新系统中所有进程页表集合中的对应表项目。linux采用了一种延迟的方式进行修改。（vmalloc&#x2F;vfree -&gt; swapper_pg_dir -&gt; pgd 从而影响init_mm）</p>
+<h2 id="线性区"><a href="#线性区" class="headerlink" title="线性区"></a>线性区</h2><p>linux 通过vm_area_struct的对象实现线性区：<br><img src="/./static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%AD%97%E6%AE%B5.png"></p>
+<ul>
+<li>vm_start 字段包含区间的第一个线性地址</li>
+<li>vm_end字段包含区间以外的第一个线性地址。</li>
+<li>vm_mm字段指向拥有这个区间的进程的mm_struct内存描述符</li>
+<li>增加或删除时会进行合并、拆分、创建等操作，以实现线性地址范围不重复</li>
+</ul>
+<h3 id="线性区数据结构"><a href="#线性区数据结构" class="headerlink" title="线性区数据结构"></a>线性区数据结构</h3><p>进程所拥有的线性区是通过一个简单链表连接在一起的。按照地址顺序排列。</p>
+<p><img src="/./static/%E4%B8%8E%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E7%9B%B8%E5%85%B3%E7%9A%84%E6%8F%8F%E8%BF%B0%E7%AC%A6.png"></p>
+<p>内核使用红黑树来实现快速确定含有指定地址的线性区，使用链表来遍历。</p>
+<h3 id="线性区访问权限"><a href="#线性区访问权限" class="headerlink" title="线性区访问权限"></a>线性区访问权限</h3><p>每个线性区都是由一组号码连续的页组成。<br>页相关的权限标志：</p>
+<ul>
+<li>页表项中的标志：Read&#x2F;Wirte、Present或User&#x2F;Supervisor （8086硬件检查）</li>
+<li>页描述符中的flags字段中的一组标志  （linux使用）</li>
+</ul>
+<p>线性区相关的标志（vm_area_struct描述符的vm_flags字段中）：<br><img src="/./static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E6%A0%87%E5%BF%97.png"></p>
+<p><img src="/./static/%E7%BA%BF%E6%80%A7%E5%8C%BA%E6%A0%87%E5%BF%972.png"></p>
+<h2 id="缺页异常"><a href="#缺页异常" class="headerlink" title="缺页异常"></a>缺页异常</h2><p>缺页异常处理程序会区分两种情况：</p>
+<ul>
+<li>由编程错误引起的异常</li>
+<li>引用属于进程地址空间但还未分配物理页框的页所引起的异常</li>
+</ul>
+<p>do_page_fault函数是8086上的缺页中断处理服务程序，其主要逻辑如下：</p>
+<p><img src="/./static/%E7%BC%BA%E9%A1%B5%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%80%BB%E4%BD%93%E6%96%B9%E6%A1%88.png"></p>
+<p>详细流程图如下：</p>
+<p><img src="/./static/%E7%BC%BA%E9%A1%B5%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E6%B5%81%E7%A8%8B%E5%9B%BE.png"></p>
+<h2 id="创建和删除进程的地址空间"><a href="#创建和删除进程的地址空间" class="headerlink" title="创建和删除进程的地址空间"></a>创建和删除进程的地址空间</h2><p>除了进程主动获取线性区以外，首先要考虑的就是fork调用要求为子进程创建一个完整的新地址空间。相反，当进程结束时，内核撤销它的地址空间。</p>
+<h3 id="创建进程的地址空间"><a href="#创建进程的地址空间" class="headerlink" title="创建进程的地址空间"></a>创建进程的地址空间</h3><p>创建新进程时通过调用copy_mm() 函数。这个函数建立新建成的所有页表和内存描述符。</p>
+<ul>
+<li>传统进程继承父进程的地址空间，并且写时复制。</li>
+<li>轻量级进程使用父进程的地址空间。完全共享。</li>
+</ul>
+<h3 id="删除进程的地址空间"><a href="#删除进程的地址空间" class="headerlink" title="删除进程的地址空间"></a>删除进程的地址空间</h3><p>内核调用exit_mm函数释放进程的地址空间。</p>
+<ol>
+<li>首先判断是不是内核线程，是则直接返回</li>
+<li>检查mm-&gt;waiters标志是否置位，是则生成转储文件</li>
+<li>函数递增内存描述符的主使用计数器，重新设置进程描述符的mm字段，并使处理器处于懒惰TLB模式</li>
+<li>调用mmput() 函数释放局部描述符表、线性区描述符和页表。因为主使用计数器已经递增，所以不释放内存描述符（当要把正在被终止的进程从本地CPU撤销时 由finish_task_switch() 函数释放内存描述符。）。</li>
+</ol>
+<h2 id="堆的管理"><a href="#堆的管理" class="headerlink" title="堆的管理"></a>堆的管理</h2><p>每个unix进程都有一个特殊的线性区,这个线性区就是堆（heap），堆用于满足进程的动态内存请求，内存描述符的start_brk与brk字段分别限定了这个区的开始地址和结束地址。</p>
+<p>进程使用一些API来请求和释放动态内存：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">malloc(size)</span><br><span class="line">calloc(n,size)</span><br><span class="line">realloc(ptr,size):改变前面的malloc calloc 分配的内存区字段大小</span><br><span class="line">free(addr)</span><br><span class="line">brk(addr):直接修改堆的大小，addr参数指定 current-&gt;mm-&gt;brk 的新值，返回值是线性区新的结束地址。</span><br><span class="line">sbrk(incr)：类似brk(),incr是增加或减少指定字节的堆大小。</span><br></pre></td></tr></table></figure>
+<p>brk函数和以上列出的函数有所不同，它是唯一一个以系统调用方式实现的函数，其他所有的函数都是使用brk() 和 mmap()系统调用实现的C语言库函数。</p>
+<h1 id="补一个数据结构图，看不懂了"><a href="#补一个数据结构图，看不懂了" class="headerlink" title="补一个数据结构图，看不懂了"></a>补一个数据结构图，看不懂了</h1><p><img src="/./static/drawio/%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%B1%BB%E5%9B%BE.drawio.svg"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/26/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4/" data-id="cm6yz33d9000y8zlv3wwd61ei" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E7%AB%A0)%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E6%9C%AA%E5%AE%8C%E6%88%90/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (十章)linux系统调用-未完成
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AB%E7%AB%A0)%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(八章)linux内存管理</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

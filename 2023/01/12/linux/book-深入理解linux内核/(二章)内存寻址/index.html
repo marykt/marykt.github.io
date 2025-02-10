@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(二章)linux内存寻址 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="内存寻址 深入理解linux 内核： 第二章 内存寻址keywords： 内存、MMU、寻址、物理地址、线性地址、逻辑地址https:&#x2F;&#x2F;linux-mm.org&#x2F;  内存地址 逻辑地址 （logical address）  在机器语言指令中用来指定操作数或一条指令的地址，例如在汇编中，程序有若干段，每一个逻辑地址由段（segment）+偏移量(offset或displacement)组成。 线性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(二章)linux内存寻址">
+<meta property="og:url" content="http://yoursite.com/2023/01/12/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="内存寻址 深入理解linux 内核： 第二章 内存寻址keywords： 内存、MMU、寻址、物理地址、线性地址、逻辑地址https:&#x2F;&#x2F;linux-mm.org&#x2F;  内存地址 逻辑地址 （logical address）  在机器语言指令中用来指定操作数或一条指令的地址，例如在汇编中，程序有若干段，每一个逻辑地址由段（segment）+偏移量(offset或displacement)组成。 线性">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80-%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png">
+<meta property="og:image" content="http://yoursite.com/static/%E6%AE%B5%E5%AF%84%E5%AD%98%E5%99%A8%E5%86%85%E5%AE%B9.png">
+<meta property="og:image" content="http://yoursite.com/static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png">
+<meta property="og:image" content="http://yoursite.com/static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E6%A0%BC%E5%BC%8F.png">
+<meta property="og:image" content="http://yoursite.com/static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%92%8C%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6.png">
+<meta property="og:image" content="http://yoursite.com/static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%AD%97%E6%AE%B5.png">
+<meta property="og:image" content="http://yoursite.com/static/%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%9B%9B%E4%B8%AA%E4%B8%BB%E8%A6%81%E7%9A%84linux%E6%AE%B5%E7%9A%84%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5%E5%80%BC.png">
+<meta property="og:image" content="http://yoursite.com/static/8086%E5%A4%84%E7%90%86%E5%99%A8%E7%9A%84%E5%88%86%E9%A1%B5.png">
+<meta property="og:image" content="http://yoursite.com/static/%E6%89%A9%E5%B1%95%E5%88%86%E9%A1%B5.png">
+<meta property="og:image" content="http://yoursite.com/static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%BB%84%E7%9B%B8%E8%81%94%E6%98%A0%E5%B0%84.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%A4%84%E7%90%86%E5%99%A8%E7%A1%AC%E4%BB%B6%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%8F%8C%E5%A4%84%E7%90%86%E5%99%A8%E4%B8%AD%E7%9A%84%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png">
+<meta property="og:image" content="http://yoursite.com/static/%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%92%8C%E7%BC%93%E5%AD%98.png">
+<meta property="og:image" content="http://yoursite.com/static/linux%E5%88%86%E9%A1%B5%E6%A8%A1%E5%BC%8F.png">
+<meta property="og:image" content="http://yoursite.com/static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png">
+<meta property="og:image" content="http://yoursite.com/static/bios%E6%8F%90%E4%BE%9B%E7%9A%84%E7%89%A9%E7%90%86%E5%9C%B0%E5%9D%80%E6%98%A0%E5%B0%84%E4%B8%BE%E4%BE%8B.png">
+<meta property="og:image" content="http://yoursite.com/static/linux2.6%E7%9A%84%E5%89%8D768%E4%B8%AA%E9%A1%B5%E6%A1%86%EF%BC%883MB%EF%BC%89.png">
+<meta property="og:image" content="http://yoursite.com/static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-1.png">
+<meta property="og:image" content="http://yoursite.com/static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-2.png">
+<meta property="og:image" content="http://yoursite.com/static/%E5%86%85%E6%A0%B8%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83.png">
+<meta property="article:published_time" content="2023-01-12T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80-%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(二章)内存寻址" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/01/12/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/" class="article-date">
+  <time datetime="2023-01-12T10:00:00.000Z" itemprop="datePublished">2023-01-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (二章)linux内存寻址
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="内存寻址"><a href="#内存寻址" class="headerlink" title="内存寻址"></a>内存寻址</h1><ul>
+<li>深入理解linux 内核： 第二章 内存寻址<br>keywords： 内存、MMU、寻址、物理地址、线性地址、逻辑地址<br><a href="https://linux-mm.org/">https://linux-mm.org/</a></li>
+</ul>
+<h1 id="内存地址"><a href="#内存地址" class="headerlink" title="内存地址"></a>内存地址</h1><ul>
+<li>逻辑地址 （logical address）<br>  在机器语言指令中用来指定操作数或一条指令的地址，例如在汇编中，程序有若干段，每一个逻辑地址由段（segment）+偏移量(offset或displacement)组成。</li>
+<li>线性地址 (linear address) &#x2F;虚拟地址（vartual address）<br>  是一个32位无符号整数，可以用来表达4GB的地址，线性地址通常用十六进制数字表示，范围从<code>0x00000000</code> 到 <code>0xffffffff</code>。代表程序能够使用的地址范围。</li>
+<li>物理地址 (physical address)<br>  用于内存芯片级内存单元寻址，与CPU的引脚发送到内存总线上的信号相对应。物理地址由32位或36位无符号整数表示。</li>
+</ul>
+<p>内存控制单元（MMU）通过一种称为分段单元的硬件电路把逻辑地址转换为线性地址；接着第二个称为分页单元的硬件电路把线性地址转成物理地址。<br><img src="/./static/%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80-%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png"><br>在多处理器或单处理器+DMA的结构中存在一个内存仲裁器的结构（memory arbiter）。此结构用于处理同时多个内存请求的问题，对于操作系统来说，此结构是透明的。</p>
+<h1 id="硬件中的分段"><a href="#硬件中的分段" class="headerlink" title="硬件中的分段"></a>硬件中的分段</h1><pre><code>  INTEL 1982年推出80286芯片，该芯片相比8086和8088有了飞跃式发展，虽然它仍是16位结构，但在CPU内部含有13.4万个晶体管，时钟频率由最初6MHz逐步提高到20MHz。内部和外部数据总线皆为16位，地址总线24位，可寻址16MB内存。80286兼容了8086所有功能，并且是8086的向上兼容的微处理器，使8086的汇编语言程序可以不做任何修改地在80286上运行。同时80286的推出也是实模式和保护模式CPU的分水岭。80286微处理器内部有4个功能部件，即地址部件AU，指令部件IU，执行部件EU和总线部件BU。这四个部件的并行操作，提高了吞吐率，加快了处理速度
+  
+  计算机必须具备自举能力将自己所与的元件激活，以便能完成加载操作系统这一目的，然后再由操作系统承担起那些单靠自举代码无法完成的更复杂的任务。自举只有两个功能：加电自检和磁盘引导。
+</code></pre>
+<p>从80286开始，intel CPU 使用两种不同的方式执行地址转换，这两种方式分为称为实模式(real mode)和保护模式（protected mode）。实模式存在主要是为了维持处理器与早期模型兼容，并让操作系统自举。</p>
+<h2 id="段选择符和段寄存器"><a href="#段选择符和段寄存器" class="headerlink" title="段选择符和段寄存器"></a>段选择符和段寄存器</h2><p>一个逻辑地址由两部分组成：段标识符（也叫选择符 Segment Setlector）+ 段内偏移地址。段标识符是一个16位字段。如下图所示。偏移量则是一个32位长的字段。<br><img src="/./static/%E6%AE%B5%E5%AF%84%E5%AD%98%E5%99%A8%E5%86%85%E5%AE%B9.png"><br>为了快速找到段选择符，处理器提供段寄存器，段寄存器存在的唯一目的是存放段选择符。这些段寄存器被称为cs,ss,ds,es,fs,和gs。尽管只有6个段寄存器，但是程序可以把一个段寄存器用于不同目的，可以将其值先保存在内存中，用完再恢复。<br>其中三个段寄存器有专门用途：</p>
+<ul>
+<li>cs 代码段寄存器，程序指令段。</li>
+<li>ss 栈寄存器，程序栈段</li>
+<li>ds 数据段寄存器，静态数据或全局数据。</li>
+</ul>
+<p>其他三个可以指向任意数据段。</p>
+<h3 id="段选择索引号（选择子）"><a href="#段选择索引号（选择子）" class="headerlink" title="段选择索引号（选择子）"></a>段选择索引号（选择子）</h3><p>表示段的地址处在段描述符表中的序号。</p>
+<h3 id="TI-表指示器"><a href="#TI-表指示器" class="headerlink" title="TI 表指示器"></a>TI 表指示器</h3><p>表指示器(在IDT位为0时才有意义?)</p>
+<ol>
+<li>1,段选择子的索引部分指向LDT（对应ldtr控制寄存器声明的段描述符表）</li>
+<li>0,段选择子的索引部分指向GDT（对应gdtr控制寄存器声明的段描述符表）</li>
+</ol>
+<h3 id="CPL、DPL、RPL："><a href="#CPL、DPL、RPL：" class="headerlink" title="CPL、DPL、RPL："></a>CPL、DPL、RPL：</h3><p>CPL是当前执行的程序或任务的特权级。它被存储在CS和SS的第0位和第1位上。通常情况下，CPL代表代码所在的段的特权级。当程序转移到不同特权级的代码段时，处理器将改变CPL。linux系统中只有0和3两个值，分别表示用户态和内核态。</p>
+<p>DPL表示段或门的特权级。它被存储在段描述符或者门描述符的DPL字段中（《操作系统篇-分段机制与GDT|LDT》中有提到），当当前代码段试图访问一个段或者门（这里大家先把门看成跟段一样，下面我们会介绍），DPL将会和CPL以及段或者门选择子的RPL相比较，根据段或者门类型的不同，DPL将会区别对待。</p>
+<p>RPL是通过段选择子的第0和第1位表现出来的。RPL是代码中根据不同段跳转而确定，以动态刷新CS里的CPL，在代码段选择符中。而且RPL对每个段来说不是固定的，两次访问同一段时的RPL可以不同。操作系统往往用RPL来避免低特权级应用程序访问高特权级段内的数据，即便提出访问请求的段有足够的特权级，如果RPL不够也是不行的，当RPL的值比CPL大的时候，RPL将起决定性作用。也就是说，RPL相当于附加的一个权限控制，只有当RPL&gt;DPL的时候，才起到实际的限制作用。</p>
+<h2 id="段描述符"><a href="#段描述符" class="headerlink" title="段描述符"></a>段描述符</h2><p>每个段由一个8字节（64位）的段描述符表示，它描述了段特征。其存放于全局描述符表（GDT）或局部描述符表（LDT）中。<br>当进程除了GDT中的段还需要创建其他段时，就可以有自己的LDT。<br><img src="/./static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"><br>有几种不同类型的段以及和他们对应的段描述符。下面列出了linux中被广泛采用的类型：</p>
+<ul>
+<li>代码段描述符<br>代表代码段，可以放在GDT或LDT中。该描述符S标志为1（非系统段）。</li>
+<li>数据段描述符<br>代表数据段，可以放在GDT或LDT中。该描述符S标志为1（非系统段）。</li>
+<li>任务状态段描述符（TSSD）<br>代表任务状态段（Task State Segment,TSS），也就是说这个段用于保存处理器寄存器的内容，只能出现在GDT中。根据相应的进程是否在CPU上运行，其type字段的值分别为11或9。该描述符S标志为0。</li>
+<li>局部描述符表描述符（LDTD）<br>代表一个包含LDT的段，只能出现在GDT中。其type字段的值为2,该描述符S标志为0。</li>
+</ul>
+<p><img src="/./static/%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E6%A0%BC%E5%BC%8F.png"></p>
+<h2 id="快速访问段描述符"><a href="#快速访问段描述符" class="headerlink" title="快速访问段描述符"></a>快速访问段描述符</h2><p>逻辑地址由16位段选择符+32位偏移量组成，段寄存器仅仅存放段选择符。<br>为了加速从逻辑地址到线性地址的转换，80x86处理器提供了一种附加的非编程的寄存器，供6个可编程的段寄存器使用。当段选择符被装入段寄存器时，相应的段描述符就由内存装入到对应的非编程CPU寄存器，从这时起针对这个段的访问就可以不访问主存中的GDT或LDT，处理器直接使用此非编程寄存器即可。仅当段寄存器内容改变时，才有必要访问GDT和LDT。</p>
+<ul>
+<li>段选择符和段描述符：<br><img src="/./static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%92%8C%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6.png"></li>
+<li>段选择符字段：<br><img src="/./static/%E6%AE%B5%E9%80%89%E6%8B%A9%E7%AC%A6%E5%AD%97%E6%AE%B5.png"></li>
+</ul>
+<h2 id="分段单元"><a href="#分段单元" class="headerlink" title="分段单元"></a>分段单元</h2><p>分段单元（segmentation unit ）主要执行以下动作：</p>
+<ul>
+<li>检查TI字段判断是哪个描述符表，GDT：从gdtr找到gdt的线性基地址，LDT：从ldtr中找到线性基地址。</li>
+<li>段选择符的index字段计算偏移地址</li>
+<li>描述符表的线性基地址+计算出的偏移地址&#x3D;最终的段描述符线性地址。<br><img src="/./static/%E9%80%BB%E8%BE%91%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png"></li>
+</ul>
+<h1 id="linux-中的分段"><a href="#linux-中的分段" class="headerlink" title="linux 中的分段"></a>linux 中的分段</h1><p>8086堆分段的支持是希望程序员把程序划分为逻辑上相关的实体，例如子程序或全局与局部数据区。。linux以非常有限的方式使用分段，实际上分段和分页的作用非常相似。linux更喜欢使用分页方式，原因如下：</p>
+<ul>
+<li>所有进程使用相同的段寄存器值时，内存管理变得更简单，也就是说它们能共享同样一组线性地址。</li>
+<li>linux为了适配多种不同架构(risc体系结构对分段支持很有限)</li>
+</ul>
+<p>2.6版本linux只在8086结构下才需要使用分段<br>运行在用户态的所有linux进程都使用一对相同的段来对指令和数据寻址，这两个段就是所谓的用户代码段和用户数据段。类似的，运行在内核态的所有linux进程都使用一对相同的段对质量和数据寻址，分别叫内核代码段和内核数据段。</p>
+<p><img src="/./static/%E5%9B%9B%E4%B8%AA%E4%B8%BB%E8%A6%81%E7%9A%84linux%E6%AE%B5%E7%9A%84%E6%AE%B5%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5%E5%80%BC.png"></p>
+<p>相应的段选择符由__USER_CS,__USER_DS,__KERNEL_CS,__KERNEL_DS分别定义，例如为了对内核代码段进行寻址，只需要把__KERNEL_CS宏产生的值装入cs段寄存器就可以。<br>从上图中可知 四个段的起始位置均为0x00000000 且可以达到2^23-1的寻址限长，可知linux下逻辑分段的逻辑地址和线性地址是相等的。偏移量字段就对应着实际内存位置。<br>CPU的当前特权级（CPL）反应了进程是在用户态还是内核态，并由CS寄存器中的RPL字段指定，只要当前特权级被改变，一些段寄存器必须相应的更新。例如CPL&#x3D;3（用户态）时，DS寄存器必须含有用户数据段的段选择符，例如CPL&#x3D;0（内核态）时，DS寄存器必须含有内核数据段的段选择符。 类似的还有SS寄存器。<br>当对指向指令或者数据结构的指针进行保存时，内核根本不需要为其设置逻辑地址的段选择符，因为CS寄存器已经包含了，且在内核态的执行的段仅有一种，所以只要cpu在切换到内核态时把__KERNEL_CS装入CS就可以了。指向内核数据结构的指针隐含的使用ds寄存器，指向用户数据结构的指针显式地使用es寄存器。<br>除了那四个段，内核还有其他几个专门的段。在下面说明linux GDT时介绍。</p>
+<h2 id="linux-GDT"><a href="#linux-GDT" class="headerlink" title="linux GDT"></a>linux GDT</h2><p>在单处理系统中只有一个GDT，而在多处理器系统中每个CPU都对应一个GDT。所有的GDT都存放在cpu_gdt_table 数组中，而所有GDT的地址和他们的大小（初始化gdtr寄存器时使用）被存放在cpu_gdt_descr数组中。这些符号都在文件arch&#x2F;i386&#x2F;kernel&#x2F;head.S 中被定义。  </p>
+<p>每个GDT包含18个段描述符和14个空的，未使用的，或保留的项。插入未使用项的目的时为了使经常一起访问的描述符能够处于同一个32字节的硬件高速缓存中。</p>
+<p>每一个GDT中包含的18个段描述符指向下面的段：</p>
+<ul>
+<li>用户态和内核态下的代码段和数据段 共4个</li>
+<li>任务状态段（TSS），每个处理器一个。</li>
+<li>1个包括缺省布局描述符的段，通常为共享</li>
+<li>3个局部线程存储（Thread-Local Storage,TLS）段。</li>
+<li>与高级电源管理（AMP）相关的3个段</li>
+<li>与支持即插即用（PnP）功能的bios服务程序相关的5个段</li>
+<li>被内核用来处理<code>双重错误</code>异常的特殊TSS段。</li>
+</ul>
+<p>系统中每个处理器都有一个GDT副本。除了少数几种情况，所有GDT副本都存放相同的表项。首先TSS段是每个处理器自己的。其次GDT中只有少数项依赖于CPU正在执行的进程（LDT和TLS段描述符）。最后 某些情况处理器可能临时修改GDT中某个项目，例如调用APM的BIOS例程时可能发生这种情况。</p>
+<h2 id="linux-LDT"><a href="#linux-LDT" class="headerlink" title="linux LDT"></a>linux LDT</h2><p>大多数用户态下的linux程序不使用局部描述符表，内核定义了一个缺省的LDT供大多数进程共享。缺省的局部描述符表存放在default_ldt数组中。它包含5个项，内核仅有效地使用了其中两个：用于ibcs执行文件的调用门和solaris&#x2F;x86可执行文件的调用门（<code>执行域</code>相关内容）调用门是8086提供的一种机制，用于在调用预定义函数时改变cpu的特权级。</p>
+<p>某些情况进程需要创建自己的LDT。比如wine那样的程序，它们执行面向段的windows应用程序。modify_ldt()系统调用用来创建进程自己的ldt。</p>
+<h1 id="硬件中的分页"><a href="#硬件中的分页" class="headerlink" title="硬件中的分页"></a>硬件中的分页</h1><p>分页单元(paging unit)把线性地址转换成物理地址。<br>为了效率，线性地址被分成以固定长度为单位的组，称为页，页内部连续的线性地址被映射到连续的物理地址中，这样内核可以以页为单位管理其权限。<br>分页单元把所有的RAM分为固定长度的页框（page frame）(有时也叫物理页)。页：只是一个数据块，可以存放在任何页框或磁盘中。<br>线性地址到物理地址的数据结构称为页表（page table）。页表存放在主存中，在启用分页之前必须由内核对页表进行初始化。<br>从80386开始 所有的8086处理器就支持分页，设置cr0寄存器的PG标志启用，当PG&#x3D;0时，线性地址就被解释成物理地址。<br>        CR0<br>        是系统内的控制寄存器之一。控制寄存器是一些特殊的寄存器，它们可以控制CPU的一些重要特性。<br>        0位是保护允许位PE(Protedted Enable)，用于启动保护模式，如果PE位置1，则保护模式启动，如果PE&#x3D;0，则在实模式下运行。<br>        1 位是监控协处理位MP(Moniter coprocessor)，它与第3位一起决定：当TS&#x3D;1时操作码WAIT是否产生一个“协处理器不能使用”的出错信号。第3位是任务转换位(Task Switch)，当一个任务转换完成之后，自动将它置1。随着TS&#x3D;1，就不能使用协处理器。<br>        CR0的第2位是模拟协处理器位 EM (Emulate coprocessor)，如果EM&#x3D;1，则不能使用协处理器，如果EM&#x3D;0，则允许使用协处理器。<br>        第4位是微处理器的扩展类型位 ET(Processor Extension Type)，其内保存着处理器扩展类型的信息，如果ET&#x3D;0，则标识系统使用的是287协处理器，如果 ET&#x3D;1，则表示系统使用的是387浮点协处理器。<br>        CR0的第31位是分页允许位(Paging Enable)，它表示芯片上的分页部件是否允许工作。<br>        CR0的第16位是写保护未即WP位(486系列之后)，只要将这一位置0就可以禁用写保护，置1则可将其恢复。</p>
+<h2 id="常规分页"><a href="#常规分页" class="headerlink" title="常规分页"></a>常规分页</h2><p>8086开始，intel处理器的分页单元处理4KB的页。<br>32位线性地址被分为三个域：</p>
+<ul>
+<li>Directory(目录) 高10位，第一转换表(页目录表),页目录表的物理地址存放在控制寄存器cr3。</li>
+<li>Table(页表) 中间10位，第二转换表（页表） 一个页表项代表4k。页目录的物理地址存放在页目录表。</li>
+<li>Offset(偏移量) 最低12位 2^12&#x3D;4k （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p>每个活动进程必须有一个分配给它的页目录，页表按需分配。</p>
+<p><img src="/./static/8086%E5%A4%84%E7%90%86%E5%99%A8%E7%9A%84%E5%88%86%E9%A1%B5.png"></p>
+<p>页目录项和页表项具有相同的结构，每项都含有以下字段：</p>
+<ol>
+<li>Present标志：页是否在主存中</li>
+<li>包含页框物理地址最高20位的字段 （因为每个页狂有4k容量。4k对齐，后12位内容可以忽略。）</li>
+<li>Accessed标志：寻址时标志，由操作系统设置</li>
+<li>Dirty标志：写操作标记，由操作系统设置</li>
+<li>read&#x2F;write标志： 权限标记</li>
+<li>PCD和PWT标志：控制硬件高速缓存处理页或页表的方式</li>
+<li><code>Page size 标志</code>： 只用于页目录项，&#x3D;1时，页目录项指的是2MB或4MB的页框</li>
+<li>Global 标志：只用于页表项，此标志在Pentium Pro 中引入，防止常用页被高速缓存刷新出去，cr4 PGE标志控制是否启用</li>
+</ol>
+<h2 id="扩展分页"><a href="#扩展分页" class="headerlink" title="扩展分页"></a>扩展分页</h2><p>Pentium模型开始 8086引入扩展分页，允许页框大小为4MB。在这些情况下内核可以不使用中间页进行地址转换。从而节省内存并保留TLB（转换后援缓冲器）项。<br>32位线性地址被分为二个域：</p>
+<ul>
+<li>Directory(目录) 高10位，第一转换表(页目录表),页目录表的物理地址存放在控制寄存器cr3。</li>
+<li>Offset(偏移量) 其余22位 2^22&#x3D;4M （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p><img src="/./static/%E6%89%A9%E5%B1%95%E5%88%86%E9%A1%B5.png"></p>
+<ul>
+<li><code>Page size 标志</code>必须设置</li>
+<li>rc4 处理器寄存器的PSE标志能使扩展分页和常规分页共存。</li>
+</ul>
+<h2 id="硬件保护方案"><a href="#硬件保护方案" class="headerlink" title="硬件保护方案"></a>硬件保护方案</h2><p>页的存取权限只有两种 read&#x2F;write标志:<code>只读</code>或者<code>可读写</code></p>
+<h2 id="物理地址扩展（PAE）分页地址"><a href="#物理地址扩展（PAE）分页地址" class="headerlink" title="物理地址扩展（PAE）分页地址"></a>物理地址扩展（PAE）分页地址</h2><p>处理器支持的RAM容量受到连接到地址总线上的地址管脚数量限制，早期8086到pentium使用32位物理地址，共4GB RAM。但是对服务器来说不够，所以从Pentium  Pro 开始，intel处理器寻址能力达到2^36&#x3D;64GB。不过需要新的分页机制来把32位线性地址转成36位物理地址。<br>设置cr4控制寄存器的物理地址扩展（PAE）标志以启用。页目录项中的页大小标志PS启动大尺寸页（PAE启动时为2MB）<br>intel为支持PAE改变分页机制：</p>
+<ul>
+<li>64GB RAM 被分为2^24个页框，页表项的物理地址字段由20位扩展到24位</li>
+<li>PDPT页表，新级别，由4个64位表项组成。存放在前4GB中，32（2^5）字节对齐的起始位置。</li>
+<li>CR3包含27位PDPT基地址字段。</li>
+</ul>
+<p>4K常规分页，32位线性地址按照下列方式解释：</p>
+<ul>
+<li>cr3 指向一个PDPT。</li>
+<li>31-30 指向PDPT 4个项中的一个</li>
+<li>29-21 页目录项索引 （2^9&#x3D;512）</li>
+<li>20-12 页表项索引 （2^9&#x3D;512）</li>
+<li>11-0  Offset(偏移量) 最低12位 2^12&#x3D;4k （页表项内容+ 此offset &#x3D; 最终物理位置）</li>
+</ul>
+<p>2MB扩展分页，32位线性地址按照下列方式解释：</p>
+<ul>
+<li>cr3 指向一个PDPT。</li>
+<li>31-30 指向PDPT 4个项中的一个</li>
+<li>29-21 页目录项索引 （2^9&#x3D;512）</li>
+<li>20-0  Offset(偏移量) 最低21位 2^21&#x3D;2M</li>
+</ul>
+<p>实际线性地址仍然是32位长，如果希望对更多RAM寻址，必须在cr3中放置一个新值，或改变PDPT的内容。只有内核能够改变进程的页表，所以在用户态下运行的进程不能使用大于4GB的物理地址空间。PAE允许内核使用，从而显著增加了系统中的进程数量。</p>
+<h2 id="64位系统分页"><a href="#64位系统分页" class="headerlink" title="64位系统分页"></a>64位系统分页</h2><p>普遍用于32位系统的两级分页机制对64位系统不适用，寻址项数量太多。<br>所有64位处理器的硬件分页系统都使用了额外的分页级别，使用的级别数量取决于处理器的类型。下表为一些linux所支持的64位平台使用的硬件分页系统的主要特征。</p>
+<p><img src="/./static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png"></p>
+<p>linux提供了一种通用分页模型，它适合绝大多数所支持的硬件分页系统。</p>
+<h2 id="硬件高速缓存"><a href="#硬件高速缓存" class="headerlink" title="硬件高速缓存"></a>硬件高速缓存</h2><p>为了缩小cpu和ram之间的速度不匹配，引入了硬件高速缓存。即cpu的L1,L2,L3缓存。8086开始引进了一个叫行（line）的新单位。行由几十个连续的字节组成，它们以脉冲突发模式（burst mode）在慢速DRAM和快速的用来实现高速缓存的片上静态RAM（SRAM）之间传送，以实现高速缓存。</p>
+<p>理论上，在一个极端情况下，高速缓存是可以直接映射的，这时主存中的一个行总是存放在高速缓存完全相同的位置。在另一个极端情况下，主存中的一个行可以放到高速缓存的任意位置。大多数高速缓存在某种程度上是N路组关联的（N-way set associative）,如下图所示：<br><img src="/./static/%E7%BB%84%E7%9B%B8%E8%81%94%E6%98%A0%E5%B0%84.png"><br>在n路组相联映像方式中，高速缓存（Cache）被分为若干组，每一组的块数是n（路）。主存中一个区的大小&#x3D;Cache的组数，主存中第0块对应第0组的任意一块，主存的地址结构为区-块-块内地址</p>
+<p>高速缓存单元插在分页单元和主内存之间。它包含一个硬件高速缓存内存（hardware cache memory）和一个高速缓存控制器（cache controller）。高速缓存内存存放内存中真正的行。高速缓存控制器中存放一个表数组项，每个表项对应高速缓存内存中的一个行。每个表项有一个标签（tag）和描述高速缓存行状态的几个标志（flag）。这个标签由一些位组成，这些位让高速缓存控制器能够辨别由这个行当前所映射的内存单元。<br>这种内存物理地址通常分为三组：</p>
+<ul>
+<li>最高几位对应标签</li>
+<li>中间几位对应高速缓存控制器的子集索引</li>
+<li>最低几位对应行内偏移量</li>
+</ul>
+<p><img src="/./static/%E5%A4%84%E7%90%86%E5%99%A8%E7%A1%AC%E4%BB%B6%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png"></p>
+<ul>
+<li>命中判断： 当访问一个RAM单元时，cpu从物理地址中提取子集的索引号（对应上图的组编号），并把子集中所有行的标签与这个物理地址的高位进行比较（对应上图中的cache标记） ，如果某个相同则命中，否则不命中</li>
+<li>更新机制：通写（write-through）+回写(write-back)，取决于存取类型。</li>
+</ul>
+<p>没有命中时高速缓存行被写回到内存，有必要的话会添加到缓存项中。</p>
+<p>多处理器的情况下，每个cpu都有一个单独的硬件高速缓存，因此需要额外硬件在多个高速缓存间同步数据。需要的情况下会通知其他cpu更新其缓存。这种活动叫高速缓存侦听（cache snooping）。这种行为会在硬件级处理，内核无需关心。</p>
+<p><img src="/./static/%E5%8F%8C%E5%A4%84%E7%90%86%E5%99%A8%E4%B8%AD%E7%9A%84%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98.png"></p>
+<p>多级高速缓存（L1-cache L2-cache等）主要是硬件实现，不需要软件管理。被内核视为一个单独的高速缓存。<br>处理器cr0寄存器的CD标志位用来启用或禁用高速缓存电路，NW标志为指明是使用通写还是回写策略。<br>linux 对于所有页框都启用高速缓存，对于写操作总是采用写回策略。</p>
+<h2 id="转换后援缓冲器（TLB）"><a href="#转换后援缓冲器（TLB）" class="headerlink" title="转换后援缓冲器（TLB）"></a>转换后援缓冲器（TLB）</h2><p>除了通用硬件高速缓存用于加快内存块的访问速度以外，8086处理器还包含了另一个称为转换后援缓冲器（Translation Lookaside Buffer）的高速缓存用于加快线性地址转化。</p>
+<p>当一个线性地址第一次使用时，慢速访问Ram中的页表计算出相应的物理地址。同时物理地址被放在一个TLB表项中。以便以后对同一个线性地址的引用可以快速转换。</p>
+<p>多处理器情况下，每个cpu都有自己的TLB，这叫cpu的本地TLB。TLB无需同步，因为运行在现有cpu上的进程可以使用同一线性地址与不同的物理地址发生联系，</p>
+<p>当CPU的cr3控制寄存器被修改时，硬件自动使得本地TLB的所有表项无效，这是因为新的页表被启用而TLB指向的是旧数据。</p>
+<h2 id="缓冲器和进程切换"><a href="#缓冲器和进程切换" class="headerlink" title="缓冲器和进程切换"></a>缓冲器和进程切换</h2><p>前提条件：</p>
+<ul>
+<li>对于多核CPU，每个processor core都有自己的TLB。</li>
+<li>对于进程来说，地址空间包含共享的内核地址空间和自己的用户地址空间。<br><img src="/./static/%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%92%8C%E7%BC%93%E5%AD%98.png"><br>因此，在进程切换的时候，需要有tlb的操作，以便清除旧进程的影响，具体怎样做呢？</li>
+</ul>
+<h3 id="直接清除或清除部分"><a href="#直接清除或清除部分" class="headerlink" title="直接清除或清除部分"></a>直接清除或清除部分</h3><p>当系统发生进程切换，从进程A切换到进程B，从而导致地址空间也从A切换到B，这时候，我们可以认为在A进程执行过程中，所有TLB和Cache的数据都是for A进程的，一旦切换到B，整个地址空间都不一样了，因此需要全部flush掉。</p>
+<p>这种方案当然没有问题，当进程B被切入执行的时候，其面对的CPU是一个干干净净，从头开始的硬件环境，TLB和Cache中不会有任何的残留的A进程的数据来影响当前B进程的执行。当然，稍微有一点遗憾的就是在B进程开始执行的时候，TLB和Cache都是冰冷的（空空如也），因此，B进程刚开始执行的时候，TLB miss和Cache miss都非常严重，从而导致了性能的下降。我们管这种空TLB叫做cold TLB，它需要随着进程的运行warm up起来才能慢慢发挥起来效果，而在这个时候有可能又会有新的进程被调度了，而造成TLB的颠簸效应。</p>
+<p>地址翻译有global（各个进程共享）和local（进程特定的）的概念，因而tlb entry也有global和local的区分。如果不区分这两个概念，那么进程切换的时候，直接flush该cpu上的所有残余。这样，当进程A切出的时候，留给下一个进程B一个清爽的tlb，而当进程A在其他cpu上再次调度的时候，它面临的也是一个全空的TLB（其他cpu的tlb不会影响）。当然，如果区分global 和local，那么tlb操作也基本类似，只不过进程切换的时候，不是flush该cpu上的所有tlb entry，而是flush所有的tlb local entry就OK了。</p>
+<h3 id="PCID机制"><a href="#PCID机制" class="headerlink" title="PCID机制"></a>PCID机制</h3><p>PCID（进程上下文标识符）是在Westmere架构引入的新特性。简单来说，在此之前，TLB是单纯的VA到PA的转换表，进程1和进程2的VA对应的PA不同，不能放在一起。加上PCID后，转换变成VA + 进程上下文ID到PA的转换表，放在一起完全没有问题了。这样进程1和进程2的页表可以和谐的在TLB中共处，进程在它们之前切换完全不需要预热了！<br>所以新的加载cr3的过程变成了：如果CR4的PCID&#x3D;1，加载CR3就不需要Flush TLB。</p>
+<h1 id="linux-中的分页"><a href="#linux-中的分页" class="headerlink" title="linux 中的分页"></a>linux 中的分页</h1><p>linux采用了一种同时适用于32位和64位的普通分页模型。直到2.6.10版本，linux采用了三级分页模型。从2.6.11版本开始，采用了4级分页模型。<br>图中展示的4中页表分别称为：</p>
+<ul>
+<li>页全局目录(Page Global Directory)</li>
+<li>页上级目录(Page Upper Directory)</li>
+<li>页中间目录(Page middle Directory)</li>
+<li>页表(Page Table)<br>每一部分的大小与具体的计算机体系结构有关。对于没有启用物理地址扩展的32位系统，两级页表就够用，这时linux使页上级目录和页中间目录flag都为0，从根本上取消页上级目录和页中间目录字段。这是通过把对应目录项数设置为1，并把这两个目录项映射到页全局目录的一个适当的目录项实现的。</li>
+</ul>
+<p><img src="/./static/linux%E5%88%86%E9%A1%B5%E6%A8%A1%E5%BC%8F.png"><br>对于启用物理地址扩展的32位系统，linux 的全局目录对应8086的页目录指针表（PDPT），取消页上级目录，页中间目录对应8086的页目录，页表对应8086的页表</p>
+<p>对于64位系统使用三级还是四级取决于硬件对线性地址的划分。如图：<br><img src="/./static/%E4%B8%80%E4%BA%9B64%E4%BD%8D%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%A1%B5%E7%BA%A7%E5%88%AB.png"></p>
+<p>linux的进程处理很大程度上依赖于分页机制。事实上线性地址到物理地址的自动转换使得下面的设计变得可行。</p>
+<ul>
+<li>每个进程分配一块不同的物理地址空间，这确保了可以有效地防止寻址错误。</li>
+<li>区别页（一组数据）和页框（主存中的物理地址）之不同。这就允许存放在某个页框中一个页可以保存到磁盘上，然后后面重新装入。这就是虚拟内存机制的基本要素。</li>
+</ul>
+<p>每个进程有它自己的页全局目录和自己的页表集。进程切换时，linux把cr3控制寄存器的内容保存在前一个执行进程的描述符中，然后把要执行进程的描述符中的值装入cr3中。</p>
+<h2 id="物理内存布局"><a href="#物理内存布局" class="headerlink" title="物理内存布局"></a>物理内存布局</h2><p> 在初始化阶段，内核必须建立一个物理地址映射来指定哪些物理地址范围对内核可用而哪些不可用（或者是用于映射硬件设备I&#x2F;O的共享内存，或者相应的页框包含BIOS数据）</p>
+<p> 内核将下列页框标记为保留：</p>
+<ul>
+<li>在不可用物理地址范围内的页框</li>
+<li>含有内核代码和已初始化的数据结构的页框</li>
+</ul>
+<p>保留页框中的数据不会被动态分配或交换到磁盘上</p>
+<p>一般来说，linux安装在RAM中从内存物理地址0x00100000（1MB）开始的地方，所需的页框总数依赖于内核的配置方案：典型配置可以被安装在小于3M的ram中。</p>
+<p>最开始的地方被保留的原因：</p>
+<ul>
+<li>页框0由bios使用，存放加电自检找到的系统硬件配置</li>
+<li>物理地址0x000a0000-0x000fffff范围通常留给BOIS例程，并映射ISA图形卡上的内部内存。这个区域就是所有IBM兼容PC上从640KB到1MB之间著名的洞：物理地址存在但被保留，对应的页框不能被操作系统使用</li>
+<li>第一个1MB内的其他页框可能由特定的计算机模型保留，例如，IBM Thinkpnd 把0xa0页框映射到0x9f页框。</li>
+</ul>
+<p>在启动的开始阶段，内核会询问bios并了解物理内存的大小。在新近计算机中，内核也调用bios过程建立一组物理地址范围和其对应的内存类型</p>
+<p>随后，内核执行machine_specific_memory_setup()函数，该函数建立物理地址映射。如果此表可以从bios获取到，内核就基于bios构建；如果不能获取内核按照保守的缺省设置进行构建：从0x9f(LOWMEMSIZE())到0x100(HIGH_MEMORY)号的所有页框都标记为保留。<br><img src="/./static/bios%E6%8F%90%E4%BE%9B%E7%9A%84%E7%89%A9%E7%90%86%E5%9C%B0%E5%9D%80%E6%98%A0%E5%B0%84%E4%B8%BE%E4%BE%8B.png"></p>
+<p>上图中显示了128MB RAM计算机的典型配置。从0x07ff3000到0x07ffffff的物理地址范围被标记为保留，因为它被硬件映射到BIOS的ROM芯片。</p>
+<p>为了避免把内核装入一组不连续的页框里，linux更愿意跳过RAM的第一个RAM。明确的说，linux用PC体系结构未保留的页框来动态存放所分配的页。<br><img src="/./static/linux2.6%E7%9A%84%E5%89%8D768%E4%B8%AA%E9%A1%B5%E6%A1%86%EF%BC%883MB%EF%BC%89.png"><br>图中出现的符号并没有在linux源码中定义，它们是编译内核时产生的（见System.map）。符号_text 对应于物理地址0x00100000,表示内核代码第一个字节的地址。内核代码的结束位置由_etext表示。</p>
+<h2 id="进程页表"><a href="#进程页表" class="headerlink" title="进程页表"></a>进程页表</h2><ul>
+<li>从0x00000000到0xbfffffff的线性地址，无论进程运行在用户态还是内核态都可以寻址 （进程自己的空间）</li>
+<li>从0xc0000000(PAGE_OFFSET)到0xffffffff的线性地址，只有内核态的进程才可以寻址。（共享内核空间）<br>页全局目录的第一部分表项映射的线性地址小于0xc0000000(PAE未启用为前768项，启用后为前三项–1&#x2F;4) 第二部分对所有进程来说应该是相同的，它等于内核页全局目录的对应表项</li>
+</ul>
+<h2 id="内核页表"><a href="#内核页表" class="headerlink" title="内核页表"></a>内核页表</h2><p>内核维护着一组自己使用的页表，驻留在所谓的主内核页全局目录（master kernel Page Global Directory）中。系统初始化后，这组页表还从未被任何进程或任何内核线程直接使用；<code>主内核页全局目录的最高目录项作为参考模型，为系统中每个普通进程对应的也全局目录提供参考模型</code><br>内核如何初始化自己的页表： 这个过程分两个阶段：（内核刚装入内存，CPU处于实模式）</p>
+<ol>
+<li>内核创造一个有限的地址空间，包括内核的代码段和数据段、初始页表和用于存放动态数据结构的128K大小的空间。这个最小限度的地址空间仅能够将内核装入RAM和对其初始化核心的数据结构。</li>
+<li>内核重新利用剩余的RAM并适当地建立分页表。</li>
+</ol>
+<h3 id="临时内核页表"><a href="#临时内核页表" class="headerlink" title="临时内核页表"></a>临时内核页表</h3><p>临时页全局目录表是在内核编译过程静态初始化的，临时页表是由arch&#x2F;i386&#x2F;kernel&#x2F;head.S–&gt;<code>startup_32()</code>汇编语言函数初始化的。（这里页上级目录和页中间目录项都相当于页全局目录项）。</p>
+<p>临时页全局目录放在<code>swapper_pg_dir</code>变量中。临时页表在pg0变量出开始存放。紧接在内核未初始化的数据段后面。</p>
+<p>假设：内核使用的段、临时页表和128K的内存范围能容纳于RAM前8M空间里，为了映射前8M空间，需要用到两个页表。</p>
+<p>分页的第一个阶段目标是允许实模式和保护模式下都能很容易地对这8M寻址。因此内核必须创建一个映射，把0x00000000到0x007fffff的线性地址（<code>实模式支持</code>）和0xc0000000到0xc07fffff的线性地址（<code>保护模式支持</code>）映射到从0x00000000到0x007fffff的物理地址。</p>
+<p>内核通过把<code>swapper_pg_dir</code>所有项都填充为0来创建期望的映射，0、1、0x300(十进制768)、0x301(十进制769)这四项除外，这四项初始化方式如下：</p>
+<ul>
+<li>0项和0x300的地址字段设置为pg0的物理地址，1项和0x301项设置为紧随pg0后页框的物理地址。</li>
+<li>把这四个项中的 Present、Read&#x2F;Write和User&#x2F;Supervisor标志置位。</li>
+<li>把这四个项中的Accessed、Dirty、PCD、PWD和Page Size 标志清零。</li>
+</ul>
+<p>startup_up() 也启用分页单元，通过向cr3控制寄存器装入  <code>swapper_pg_dir</code>的地址及设置cr0控制寄存器的PG标志来达到这个目的。(__PAGE_OFFSET &#x3D; Oxc0000000)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line"> * Enable paging</span><br><span class="line"> */</span><br><span class="line">	movl $swapper_pg_dir-__PAGE_OFFSET,%eax</span><br><span class="line">	movl %eax,%cr3		/* set the page table pointer.. */</span><br><span class="line">	movl %cr0,%eax</span><br><span class="line">	orl $0x80000000,%eax</span><br><span class="line">	movl %eax,%cr0		/* ..and set paging (PG) bit */</span><br><span class="line">	ljmp $__BOOT_CS,$1f	/* Clear prefetch and normalize %eip */</span><br><span class="line">1:</span><br><span class="line">	/* Set up the stack pointer */</span><br><span class="line">	lss stack_start,%esp</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="当RAM小于896MB时的最终内核页表"><a href="#当RAM小于896MB时的最终内核页表" class="headerlink" title="当RAM小于896MB时的最终内核页表"></a>当RAM小于896MB时的最终内核页表</h2><p>由内核页表所提供的最终映射必须把从0xc0000000开始的线性地址转换为从0开始的物理地址</p>
+<p>宏__pa 用于把从PAGE_OFFSET开始的线性地址转为相应的物理地址而宏__va做相反的转化。</p>
+<p>主内核页全局目录仍然保存在swaper_pg_dir变量中。它由<code>paging_init()</code> 函数初始化。该函数进行如下操作：</p>
+<ol>
+<li>调用pagetable_init()适当地建立页表项。</li>
+<li>把swapper_pg_dir的物理地址写入cr3控制寄存器中</li>
+<li>如果CPU支持PAE并且编译时内核支持PAE，则将cr4寄存器的PAE标志位置位</li>
+<li>调用__flush_tlb_all() 使TLB的所有项无效</li>
+</ol>
+<p>小于896MB时32位物理地址足够对所有可用RAM进行寻址，没必要激活PAE机制。<br>swaper_pg_dir 初始化如下：<br><img src="/./static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-1.png"><br>假定CPU支持4MB页和“全局（global）”TLB表项的8086处理器。如果全局目录项对应的是0xc000000之上的线性地址，则把所有这些项的User&#x2F;Supervisor标志清0，以拒绝用户态进程访问内核地址空间。还要注意Page Size被置位使得内核可以通过大型页来对RAM进行寻址（扩展分页）</p>
+<p>starup_32()函数创建的物理内存前8MB的恒等映射用来完成内核的初始化。映射不需要时，内核调用zap_low_mappings()函数清除对应的页表项。后面<code>固定映射的线性地址</code>一节会详细说明内核如何调整</p>
+<h2 id="当RAM在896MB和8096MB之间时的最终内核页表"><a href="#当RAM在896MB和8096MB之间时的最终内核页表" class="headerlink" title="当RAM在896MB和8096MB之间时的最终内核页表"></a>当RAM在896MB和8096MB之间时的最终内核页表</h2><p>这种情况下，并不把RAM全部映射到内核地址空间。<br>内核使用前一种情况初始化</p>
+<p>线性地址的最高128M留给几种映射（固定映射的线性地址、非连续内存区的线性地址）去用。因此映射RAM所剩空间为1GB-128MB&#x3D;896MB</p>
+<h2 id="当RAM大于8096MB时的最终内核页表"><a href="#当RAM大于8096MB时的最终内核页表" class="headerlink" title="当RAM大于8096MB时的最终内核页表"></a>当RAM大于8096MB时的最终内核页表</h2><p>以下情况出现时采用此情况进行初始化：</p>
+<ul>
+<li>CPU模型支持物理地址扩展（PAE）</li>
+<li>RAM容量大于4GB</li>
+<li>内核以PAE支持来编译</li>
+</ul>
+<p>与前一种情况的主要差异是使用了三级分页模型。<br><img src="/./static/swapper_pg_dir%E5%88%9D%E5%A7%8B%E5%8C%96-2.png"><br>页全局目录中的前三项与用户线性地址空间相对应，内核用一个空页（empty_zero_page）的地址对这三项进行初始化。第四项用页中间目录（pmd）的地址初始化，该页中间目录是通过调用<code>alloc_bootmem_low_pages()</code>分配的。页中间目录的前448项（共512项，后64留给非连续内存分配;在第8章）用RAM前896MB的物理地址填充。</p>
+<p>注意：支持PAE的CPU也支持大型2MB页和全局页。只要可能，linux使用大型页来减少页表数。</p>
+<p>然后页全局目录的第四项被拷贝到第一项，这样好为线性地址空间的前896MB中的低物理内存映射作镜像。为了完成对SMP系统的初始化，此映射是必须的；当这个映射不再需要时，内核调用zap_low_mappings()函数清除对应的页表项，和前面一样。</p>
+<h2 id="固定映射的线性地址"><a href="#固定映射的线性地址" class="headerlink" title="固定映射的线性地址"></a>固定映射的线性地址</h2><p>在前面写过，内核线性地址的第四个GB（0xc0000000）的初始部分映射的是系统的物理内存。另外，至少128MB的线性地址总是留作他用，因为内核使用这些线性地址实现非连续内存分配和固定映射的线性地址。</p>
+<p>非连续内存分配是动态分配和释放内存页的一种特殊方式，在第八章（非连续内存区的线性地址）进行说明。</p>
+<p>固定映射的线性地址（fix-mapped linear address）基本上是一种类似于0xffffc000这样的常量线性地址，其对应的物理地址不必等于线性地址减去0xc000000，而是可以以任意方式建立。每个固定映射的线性地址都映射一个物理内存的页框。内核使用固定映射的线性地址来代替指针变量，因为这些指针变量的值从不改变。<br><img src="/./static/%E5%86%85%E6%A0%B8%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83.png"><br>每个固定映射的线性地址都存放在线性地址第四个GB的末端。</p>
+<h2 id="硬件高速缓存和TLB"><a href="#硬件高速缓存和TLB" class="headerlink" title="硬件高速缓存和TLB"></a>硬件高速缓存和TLB</h2><p>为了使得 硬件高速缓存和TLB的效果最大化。内核在下列决策中考虑体系结构：</p>
+<ul>
+<li>数据结构中最常使用的字段放在该数据结构的低偏移部分，以便它们能够处于高速缓存的同一行中。</li>
+<li>当为一大组数据结构分配空间时，内核试图把它们都存放在内存中，以便所有高速缓存行按照同一方式使用。</li>
+</ul>
+<h3 id="处理TLB"><a href="#处理TLB" class="headerlink" title="处理TLB"></a>处理TLB</h3><p>处理器不能自动同步它们自己的TLB高速缓存，因为决定线性地址和物理地址之间映射何时有效的是内核， 而不是硬件。<br>linux 提供了几种在合适时机刷新TLB的方法。</p>
+<p>一般来说，任何进程切换都会暗示着更换活动页表集合。相对于过期页表，本地TLB表项必须刷新；在这个过程中是把新的页全局目录地址写入cr3寄存器时自动完成的。不过内核在特殊情况会避免刷新。</p>
+<ul>
+<li>共享相同页表集的普通进程之间</li>
+<li>普通进程和内核线程之间<br>原因：内核线程并不拥有自己的页表集，它使用的是一个普通进程的页表集。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2023/01/12/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E7%AB%A0)%E5%86%85%E5%AD%98%E5%AF%BB%E5%9D%80/" data-id="cm6yz33dd00168zlvc8zhf3yp" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/04/10/linux/linux%20%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          linux 字符设备驱动
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/12/29/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%8C%E5%8D%81%E7%AB%A0)%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C-%E6%9C%AA%E5%AE%8C%E6%88%90/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(二十章)linux程序的执行-未完成</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

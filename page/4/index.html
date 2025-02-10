@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="小边的博客">
+<meta property="og:url" content="http://yoursite.com/page/4/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="marykt">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-linux/book-深入理解linux内核/(三章)进程" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/11/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%89%E7%AB%A0)%E8%BF%9B%E7%A8%8B/" class="article-date">
+  <time datetime="2022-11-27T10:00:00.000Z" itemprop="datePublished">2022-11-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/11/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%89%E7%AB%A0)%E8%BF%9B%E7%A8%8B/">(三章)linux 进程</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="进程通信"><a href="#进程通信" class="headerlink" title="进程通信"></a>进程通信</h1><ul>
+<li>深入理解linux 内核： 第三章 进程<br>keywords： 进程、轻量级进程</li>
+</ul>
+<h2 id="进程、轻量级进程和线程"><a href="#进程、轻量级进程和线程" class="headerlink" title="进程、轻量级进程和线程"></a>进程、轻量级进程和线程</h2><p>进程：担当分配系统资源（CPU时间、内存等）的实体。子进程是拷贝的父进程的地址空间、独立的堆和栈。<br>轻量级进程：linux为多线程程序的优化支持<br>线程：和进程共享内存地址空间、共享文件集</p>
+<h2 id="进程描述符"><a href="#进程描述符" class="headerlink" title="进程描述符"></a>进程描述符</h2><p>为了管理进程，内核使用了进程描述符（process descriptor）– 一种task_struct 类型结构，它的字段包含了与一个进程相关的所有信息。下图示意性地描述了linux的进程描述符：</p>
+<p><img src="/./static/linux%E8%BF%9B%E7%A8%8B%E6%8F%8F%E8%BF%B0%E7%AC%A6.png"></p>
+<h2 id="进程状态"><a href="#进程状态" class="headerlink" title="进程状态"></a>进程状态</h2><p>进程中的state字段描述了进程当前的状态。当前版本这些状态是互斥的。下面是可能的状态：</p>
+<p><img src="/./static/linux%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81.png"></p>
+<p>还有两个状态可以放到state字段也可以放到exit_state字段中，只有终止时才能变成这两个状态中的一种：</p>
+<p><img src="/./static/linux%E8%BF%9B%E7%A8%8B%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81.png"></p>
+<p>state字段通常用一个简单赋值语句：</p>
+<p>p-&gt;state &#x3D; TASK_RUNNING;</p>
+<p>内核也是用set_task_state和set_current_state宏；分别设置指定进程的状态和当前进程的状态。此外还有禁止编译器或控制单元不把此操作和其他操作混合的作用。</p>
+<h2 id="标识一个进程"><a href="#标识一个进程" class="headerlink" title="标识一个进程"></a>标识一个进程</h2><p>进程和进程描述符之间有严格的一一对应关系，这使得使用32位进程描述符地址标识进程称为一种方便的方式。进程描述符指针指向这些地址，内核对进程的大部分引用是通过进程描述符指针进行的。</p>
+<p>另一方面，类Unix操作系统允许用户使用一个叫做进程标识符processID（或PID）的数来标识进程，PID存放在进程描述符的pid字段中。PID顺序编号（上限&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;pid_max(PID_MAX_DEFAULT-1&#x3D;32767)），64位系统可扩大为4194303。</p>
+<p>由于循环使用PID编号，内核使用pidmap-array位图来表示当前已分配的PID号和闲置的PID号。因为一个页框包含32768个位，所以32位系统的pidmap-array位图存放在单独页，64位系统中内核分配超过页大小时，内核会为pid位图分配更多页。系统不会释放这些页。</p>
+<p>POSIX 1003.1c 标准规则定一个多线程应用程序中所有的线程要有相同的PID。所以linux引入了线程组的表示。一个线程组中所有的线程使用和该线程组的领头线程（thread group leader）相同的PID，也就是该组中第一个轻量级进程的PID，它被存入进程描述符的tgid字段中。getpid()系统调用返回当前进程tgid的值，而不是pid的值，因此一个多线程应用的所有线程共享相同PID。绝大多数进程都属于一个线程组，包含单一成员（普通非linux多线程程序），且tgid&#x3D;pid；</p>
+<p>下面讲述如何从PID有效地找到它的进程描述符指针。效率很重要</p>
+<h2 id="进程描述符处理"><a href="#进程描述符处理" class="headerlink" title="进程描述符处理"></a>进程描述符处理</h2><p>进程描述符存放在动态内存中，对每个进程来说，linux都把两个不同的数据结构紧凑地放在一个单独为进程分配的存储区域内：</p>
+<ul>
+<li>内核态的进程堆栈</li>
+<li>紧挨进程描述符的小数据结构thread_info,叫做线程描述符<br>这块存储区域的大小通常为8192个字节（两个页框）。考虑效率内核会尽量让这8k为连续的，且第一个页框起始地址为2^13的倍数。实际当没有可用动态空间时，很难找到这样的连续页框，所以8086编译时可选的允许内核栈和线程描述符使用一个页框（4096字节）。</li>
+</ul>
+<p>当使用一个页框时，要考虑栈溢出的情况。内核会采用一些额外的栈以防止中断和异常的深度嵌套而引发的溢出。</p>
+<p>8KB内存区存放两种数据结构的方式。线程描述符存放在内存区的开始，栈从末端向下。<br><img src="/./static/thread_info%E7%BB%93%E6%9E%84%E5%92%8C%E8%BF%9B%E7%A8%8B%E5%86%85%E6%A0%B8%E6%A0%88%E5%AD%98%E6%94%BE%E5%9C%A8%E4%B8%A4%E4%B8%AA%E8%BF%9E%E7%BB%AD%E9%A1%B5%E6%A1%86.png"><br>esp寄存器是CPU栈指针，用来存放栈顶单元地址。数据写入栈后esp值自动递减。<br>thread_info 结构是52字节长，因此内核栈能扩展到8140字节。<br>C语言使用下列的联合结构表示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">union thread_union &#123;</span><br><span class="line">    struct thread_info thread_info;</span><br><span class="line">    unsigned long stackp[2048]; /* 一个页框情况下是1024 */</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>内核使用alloc_thread_info和free_thread_info 宏分配和释放thread_union 所占空间。</p>
+<h2 id="标识当前进程"><a href="#标识当前进程" class="headerlink" title="标识当前进程"></a>标识当前进程</h2><p>根据上面的内存地址规划，内核可以很方便地从esp的地址获取到thread_info的地址。如果thread_union地址范围为8K 则屏蔽低13位就可以获得thread_union结构的基地址，如果thread_union地址范围为4K，内核需要屏蔽低12位。此工作由current_thread_info()函数来完成，它产生如下汇编指令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">movl $0xffffe000, %ecx /* 或者是用于4k堆栈的 0xfffff000*/</span><br><span class="line">andl %esp,%ecx</span><br><span class="line">movl %ecx,p</span><br></pre></td></tr></table></figure>
+<p>这三条指令执行完之后，p就包含在执行指令的CPU上运行进程的thread_info结构的指针。</p>
+<p>进程最常用用的是进程描述符的地址，而不是thread_info的地址，为了获得它，内核常用的是current宏，等于调用current_thread_info()-&gt;task，它产生如下汇编：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">movl $0xffffe000, %ecx /* 或者是用于4k堆栈的 0xfffff000*/</span><br><span class="line">andl %esp,%ecx</span><br><span class="line">movl (%ecx),p</span><br></pre></td></tr></table></figure>
+<p>因为task字段在thread_info结构中的偏移量为0，所以执行完以上代码后，p中就包含进程描述符的地址。</p>
+<p>常用的调用为 current-&gt;pid 返回在cpu上正在执行的进程的PID。</p>
+<p>用栈存放进程描述符的另一个优点体现在多处理器系统上，对于每个硬件处理器，仅通过检查栈就可以获得当前正确的进程。早先的linux版本使用全局静态变量current来表示正在痙的进程的描述符。多处理系统上有必要把current定义为一个数组，每个元素对应一个CPU</p>
+<h2 id="进程链表"><a href="#进程链表" class="headerlink" title="进程链表"></a>进程链表</h2><p>进程链表把所有进程的描述符链接起来。每一个task_struct字段都包含一个list_head类型的tasks字段。这个类型的prev和next分别指向前面和后面的元素</p>
+<p>进程链表的头是init_task描述符，它是0号进程（process 0）或 swapper进程的进程描述符。init_task的tasks.prev字段指向链表中最后插入的进程描述符的tasks字段</p>
+<p>SET_LINKS 和REMOVE_LINKS宏分别用户从进程链表中添加和删除进程描述符。这些宏也考虑了进程间的父子关系。</p>
+<p>还有就是for_each_process，它的功能是扫描整个进程链表，其定义如下：<br><img src="/./static/for_each_process.png"></p>
+<h3 id="TASK-RUNNING-状态的进程链表-task-struct-run-list"><a href="#TASK-RUNNING-状态的进程链表-task-struct-run-list" class="headerlink" title="TASK_RUNNING 状态的进程链表(task_struct-&gt;run_list)"></a>TASK_RUNNING 状态的进程链表(task_struct-&gt;run_list)</h3><p>当内核寻找进程在CPU上执行时，必须只考虑可运行进程（处在TASK_RUNNING 链表的进程）。</p>
+<p>早先的的linux使用运行队列链表，由于优先级判定的开销过大，调度程序会扫描整个队列。</p>
+<p>linux2.6 实现的运行队列能够在固定的时间内选出“最佳”可运行程序，诀窍是建立多个可运行进程链表。每个进程优先权对应一个不同的链表。运行队列链表被拆分为140个不同的队列,插入时根据程序优先级插入到不同的链表中。对应的数据结构为prio_array_t：</p>
+<p><img src="/./static/prio_array_t%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%AD%97%E6%AE%B5.png"></p>
+<h2 id="进程间关系"><a href="#进程间关系" class="headerlink" title="进程间关系"></a>进程间关系</h2><p>进程间具有父&#x2F;子关系.如果一个进程创建多个子进程，这些子进程之间具有兄弟关系。在进程描述符中引入几个字段来表示这些关系。进程0和进程1是由内核创建的；进程1（init）是所有进程的祖先。<br><img src="/./static/%E8%BF%9B%E7%A8%8B%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%BF%9B%E7%A8%8B%E4%BA%B2%E5%B1%9E%E5%85%B3%E7%B3%BB%E7%9A%84%E5%AD%97%E6%AE%B5%E6%8F%8F%E8%BF%B0.png"></p>
+<p>下图显示了一组进程之间的亲属关系。进程P0创建了P1,P2,P3。进程p3又创建了P4。<br><img src="/./static/%E4%BA%94%E4%B8%AA%E8%BF%9B%E7%A8%8B%E4%B9%8B%E9%97%B4%E7%9A%84%E4%BA%B2%E5%B1%9E%E5%85%B3%E7%B3%BB.png"></p>
+<p><img src="/./static/%E5%BB%BA%E7%AB%8B%E9%9D%9E%E4%BA%B2%E5%B1%9E%E5%85%B3%E7%B3%BB%E7%9A%84%E8%BF%9B%E7%A8%8B%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%AD%97%E6%AE%B5.png"></p>
+<h3 id="pidhash表及链表"><a href="#pidhash表及链表" class="headerlink" title="pidhash表及链表"></a>pidhash表及链表</h3><p>在几种情况下，内核必须能从进程的PID导出对应的进程描述符指针。例如，为kill()调用提供时会发生这种情况：进程P1希望向P2发送一个信号，参数为P2的pid，内核需要从P2的pid找到对应的进程描述符。</p>
+<p>顺序扫描链表直接查找的方式非常低效。为了加速，引入了4个散列表（对应四种ID ：PID、TGID、PGID、SIG）。<br><img src="/./static/%E5%9B%9B%E4%B8%AA%E6%95%A3%E5%88%97%E8%A1%A8%E5%92%8C%E8%BF%9B%E7%A8%8B%E6%8F%8F%E8%BF%B0%E7%AC%A6%E4%B8%AD%E7%9A%84%E7%9B%B8%E5%85%B3%E5%AD%97%E6%AE%B5.png"></p>
+<p>内核初始化期间会动态地为四个散列表分配空间，并把地址存入pid_hash 数组。散列表长度依赖于可用RAM容量。</p>
+<p>pid_hash 数组如下图：</p>
+<p><img src="/./static/PID%E6%95%A3%E5%88%97%E8%A1%A8.png"></p>
+<p>hash结构如下图：</p>
+<p><img src="/./static/pidhash%E8%A1%A8%E5%8F%8A%E9%93%BE%E8%A1%A8.png"></p>
+<h2 id="如何组织进程"><a href="#如何组织进程" class="headerlink" title="如何组织进程"></a>如何组织进程</h2><p>运行队列链表把处于<code>TASK_RUNNING</code>状态的所有进程组织在一起。当要把其他状态的进程分组时，根据状态不同有不同的处理方式：</p>
+<ul>
+<li>没有为处于TASK_STOPED、EXIT_ZOMBIE或EXIT_DEAD状态的进程建立专门的链表。由于对这些进程的访问比较简单，通过PID或者父子进程链表可以访问，所以不必进行分组</li>
+<li>根据不同的特殊事件把处于TASK_INTERRUPTIBLE或TASK_UNINTERRUPTIBLE状态的进程细分为许多类，每一类都对应某个特殊的事件。在这种状态下，进程状态提供的信息满足不了快速检索的需要，所以必须引入另外的进程链表。这些链表被称为等待队列。</li>
+</ul>
+<h3 id="等待队列"><a href="#等待队列" class="headerlink" title="等待队列"></a>等待队列</h3><p>等待队列在内核中有很多用途，尤其是中断处理、进程同步和定时。用于进程需要等待某些事件发生的情况。</p>
+<p>等待队列实现了在事件上的条件等待：希望等待特定事件的进程把自己放进合适的等待队列，并放弃控制权。因此，等待队列标识一组睡眠的进程，当某条件变真时，内核唤醒它。</p>
+<p>等待队列由双向链表实现，其元素包括指向进程描述符的指针，每个队列都有一个等待队列头（wait queue head），等待队列头是一个类型为wait_queue_head_t的数据结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct _ _wait_queue_head&#123;</span><br><span class="line">    spinlock_t lock;</span><br><span class="line">    struct list_head task_list;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为等待队列是由中断处理程序和主要内核函数修改的，因此必须上锁，防止同时访问。</p>
+<p>等待队列链表中的元素类型为 wait_queue_t;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">struct _ _wait_queue&#123;</span><br><span class="line">    unsigned int flags;</span><br><span class="line">    struct task_struct * task;</span><br><span class="line">    wait_queue_func_t func;</span><br><span class="line">    struct list_head task_list;</span><br><span class="line">&#125;</span><br><span class="line">typedef struct _ _wait_queue  wait_queue_t;</span><br></pre></td></tr></table></figure>
+
+<p>等待队列链表中每个元素代表一个睡眠进程，进程等待某个事件发生。描述符字段放在task字段中。task_list对应着等待相同事件的进程链表。</p>
+<p>然而，考虑如果一次性唤醒所有进程会造成惊群效果。因此分为两种睡眠进程：互斥进程（等待队列元素的flags字段为1）由内核有选择的唤醒，非互斥进程（flags值为0）总是由内核在事件发生时唤醒。例如考虑等待磁盘传输结束的一组进程：一旦磁盘传输完成，所有等待的进程都会被唤醒。等待队列元素的func字段用来表示等待队列中睡眠进程应该用什么方式唤醒。</p>
+<p>队列中非互斥的会放到前面，互斥的放到结尾，当需要唤醒时，顺序进行唤醒。直到唤醒一个互斥的或结束。(一个等待队列同时包含互斥和非互斥的进程是非常罕见的)</p>
+<h3 id="进程资源限制"><a href="#进程资源限制" class="headerlink" title="进程资源限制"></a>进程资源限制</h3><p>每个进程都有一组相关的资源限制（resource limit）,限制指定了进程能使用的系统资源数量。这些限制避免用户过分使用系统资源（CPU、磁盘空间等）。</p>
+<p>对当前进程的资源限制存放在 current-&gt;signal-&gt;rlim字段，即进程的信号描述符（十一章 与信号相关的数据结构）的一个字段。该字段是类型为rlimit结构的数组，每个资源限制对应一个元素：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct rlimit&#123;</span><br><span class="line">    unsigned long rlim_cur;</span><br><span class="line">    unsigned long rlim_max;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/./static/%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6.png"></p>
+<ul>
+<li>rlim_cur 表示资源的当前资源限制。例如current-&gt;signal-&gt;rlim[RLIMIT_CPU]代表正在运行的进程所占CPU时间的限制。</li>
+<li>rlim_max 表示资源限制所允许的最大值（系统所允许的）。<br>由用户创建的每个新进程都会继承其父进程rlim数组的内容。</li>
+</ul>
+<h2 id="进程切换"><a href="#进程切换" class="headerlink" title="进程切换"></a>进程切换</h2><p>为了控制进程的执行，内核必须有能力挂起正在cpu上运行的进程，并恢复以前挂起的某个进程的执行。这种行为叫做进程切换(process switch)、任务切换(task switch)或上下文切换（context switch）。</p>
+<h3 id="硬件上下文"><a href="#硬件上下文" class="headerlink" title="硬件上下文"></a>硬件上下文</h3><p>尽管每个进程可以拥有属于自己的地址空间，但是所有进程必须共享CPU寄存器。因此，在恢复一个进程执行之前，内核必须确保恢复了所有寄存器的值。</p>
+<p>进程恢复执行前必须装入寄存器的一组数据称为硬件上下文（hardware context）。硬件上下文是可执行上下文的一个子集，因为可执行上下文包含进程执行时所需要的所有信息。在linux中，进程硬件上下文的一部分存放在TSS段，剩余部分放在内核态堆栈中。</p>
+<h3 id="执行进程切换"><a href="#执行进程切换" class="headerlink" title="执行进程切换"></a>执行进程切换</h3><p>进程切换可能只发生在schedule()函数。这里我们仅关注内核如何执行一个进程切换。</p>
+<p>进程切换由两步组成：</p>
+<ol>
+<li>切换页全局目录，以安装一个新的地址空间。</li>
+<li>切换内核态堆栈和硬件上下文，因为硬件上下文提供了内核执行新进程所需的所有信息。</li>
+</ol>
+<p>假设prev指向被替换的进程的描述符，next指向被激活进程的描述符。</p>
+<h4 id="switch-to-宏-（进程切换第二步）"><a href="#switch-to-宏-（进程切换第二步）" class="headerlink" title="switch_to 宏 （进程切换第二步）"></a>switch_to 宏 （进程切换第二步）</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">参数：</span><br><span class="line">prev: 前一个进程描述符</span><br><span class="line">next：新的进程描述符</span><br><span class="line">last: </span><br></pre></td></tr></table></figure>
+<p>使用switch_to宏的时候传入的prev和last都是同一个值,比如会这么调用这个宏:<br>switch_to(prev,next,prev).</p>
+<p>考虑一种场景,进程A切换到进程B,因为每个进程的空间是不同的,所以在切换之前,进程A的空间里prev&#x3D;A,next&#x3D;B,last&#x3D;A.<br>一段时间之后,需要切换回到进程A,假设当前进程是C,那么对于C而言prev&#x3D;C,next&#x3D;A,last&#x3D;C.</p>
+<p>对比前后两种场景:</p>
+<ul>
+<li>进程A切换前:prev&#x3D;A,next&#x3D;B,last&#x3D;A</li>
+<li>进程C切换前:prev&#x3D;C,next&#x3D;A,last&#x3D;C</li>
+</ul>
+<p>这时开始从进程C切换到进程A,注意到在切换之前switch_to宏将prev存放到了eax寄存器中,也就是在进程C切换到进程A之前,eax&#x3D;C</p>
+<p>切换之后,很显然,来到了进程A的空间,因此prev,next,last指针要回到进程A被切换出去之前的指向,因此prev&#x3D;A,next&#x3D;B,last&#x3D;A,而eax的数据保持不变.</p>
+<p>在switch_to宏返回之前,将eax寄存器的数据存放到last中,因此,last&#x3D;eax&#x3D;C.<br>此时,也就是:</p>
+<ul>
+<li>进程A被切换回来之后,prev&#x3D;A,next&#x3D;B,last&#x3D;C</li>
+</ul>
+<p><img src="/./static/%E9%80%9A%E8%BF%87%E4%B8%80%E4%B8%AA%E8%BF%9B%E7%A8%8B%E5%88%87%E6%8D%A2%E4%BF%9D%E7%95%99%E5%AF%B9%E8%BF%9B%E7%A8%8BC%E7%9A%84%E5%BC%95%E7%94%A8.png"></p>
+<h4 id="保存和加载FPU、MMX及XMM寄存器"><a href="#保存和加载FPU、MMX及XMM寄存器" class="headerlink" title="保存和加载FPU、MMX及XMM寄存器"></a>保存和加载FPU、MMX及XMM寄存器</h4><p>从80486DX开始，算数浮点单元（floating-point unit ,FPU）已被集成到CPU中。为了维持和旧模式的兼容，浮点算数函数由ESCAPE指令执行，这些指令作用于CPU中的浮点寄存器集。如果一个进程正在使用ESCAPE指令，那么，浮点寄存器的内容就属于它的硬件上下文，并应该保存。MMX指令：加速多媒体应用程序的执行，作用于FPU浮点寄存器</p>
+<p>SSE扩展： 处理器内部引入了单指令多数据流水线（SIMD） 奔腾III 模型扩展了SIMD，引入了SSE扩展（Streaming SIME Extensions）.这样的寄存器不与FPU和MMX寄存器重叠。奔腾4模型引入另一个特点：SSE2，支持高精度浮点值，SSE2和SSE使用同一XMM寄存器集。</p>
+<p>内核应当处理：</p>
+<ul>
+<li>进程切换时进行这些寄存器的处理</li>
+<li>内核使用FPU、MMX和SEE&#x2F;SEE2单元需要避免干扰用户态进程所做的任何计算。</li>
+</ul>
+<h2 id="创建进程"><a href="#创建进程" class="headerlink" title="创建进程"></a>创建进程</h2><p>unix 操作系统依赖进程创建来满足用户的需求，例如，用户只要输入一条命令，shell进程就会创建一个新进程，新进程执行shell的另一个拷贝。</p>
+<p>传统linux复制父进程的所有资源，但是效率慢，因为子进程需要拷贝父进程的整个地址空间。</p>
+<p>现代Unix内核通过引入三种不同的机制解决了这个问题：</p>
+<ul>
+<li>写时复制技术，允许父子进程读相同的物理页。只要两者有一个试图写入一个物理页，内核就进行拷贝。</li>
+<li>轻量级进程，允许父子进程共享每进程在内核的很多数据结构，如页表（也就是整个用户态地址空间）、打开文件表及信号处理。</li>
+<li>Vfork()系统调用创建的进程能共享其父进程的内存地址空间。为了防止父进程重写子进程需要的数据，阻塞父进程的执行，直到子进程退出或执行一个新的程序为止。</li>
+</ul>
+<h3 id="clone-、fork-及vfork-系统调用"><a href="#clone-、fork-及vfork-系统调用" class="headerlink" title="clone()、fork()及vfork()系统调用"></a>clone()、fork()及vfork()系统调用</h3><p>在linux中，轻量级进程是由名为clone的函数创建的。<br>do_fork()函数负责处理clone()、fork()及vfork()系统调用。<br>copy_process()函数创建进程描述符以及子进程执行所需要的所有其他数据结构。  </p>
+<h2 id="内核线程"><a href="#内核线程" class="headerlink" title="内核线程"></a>内核线程</h2><p>传统的unix把一些重要的任务委托给周期执行的进程，这些任务包括刷新磁盘高速缓存，交换页框，维护网络链接等等。在现代操作系统中，把它们的函数委托给内核线程（kernel thread），内核线程不受不必要的用户态上下文拖累。</p>
+<p>在linux中，内核线程在以下几方面不同于普通进程：</p>
+<ul>
+<li>内核线程只运行在内核态，而普通进程既可以运行在内核态，也可以运行在用户态。</li>
+<li>因为内核线程只运行在内核态，它们只使用大于PAGE_OFFSET的线性地址空间。普通进程则可以使用4GB的线性地址空间。</li>
+</ul>
+<h3 id="创建一个内核线程"><a href="#创建一个内核线程" class="headerlink" title="创建一个内核线程"></a>创建一个内核线程</h3><p>kernel_thread()函数用于创建一个内核线程。该函数本质上调用的do_fork()</p>
+<h3 id="进程0"><a href="#进程0" class="headerlink" title="进程0"></a>进程0</h3><p>所有进程的祖先叫做进程0, idle进程或者因为历史原因叫做swapper进程，它是linux初始化阶段从无到有创建的一个内核线程。</p>
+<p>这个祖先进程使用下列静态分配的数据结构：<br><img src="/./static/%E8%BF%9B%E7%A8%8B0%E9%9D%99%E6%80%81%E5%88%86%E9%85%8D%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"></p>
+<p>start_kernel() 函数初始化内核所需的数据结构，激活中断，创建另一个叫做进程1的内核线程（一般叫做init进程）：</p>
+<p>kernel_thread(init,NULL,CLONE_FS|CLONE_SIGHAND);</p>
+<p>此时创建的内核线程的PID为1 并与进程0共享每进程所有的内核数据结构。当内核调度程序选择到它时,init进程开始执行init()函数。</p>
+<p>创建init进程后，进程0执行cpu_idle()函数，只有当没有其他进程处于TASK_RUNNING状态时，调度程序才选择进程0.</p>
+<p>多处理器情况下，每个CPU都有一个进程0；电源开启时，BIOS就启动其中一个CPU，同时禁用其他CPU，运行在CPU0上的swapper进程初始化内核数据结构，然后激活其他CPU,并通过copy_process()函数创建另外的swapper进程，把0传递给新创建的swapper进程作为PID。另外内核把适当的CPU索引赋给内核锁创建的每个进程的thread_info所描述的cpu字段。</p>
+<h3 id="进程1"><a href="#进程1" class="headerlink" title="进程1"></a>进程1</h3><p>由进程0创建的内核线程执行init()函数，init()依次完成内核初始化。init()调用exec（）系统调用装入可执行程序init。init内核就变成了一个普通进程，且拥有自己的（per-process）内核数据结构（二十章）。它创建和监控在操作系统外层执行的所有进程的活动。</p>
+<h3 id="其他内核进程"><a href="#其他内核进程" class="headerlink" title="其他内核进程"></a>其他内核进程</h3><p>linux使用很多其他内核线程。其中一些会在系统初始化阶段创建，一直到系统关闭；其他一些则是执行某任务时“按需”创建</p>
+<p>一些其他内核线程的例子是：<br><img src="/./static/%E4%B8%80%E4%BA%9B%E5%86%85%E6%A0%B8%E7%BA%BF%E7%A8%8B.png"></p>
+<h2 id="撤销进程"><a href="#撤销进程" class="headerlink" title="撤销进程"></a>撤销进程</h2><h3 id="进程终止"><a href="#进程终止" class="headerlink" title="进程终止"></a>进程终止</h3><p>linux 2.6 中有两个终止用户态应用的系统调用：</p>
+<ul>
+<li>exit_group() 系统调用，它终止整个线程组，即整个基于多线程的应用。do_group_exit()是对应的系统调用。这是C库exit()应该调用的系统调用</li>
+<li>exit()系统调用，它终止某个线程，不管该线程所属线程组的所有其他进程。do_exit()是对应的系统调用。这是诸如pthread_exit()调用所使用的系统调用</li>
+</ul>
+<h3 id="进程删除"><a href="#进程删除" class="headerlink" title="进程删除"></a>进程删除</h3><p>unix允许进程查询内核以获得其父进程的PID，或者其他子进程的执行状态。</p>
+<p>为了遵循这种设计，不允许unix内核在进程一终止就抛弃包含在进程描述符字段中的数据。只有父进程发出了与被终止的进程相关的wait()类系统调用后，才允许这样做，这就是引入僵死状态的原因：进程已经结束，但是必须保存它的描述符，直到父进程得到通知。</p>
+<p>如果父进程在子进程之前结束，那么孤儿进程则会称为init的子进程来解决这个问题。init进程在调用wait()类系统调用检查其合法的子进程终止时，就会撤销僵死的进程。</p>
+<p>release_task()函数从僵死进程的描述符中分离出最后的数据结构。对僵死进程的处理有两种可能的方式：</p>
+<ol>
+<li>如果父进程不需要接收来自子进程的信号，就调用do_exit()</li>
+<li>如果已经给父进程发送了一个信号，就调用wait4()或waitpid()系统调用</li>
+</ol>
+<p>在第二种情况下，函数将回收进程描述符所占的内存空间<br>在第一钟情况下，内存的回收由进程调度程序来完成。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/11/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%B8%89%E7%AB%A0)%E8%BF%9B%E7%A8%8B/" data-id="cm6yz33d8000u8zlv3hezfqwi" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/内核常用数据结构" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/11/26/linux/%E5%86%85%E6%A0%B8%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" class="article-date">
+  <time datetime="2022-11-26T10:00:00.000Z" itemprop="datePublished">2022-11-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/11/26/linux/%E5%86%85%E6%A0%B8%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">内核常用数据结构</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="双向链表"><a href="#双向链表" class="headerlink" title="双向链表"></a>双向链表</h2><p>linux 内核定义了 list_head 数据结构，字段prev和next 分别标识双向链表的向前和向后的指针元素。<br>![](.&#x2F;static&#x2F;用list_head 数据结构构造的双向链表.png)</p>
+<ul>
+<li>新链表使用 LIST_HEAD(list_name) 宏进行初始化，见上图b</li>
+</ul>
+<p>有几个实现原语的函数和宏，如下表所示：<br><img src="/./static/%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8-%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0%E5%92%8C%E5%AE%8F.png"></p>
+<h3 id="散列表中的双向链表"><a href="#散列表中的双向链表" class="headerlink" title="散列表中的双向链表"></a>散列表中的双向链表</h3><p>散列表中用到的双向链表和一般双向链表有明显区别，其不是循环链表，而是使用hlist_head+hlist_node 进行构建。<br>可以用hlist_add_head() 等hlist函数和宏进行操纵。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/11/26/linux/%E5%86%85%E6%A0%B8%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" data-id="cm6yz33cy000d8zlv0mtpepoy" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十一章)信号" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/" class="article-date">
+  <time datetime="2022-09-27T10:00:00.000Z" itemprop="datePublished">2022-09-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/09/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/">(十一章)linux信号</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>信号是一个很短的消息，可以发送给一个进程或一组进程。发送给进程的唯一信息通常是一个数，以此来标识信号。标准信号中，只关注此数字。<br>信号的目的：</p>
+<ul>
+<li>让进程知道已经发生了一个特定的事件。</li>
+<li>强迫进程执行它自己代码中的信号处理程序。<br>linux 1-31 为常规信号（regular signal）: 多次发送信号，进程只会收到一个。<br>linux 32-64为实时信号（real-time signal）: 多次发送信号，信号进行排队。</li>
+</ul>
+<p>信号传递分为两个阶段：</p>
+<ul>
+<li>信号产生<br>内核更新目标进程的数据结构以表示一个新信号已被发送。</li>
+<li>信号传递<br>内核强迫目标进程通过以下方式对信号做出反应：或改变目标进程的执行状态，或开始特定的信号处理程序，或者两者都是。</li>
+</ul>
+<p>每个信号至多被传递一次。信号是可消费资源；一旦被传递，数据结构中的对应信号信息就会被取消。 已经产生但是还没有传递的信号被称为挂起信号，被挂起的常规信号只能同时存在一个，实时信号可以有多个。</p>
+<p>信号可能会被挂起，考虑以下因素：</p>
+<ul>
+<li>信号通常只被当前正在运行的进程传递（current进程）</li>
+<li>信号可以由进程选择性地阻塞（blocked）</li>
+<li>进程信号处理过程中会自动阻塞对应信号直到处理程序结束。正在处理的信号的又一次出现不会中断当前的这个处理程序。</li>
+</ul>
+<p>POSIX信号和多线程<br>POSIX 1003.1 标准对多线程应用的信号处理有一些严格要求：</p>
+<ul>
+<li>信号处理程序必须再多线程应用的所有线程间共享；不过，每个线程必须有自己的挂起掩码信号和阻塞信号</li>
+<li>POSIX库函数kill()和sigqueue()必须向所有的多线程应用而不是某个特殊线程发送信号。所有由内核产生的信号同样如此</li>
+<li>每个发送给多线程应用的信号仅仅传送给一个线程，此线程由内核在不阻塞该信号的线程中随意挑选的。</li>
+<li>如果向多线程应用发送了一个致命信号，内核将杀死该应用的所有线程，而不是仅仅杀死接受信号的那个线程。</li>
+</ul>
+<p><code>线程组</code> 这里指的是任意一种线程组，包含单进程线程组。当kill时</p>
+<p><code>最初版本linux 不支持多线程程序，只支持多进程。linux 为了支持多线程程序，提供了轻量级进程方案，轻量级进程=课本上的线程。组成的线程组=进程。轻量级进程也是基本的调度单位，同一线程组可以共享一部分资源：打开的文件、地址空间等。</code></p>
+<p>(例外：不可能给0号进程（swapper）发送信号。发送给1 （init）的总是被丢弃。)</p>
+<h1 id="信号相关数据结构"><a href="#信号相关数据结构" class="headerlink" title="信号相关数据结构"></a>信号相关数据结构</h1><p><img src="/./static/%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86%E7%9B%B8%E5%85%B3%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/27/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%80%E7%AB%A0)%E4%BF%A1%E5%8F%B7/" data-id="cm6yz33dh001f8zlv31zw3yg3" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十九章)进程通信" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" class="article-date">
+  <time datetime="2022-09-21T10:00:00.000Z" itemprop="datePublished">2022-09-21</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/">(十九章)linux进程通信</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="进程通信"><a href="#进程通信" class="headerlink" title="进程通信"></a>进程通信</h1><ul>
+<li>深入理解linux 内核： 第十九章 进程通信<br>keywords： 进程通信、IPC、FIFO、管道<br>进程通信常用手段：锁保护的磁盘文件、管道和FIFO（命名管道）、IPC 信号量、IPC 消息、IPC 共享内存、套接字。</li>
+</ul>
+<h1 id="锁保护的磁盘文件"><a href="#锁保护的磁盘文件" class="headerlink" title="锁保护的磁盘文件"></a>锁保护的磁盘文件</h1><p>代价很高，不推荐。</p>
+<h1 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h1><p>适合进程之间生产者消费者模型交互，一些进程写入，一些进程读取数据。一个进程写入管道的数据都由内核重定向到另一个进程，另一个进程就可以从管道中读取数据。  </p>
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><p>POSIX只定义了半双工的管道，如果需要双向数据流则需要定义两个不同的管道<br>有些unix系统，例如System V Releas 4 ,实现了全双工。linux则可以通过不关闭另一个描述符来实现全双工。</p>
+<p>linux shell 中的<code>ls | more</code> 就是使用的管道。 在这个场景下首先执行：  </p>
+<ol>
+<li>调用pipe()系统调用；假设返回文件描述符3（管道的读）和4（管道的写）</li>
+<li>两次fork()系统调用，分别创建用于执行ls和more。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+</ol>
+<p>对于执行ls的子进程：</p>
+<ol>
+<li>调用dup2(4,1),把描述符4拷贝到1的位置，替换掉默认写描述符。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+<li>调用execve()系统调用来执行ls程序。</li>
+</ol>
+<p>对于执行more的子进程：</p>
+<ol>
+<li>调用dup2(3,0),把描述符3拷贝到0的位置，替换掉默认读描述符。</li>
+<li>两次调用close()系统调用，释放3和4。</li>
+<li>调用execve()系统调用来执行more程序。</li>
+</ol>
+<h2 id="pipefs"><a href="#pipefs" class="headerlink" title="pipefs"></a>pipefs</h2><p>管道使用的是特殊文件系统pipefs，这个文件系统没有安装点，所以用户看不到。而对应的操作又可以通过pipefs进行整合。<br>init_pipe_fs() 函数：注册pipefs文件系统并安装它</p>
+<h2 id="管道创建过程"><a href="#管道创建过程" class="headerlink" title="管道创建过程"></a>管道创建过程</h2><p>管道创建在pipefs文件系统上，返回两个文件描述符。其中管道对象内部包含readers计数器和writers计数器，在非命名管道只能由此进程和子进程使用的这个情况下，其计数器的值不会大于1。这是由于fork 出的进程复制了文件描述符表，只会造成对应的文件条目内部的计数+1，子进程关闭文件时，也是将系统文件表条目内部的计数减一，当计数值减为0时，才将其删除。只有对应的文件对象被释放，计数器才会减一。</p>
+<h2 id="管道读数据过程"><a href="#管道读数据过程" class="headerlink" title="管道读数据过程"></a>管道读数据过程</h2><p><img src="/./static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png"></p>
+<h2 id="管道写数据过程"><a href="#管道写数据过程" class="headerlink" title="管道写数据过程"></a>管道写数据过程</h2><p><img src="/./static/%E7%AE%A1%E9%81%93%E9%A2%84%E6%9C%9F%E8%AF%BB%E5%8F%96%E8%A1%8C%E4%B8%BA.png"></p>
+<h1 id="FIFO"><a href="#FIFO" class="headerlink" title="FIFO"></a>FIFO</h1><p>解决任意两个进程需要共享管道的问题。</p>
+<ol>
+<li>FIFO索引节点出现在系统目录树上而不是pipefs特殊文件系统中</li>
+<li>FIFO是一种双向通信管道；可以以读写方式打开一个FIFO。</li>
+</ol>
+<h1 id="System-V-IPC"><a href="#System-V-IPC" class="headerlink" title="System V IPC"></a>System V IPC</h1><p>IPC 是进程间通信的的缩写，通常指允许用户态程序执行下列操作的一组机制：</p>
+<ul>
+<li>通过信号量与其他进程进行同步（IPC 信号量）</li>
+<li>向其他进程发送消息或从其他进程接受消息（IPC 消息）</li>
+<li>和其他进程共享内存（IPC 共享内存）</li>
+</ul>
+<h1 id="POSIX-消息队列"><a href="#POSIX-消息队列" class="headerlink" title="POSIX 消息队列"></a>POSIX 消息队列</h1><p>相比systemV IPC 消息队列，有许多优点：</p>
+<ul>
+<li>更简单的基于文件的应用接口</li>
+<li>完全支持消息优先级</li>
+<li>完全支持消息到达的异步通知，通过信号或线程创建实现。</li>
+<li>用于阻塞发送与接受操作的超时机制</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/21/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B9%9D%E7%AB%A0)%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/" data-id="cm6yz33dk001l8zlv0d2i8z6r" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十三章)IO体系结构和设备驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2022-09-18T10:00:00.000Z" itemprop="datePublished">2022-09-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/">(十三章)linux IO体系结构和设备驱动</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="IO体系结构和设备驱动"><a href="#IO体系结构和设备驱动" class="headerlink" title="IO体系结构和设备驱动"></a>IO体系结构和设备驱动</h1><ul>
+<li>深入理解linux 内核： 第十三章 IO体系结构和设备驱动<br>keywords： 驱动、设备驱动、IO</li>
+</ul>
+<h1 id="kobject、kset、subsystem"><a href="#kobject、kset、subsystem" class="headerlink" title="kobject、kset、subsystem"></a>kobject、kset、subsystem</h1><p>sysfs文件系统是一种特殊的文件系统，其 sysfs 树用于保存各种已注册kobject之间和各种容器对象之间的层级关系和设备驱动程序所占io端口的范围。<br>通常sysfs文件系统的上层目录肯定是已注册的subsystem。</p>
+<h1 id="sysfs层级关系图"><a href="#sysfs层级关系图" class="headerlink" title="sysfs层级关系图"></a>sysfs层级关系图</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class subsystem &#123;</span><br><span class="line">    子系统数据结构  </span><br><span class="line">    struct kset kset 嵌入的kset结构</span><br><span class="line">    rwsem 读写信号量</span><br><span class="line">&#125;</span><br><span class="line">class kset&#123;</span><br><span class="line">    设备驱动程序set</span><br><span class="line">    struct subsystem* subsys 指向subsystem描述符</span><br><span class="line">    struct kobj_type* ktype 指向kset的kobject类型描述符</span><br><span class="line">    struct list_head list 包含在此kset中的kobject链表的首部</span><br><span class="line">    struct kobject kobj 嵌入的kobject结构</span><br><span class="line">    struct kset_hotplug_ops* hotplug_ops 指向用于处理kobject结构的过滤和热插拔操作的回调函数表</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class kobject&#123;</span><br><span class="line">    设备驱动程序</span><br><span class="line">    char* k_name 含有容器名称的字符串</span><br><span class="line">    char[] name 含有容器名称的字符串如果不超过20字节</span><br><span class="line">    struct kref 容器的引用计数器</span><br><span class="line">    struct list_head entry 用于kobject所插入的链表的指针</span><br><span class="line">    struct kobject* parent 指向父kobject(如果存在)</span><br><span class="line">    struct ket* kset       指向包含此kobject的kset</span><br><span class="line">    struct kobj_type* ktype 指向kobject 的类型描述符</span><br><span class="line">    struct dentry* dentry  指向kobject相对应的sysfs文件的dentry数据结构 （对应/sys目录下文件）</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">subsystem &lt;|-- subsystem</span><br><span class="line">subsystem &lt;|-- kset</span><br><span class="line"></span><br><span class="line">kset  &lt;|-- kset</span><br><span class="line">kset  &lt;|-- kobject</span><br><span class="line">kobject  &lt;|-- kobject</span><br><span class="line">kobject  &lt;|-- attribute</span><br></pre></td></tr></table></figure>
+<h1 id="设备驱动程序模型"><a href="#设备驱动程序模型" class="headerlink" title="设备驱动程序模型"></a>设备驱动程序模型</h1><p>模型包含几个基本数据结构之上：这些结构描述了总线、设备、设备驱动器等</p>
+<h2 id="结构图"><a href="#结构图" class="headerlink" title="结构图"></a>结构图</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class device &#123;</span><br><span class="line">    设备，对应一个设备  (/sys/devices)</span><br><span class="line">&#125;</span><br><span class="line">class device_driver &#123;</span><br><span class="line">    设备驱动程序  </span><br><span class="line">&#125;</span><br><span class="line">class bus_type &#123;</span><br><span class="line">    总线  (/sys/bus)</span><br><span class="line">&#125;</span><br><span class="line">class `class` &#123;</span><br><span class="line">    类(/sys/class)</span><br><span class="line">&#125;</span><br><span class="line">device_driver  &lt;|-- device</span><br><span class="line">bus_type  &lt;|-- device_driver</span><br><span class="line">bus_type  &lt;|-- device</span><br></pre></td></tr></table></figure>
+<h1 id="设备文件"><a href="#设备文件" class="headerlink" title="设备文件"></a>设备文件</h1><p>io设备是可以当作普通文件的，按照类型分主要分为块设备和字符设备。</p>
+<ul>
+<li>块设备：可以随机访问，比如硬盘、dvd等</li>
+<li>字符设备：可以或不可以随机访问（声卡），访问开销取决于硬件（磁带机）。<br>网卡是例外，网卡不直接与设备文件对应。<br>块设备和字符设备的主次设备号互相独立。（Linux2.6之前设备号为8+8,之后为12+20 合并为dev_t,可以使用MAJOR、MINOR、MKDEV进行拆分和合并）</li>
+</ul>
+<h2 id="动态创建设备号"><a href="#动态创建设备号" class="headerlink" title="动态创建设备号"></a>动态创建设备号</h2><ul>
+<li>驱动程序可以申请系统中的空闲设备号<br>设备文件在驱动程序初始化主次设备号时进行创建，主次设备号存放在&#x2F;sys&#x2F;class子目录下的dev属性中。</li>
+</ul>
+<h2 id="动态创建设备文件"><a href="#动态创建设备文件" class="headerlink" title="动态创建设备文件"></a>动态创建设备文件</h2><ul>
+<li>使用udev工具集的用户态程序。系统启动时&#x2F;dev目录是空的，udev扫描&#x2F;sys&#x2F;class目录来寻找dev文件，对于每一个dev文件udev会在&#x2F;dev目录下创建一个相应的设备文件。udev会根据配置分配文件名和创建符号链接，最后dev目录只存放了内核所支持的所有设备的设备文件。</li>
+<li>通常系统初始化后才会创建设备文件，驱动程序加载或热插设备加入系统时udev可以自动创建对应设备文件（支持热插拔的的驱动在发现新设备后会调用脚本<code>/sbin/hotplug</code>，参数作为环境变量传给此脚本）。</li>
+</ul>
+<h2 id="设备文件的VFS处理"><a href="#设备文件的VFS处理" class="headerlink" title="设备文件的VFS处理"></a>设备文件的VFS处理</h2><ul>
+<li>VFS模型中open调用，调用到ext2&#x2F;3_read_inode时。此函数判断索引节点和设备文件对应时调用init_special_inode()，该函数把索引节点对象的i_rdev字段初始化为设备文件的主次设备号，把i_fop字段设备def_blk_fops或者def_chr_fops 文件操作表的地址（根据设备文件类型）。基于这两个表，对设备文件的系统调用会激活设备驱动程序的函数，而不是基本文件系统的函数。</li>
+</ul>
+<h1 id="设备驱动程序"><a href="#设备驱动程序" class="headerlink" title="设备驱动程序"></a>设备驱动程序</h1><p>驱动程序是内核例程的集合，它使得硬件设备响应控制设备的编程接口，因此该接口是一组规范的VFS函数集（open、read、lseek、ioctl等等）。<br>除了标准VFS函数集合以外仍有很多地方需要考虑： </p>
+<h2 id="驱动程序注册"><a href="#驱动程序注册" class="headerlink" title="驱动程序注册"></a>驱动程序注册</h2><p>注册设备驱动程序意味着分配一个新的device_driver描述符，并将其插入到设备驱动程序模型的数据结构中，并把它与对应的设备文件连接起来。<br>如果设备文件对应的驱动程序未被注册，则堆设备文件的访问会返回-ENODEV</p>
+<ul>
+<li>静态编译的驱动程序，注册在内核初始化阶段进行</li>
+<li>内核模块形式的驱动程序，注册在模块装入时进行。模块卸载时注销。</li>
+</ul>
+<p>例如，对一个pci设备。驱动程序初始化一个pci_driver类型的描述符，调用pci_register_driver()-&gt;<code>driver_register()</code>进行注册。注册时内核会寻找可能由此驱动支持的硬件设备（内核依靠相关的总线类型描述符bus_type 的match方法，以及device_driver对象的probe方法。如果探测到，内核会分配一个设备对象，然后调用<code>device_register()</code>函数把设备插入设备驱动程序的模型中）。</p>
+<h2 id="初始化设备驱动程序"><a href="#初始化设备驱动程序" class="headerlink" title="初始化设备驱动程序"></a>初始化设备驱动程序</h2><p>初始化设备驱动程序意味着分配系统资源。<br>例如设备需要使用IRQ，多个设备可能共享同一个IRQ线。其他的还有用于DMA传送缓冲区的页框和DMA通道本身。<br>为了确保资源在需要时能够获得，获得后不用再次请求，设备驱动程序通常采用以下模式：</p>
+<ul>
+<li>引用计数器计算当前访问设备文件的进程数，open时增加，release时减少。</li>
+<li>open时判断计数器大小，如果为0则申请资源（中断、DMA等）</li>
+<li>release减少计数器后，如果为0则释放资源（中断、DMA等）</li>
+</ul>
+<h2 id="监控I-O-操作"><a href="#监控I-O-操作" class="headerlink" title="监控I&#x2F;O 操作"></a>监控I&#x2F;O 操作</h2><p>I&#x2F;O操作的耗时是不固定的，所以需要监控I&#x2F;O操作的状态。通常使用轮询模式和中断模式</p>
+<h3 id="轮询模式"><a href="#轮询模式" class="headerlink" title="轮询模式"></a>轮询模式</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">for(;;)&#123;</span><br><span class="line">    ... //使用计数或节拍计数器，并判断退出条件</span><br><span class="line">    ...// 可选的释放cpu。</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="中断模式"><a href="#中断模式" class="headerlink" title="中断模式"></a>中断模式</h3><p>如果I&#x2F;O 控制器能够通过IRQ线发出I&#x2F;O结束的信号，那么中断模式才能被使用。<br>一般使用中断+定时器来进行控制。</p>
+<h2 id="访问I-O-共享存储器"><a href="#访问I-O-共享存储器" class="headerlink" title="访问I/O 共享存储器"></a><code>访问I/O 共享存储器</code></h2><p>根据设备和总线的类型，I&#x2F;O 共享存储器可以被映射到不同的物理地址范围。</p>
+<h2 id="直接内存访问（DMA）"><a href="#直接内存访问（DMA）" class="headerlink" title="直接内存访问（DMA）"></a>直接内存访问（DMA）</h2><ul>
+<li>DMA使用可以采用同步或异步方式，第一种方式数据传送是由进程触发的（如声卡，用户态程序写入到dsp设备文件中，驱动程序会把数据从内核缓冲区拷贝到预先定时的DSP中，声卡传送完后引发中断，驱动程序会检查内核缓冲区是否还有要播放的样本。如果没有驱动程序再启动一次DMA传送），第二种是由硬件设备触发的（如网卡，可以从LAN中接受帧，网卡把接受的帧存储到自己的I&#x2F;O 共享存储器中，然后引发中断驱动程序确认中断后，命令网卡将帧从I&#x2F;O 共享存储器拷贝到内核缓冲区。传送完成后再引发新中断，驱动程序将新帧通知上层）。</li>
+</ul>
+<h2 id="内核支持的级别"><a href="#内核支持的级别" class="headerlink" title="内核支持的级别"></a>内核支持的级别</h2><ul>
+<li>根本不支持：程序使用IN和OUT汇编直接操作I&#x2F;O 端口。完全绕过了内核设备驱动程序，常见的是X window系统对图形显示的传统处理方式。</li>
+<li>最小支持：内核不识别硬件设备，但是识别I&#x2F;O 接口。用户程序把I&#x2F;O 接口视为字符流的顺序设备。功能有限。</li>
+<li>扩展支持：内核识别硬件设备，并处理I&#x2F;O 接口本身。这种可能没有对应的设备文件。除了串口和并口以外的所有通用I&#x2F;O 接口上连接的外部设备都需要扩展支持。</li>
+</ul>
+<h2 id="字符设备驱动程序"><a href="#字符设备驱动程序" class="headerlink" title="字符设备驱动程序"></a>字符设备驱动程序</h2><h2 id="块设备驱动程序"><a href="#块设备驱动程序" class="headerlink" title="块设备驱动程序"></a>块设备驱动程序</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%B8%89%E7%AB%A0)IO%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" data-id="cm6yz33di001h8zlv47mx5z3v" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十二章)linux文件系统" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="article-date">
+  <time datetime="2022-09-18T10:00:00.000Z" itemprop="datePublished">2022-09-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">(十二章)linux文件系统</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="linux-文件系统代码"><a href="#linux-文件系统代码" class="headerlink" title="linux 文件系统代码"></a>linux 文件系统代码</h1><ul>
+<li>深入理解linux 内核：454 第十二章 虚拟文件系统<br>keywords： VFS、通用文件模型（common file model）</li>
+</ul>
+<h1 id="VFS"><a href="#VFS" class="headerlink" title="VFS"></a>VFS</h1><p>虚拟文件系统： linux 系统内部的一种封装的设计，使得能够兼容多种文件系统</p>
+<h1 id="通用文件模型"><a href="#通用文件模型" class="headerlink" title="通用文件模型"></a>通用文件模型</h1><p>VFS提供的设计方案。<br>超级块 superblock  对应磁盘大块文件系统。包含脏数据。<br>索引节点 inode 存放具体文件磁盘存储数据 对应磁盘存储中的节点。包含脏数据。<br>文件 file 文件对象，对应内核中的文件。文件被打开时创建，用于描述被使用的文件。不含脏数据。<br>目录项 dentry (对应一个硬连接)</p>
+<p>进程–fd-&gt;文件对象–f_dentry-&gt;目录项对象 –d_inode-&gt;索引节点–i_sb-&gt;超级块—&gt;磁盘</p>
+<h2 id="对于进程来说"><a href="#对于进程来说" class="headerlink" title="对于进程来说"></a>对于进程来说</h2><p>进程fs_struct 中会声明 当前工作目录和根目录<br>进程files_struct会记录打开的文件对象</p>
+<h1 id="文件系统的类型"><a href="#文件系统的类型" class="headerlink" title="文件系统的类型"></a>文件系统的类型</h1><p>文件系统类：</p>
+<h2 id="特殊文件系统-vfsmount"><a href="#特殊文件系统-vfsmount" class="headerlink" title="特殊文件系统(vfsmount)"></a>特殊文件系统(vfsmount)</h2><h2 id="普通文件系统-vfsmount"><a href="#普通文件系统-vfsmount" class="headerlink" title="普通文件系统(vfsmount)"></a>普通文件系统(vfsmount)</h2><h1 id="进程打开文件数量限制"><a href="#进程打开文件数量限制" class="headerlink" title="进程打开文件数量限制"></a>进程打开文件数量限制</h1><p>受限于进程描述符中 signal-&gt;rlim[RLIMIT_NOIFILE] 普通用户默认1024 如果是root 则可以增大<br>受限于内核参数 NR_OPEN 1048576</p>
+<h1 id="2-1-的作用"><a href="#2-1-的作用" class="headerlink" title="2 &gt; &amp;1 的作用"></a>2 &gt; &amp;1 的作用</h1><p>进程files_struct-&gt;fd 指向的文件数组中  0 为标准输入  1 为标准输出  2 为标准错误输出 ，这里的索引就是文件描述符（file descriptor）]</p>
+<h1 id="进程和文件系统层级关系图"><a href="#进程和文件系统层级关系图" class="headerlink" title="进程和文件系统层级关系图"></a>进程和文件系统层级关系图</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br></pre></td><td class="code"><pre><span class="line">classDiagram</span><br><span class="line">class process &#123;</span><br><span class="line">    进程描述  </span><br><span class="line">    Namespace* namespace</span><br><span class="line">    struct fs_struct fs  进程文件系统相关描述</span><br><span class="line">    struct files_struct files  打开文件的表</span><br><span class="line">&#125;</span><br><span class="line">class fs_struct&#123;</span><br><span class="line">    映射进程和文件系统</span><br><span class="line">    atomic_t count   共享此表的进程数量</span><br><span class="line">    rwlock_t lock 字段读写自旋锁</span><br><span class="line">    Int umask 打开文件位掩码</span><br><span class="line">    struct dentry * root 根目录的目录项</span><br><span class="line">    struct dentry * pwd 当前目录的目录项</span><br><span class="line">    struct dentry * altroot 模拟根目录的目录项（8086上始终为null）</span><br><span class="line">    struct vfsmount* rootmnt 根目录所安装文件系统的文件系统对象</span><br><span class="line">    struct vfsmount* pwdmnt 当前目录的安装文件系统的文件系统对象</span><br><span class="line">    struct vfsmount* altrootmnt 模拟根目录的安装文件系统的文件系统对象（8086上始终为null）</span><br><span class="line">&#125;</span><br><span class="line">class files_struct&#123;</span><br><span class="line">    进程打开的文件</span><br><span class="line">    atomic_t count   共享此表的进程数量</span><br><span class="line">    rwlock_t lock 字段读写自旋锁</span><br><span class="line">    Int max_fds 文件对象的当前最大数目</span><br><span class="line">    Int max_fdset 文件描述符的当前最大数目</span><br><span class="line">    Int next_fd 所分配的最大文件描述符+1</span><br><span class="line">    struct file ** fd 指向文件对象数组的指针</span><br><span class="line">    fd_set * close_on_exec 指向执行exec（）时需要关闭的文件描述符的指针</span><br><span class="line">    fd_set * open_fds 指向打开文件描述符的指针</span><br><span class="line">    fs_set  close_on_exec_init close_on_exec初始化指向的空间</span><br><span class="line">    fs_set  open_fds_init open_fds初始化指向的空间</span><br><span class="line">    struct file *p[] fd_array fd初始化指向的空间 0:标准输入，1:标准输出，2:错误输出</span><br><span class="line">&#125;</span><br><span class="line">class file&#123;</span><br><span class="line">    文件对象,不含脏数据</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class namespace &#123;</span><br><span class="line">    // 进程命名空间_多个进程可共享</span><br><span class="line">    atomic_t count   共享引用计数器</span><br><span class="line">    struct vfsmount * root  根目录文件系统描述符</span><br><span class="line">    struct list_head list  已安装文件系统描述符链表（vfsmount）</span><br><span class="line">    struct rw_semaphore sem  读写信号量</span><br><span class="line">&#125;</span><br><span class="line">class vfsmount&#123;</span><br><span class="line">    文件系统</span><br><span class="line">    struct list_head mnt_hash   用于散列表的指针</span><br><span class="line">    struct mount *mnt_parent    指向父文件系统</span><br><span class="line">	struct dentry *mnt_mountpoint  指向安装点目录dentry</span><br><span class="line">    struct dentry *mnt_root        指向根目录的dentry</span><br><span class="line">    struct super_block *mnt_sb     指向这个文件系统的超级块对象 （超级块对象是唯一，）</span><br><span class="line"></span><br><span class="line">    struct list_head mnt_mounts   包含所有文件系统描述符链表的头（对于此文件系统来说）</span><br><span class="line">    struct list_head mnt_child  用于已安装文件系统链表 mnt_mounts的指针</span><br><span class="line"></span><br><span class="line">	atomic_t mnt_count       引用计数器</span><br><span class="line">    Int    mnt_flags          文件系统标志： MNT_NOSUID禁止setuid和setgid MNT_NODEV禁止访问设备文件 MNT_NOEXEC禁止程序执行 </span><br><span class="line">    Int    mnt_expiry_mark     到期标志,已到期会等待计数归零释放。</span><br><span class="line">    char  *mnt_devname 设备文件名</span><br><span class="line">    struct list_head mnt_list   已安装文件系统描述符的 namespace.list 链表的头指针</span><br><span class="line">    struct list_head mnt_fslink 文件系统到期链表的指针的头指针</span><br><span class="line">    struct namespace *mnt_namespace 指向安装了文件系统namespace的进程命名空间</span><br><span class="line">&#125; </span><br><span class="line">class super_block&#123;</span><br><span class="line">    超级块，对应磁盘大块文件系统，和分区对应。包含脏数据</span><br><span class="line">    struct list_head s_list 指向超级块链表的指针</span><br><span class="line">    dev_t s_dev  设备标识符</span><br><span class="line">    unsigned long s_blocksize 以字节为单位的块大小</span><br><span class="line">    unsigned long s_old_blocksize 块设备驱动程序中的以字节为单位的块大小</span><br><span class="line">    unsigned char s_blocksize_bits 以位为单位的块大小</span><br><span class="line">    unsigned char s_dirt 脏标志</span><br><span class="line">    。。。</span><br><span class="line">    struct list_head s_inodes 所有索引节点的链表</span><br><span class="line">    struct list_head s_dirty 改进型索引节点的链表</span><br><span class="line">    struct list_head s_io 等待被写入磁盘的索引节点链表</span><br><span class="line">    struct hlist_head s_anon 处理远程文件系统匿名目录项的链表</span><br><span class="line">    struct list_head s_files 文件对象的链表</span><br><span class="line">    struct block_device * s_bdev 指向块设备驱动程序描述符的指针</span><br><span class="line">    struct list_head s_instances 文件系统类型的超级块对象链表的指针（用于文件系统类型注册）</span><br><span class="line">    。。。</span><br><span class="line">&#125;</span><br><span class="line">class dev_t&#123;</span><br><span class="line">    设备驱动程序</span><br><span class="line">&#125;</span><br><span class="line">class file_system_type&#123;</span><br><span class="line">    文件系统类型</span><br><span class="line">    const char* name 文件系统名</span><br><span class="line">    int fs_flags 文件系统类型标志</span><br><span class="line">    struct superblock * (*)() get_sb 读取超级块的方法</span><br><span class="line">    void (*)() kill_sb 删除超级块的方法</span><br><span class="line">    struct module* owner  实现此文件系统的模块的指针</span><br><span class="line">    struct file_system_type * next 链表下一位</span><br><span class="line">    struct list_head fs_supers  相同文件系统类型的超级块对象链表的头</span><br><span class="line">&#125;</span><br><span class="line">class inode&#123;</span><br><span class="line">    索引节点,包含脏数据，对应文件的磁盘。</span><br><span class="line">    struct hlist_node i_hash 散列链表指针</span><br><span class="line">    struct list_head i_list  描述inode当前状态的链表的指针</span><br><span class="line">    struct list_head i_sb_list  super_block中被管理的链表的头节点</span><br><span class="line">    struct list_head i_dentry 引用索引节点的目录项对象的链表的头</span><br><span class="line">    struct file_lock* i_flock 指向文件锁链表的指针</span><br><span class="line"></span><br><span class="line">    。。。</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class dentry&#123;</span><br><span class="line">    目录项对象</span><br><span class="line">    atomic_t d_count  引用计数器</span><br><span class="line">    unsigned int d_flag		</span><br><span class="line">	spinlock_t d_lock</span><br><span class="line"></span><br><span class="line">    struct inode *d_inode;		* Where the name belongs to - NULL is* negative *//</span><br><span class="line">	struct dentry *d_parent;	/* parent directory */</span><br><span class="line">	struct qstr d_name;</span><br><span class="line">	</span><br><span class="line">	struct list_head d_lru;		/* LRU list */</span><br><span class="line">	struct list_head d_child;	/* child of parent list */</span><br><span class="line">	struct list_head d_subdirs;	/* our children */</span><br><span class="line">    struct list_head d_alias;	</span><br><span class="line"></span><br><span class="line">    unsigned long d_time</span><br><span class="line">    struct dentry_operations* d_op</span><br><span class="line">    struct super_block *d_sb</span><br><span class="line">    void *d_fsdata</span><br><span class="line">    struct rcu_head d_rcu </span><br><span class="line">    struct dcookie_struct *d_cookie</span><br><span class="line">    struct hlist_node d_hash;	/* lookup hash list */</span><br><span class="line">    int d_mounted </span><br><span class="line">        </span><br><span class="line">    unsigned char d_iname[DNAME_INLINE_LEN];	/* small names */</span><br><span class="line">&#125;</span><br><span class="line">class file_lock&#123;</span><br><span class="line">    文件锁</span><br><span class="line">    struct file_lock* fl_next inode-&gt;i_flock单向链表</span><br><span class="line">    struct list_head fl_link 用于全局活动或阻塞链表的指针</span><br><span class="line">    struct list_head fl_block 用于锁的等待者链表的指针</span><br><span class="line">    wait_queue_head_t fl_wait 阻塞进程等待队列</span><br><span class="line">    fl_flags 标记此锁的类型 POSIX 0、FLOCK 1 等</span><br><span class="line">    。。。。</span><br><span class="line">&#125;</span><br><span class="line">process &lt;|-- fs_struct</span><br><span class="line">process &lt;|-- files_struct</span><br><span class="line">files_struct &lt;|-- file</span><br><span class="line">fs_struct &lt;|-- namespace</span><br><span class="line">fs_struct &lt;|-- vfsmount</span><br><span class="line">namespace &lt;|-- vfsmount</span><br><span class="line">vfsmount &lt;|-- super_block</span><br><span class="line">vfsmount &lt;|-- dentry</span><br><span class="line">vfsmount &lt;|-- vfsmount</span><br><span class="line"></span><br><span class="line">fs_struct &lt;|-- dentry</span><br><span class="line"></span><br><span class="line">dentry &lt;|-- inode</span><br><span class="line">dentry &lt;|-- super_block</span><br><span class="line">inode &lt;|-- super_block</span><br><span class="line">inode &lt;|-- file_lock</span><br><span class="line"></span><br><span class="line">super_block &lt;|-- dev_t</span><br><span class="line">super_block &lt;|-- file_system_type</span><br><span class="line"></span><br><span class="line">file  &lt;|-- dentry</span><br><span class="line">file  &lt;|-- vfsmount</span><br></pre></td></tr></table></figure>
+<h1 id="路径名查找过程"><a href="#路径名查找过程" class="headerlink" title="路径名查找过程"></a>路径名查找过程</h1><ol>
+<li>首先 对于路径 &#x2F;opt&#x2F;share&#x2F;xxx 分解路径名 [“opt”,”share”,”xxx”] 除最后一个以外 其他的必定是目录</li>
+<li>如果第一位是&#x2F; 是在 process-&gt;fs-&gt;root 中查找，否则在process-&gt;fs-&gt;pwd 中查找。</li>
+<li>结合目录项高速缓存（散列表和链表）和inode 的查找目录（lookup）等功能循环找到最终的 dentry,</li>
+<li>返回路径名对象nameidata</li>
+</ol>
+<h1 id="open-调用"><a href="#open-调用" class="headerlink" title="open 调用"></a>open 调用</h1><ol>
+<li>查找路径名</li>
+<li>存放新文件描述符到进程的process-&gt;files-&gt;fd 中。占好位置。</li>
+<li>调用filp_open()-&gt;open_namei() 进行检查锁权限等。</li>
+<li>调用dentry_open 创建文件对象，插入文件对象到 super_block-&gt;s_files 返回文件对象地址</li>
+<li>process-&gt;files-&gt;fd 设置为上一步创建的文件对象。</li>
+</ol>
+<h1 id="read-write"><a href="#read-write" class="headerlink" title="read&#x2F;write"></a>read&#x2F;write</h1><ol>
+<li>fget_light() 从fd获取文件对象</li>
+<li>检查file-&gt;f_mode 标志 判断操作是否允许</li>
+<li>判断文件对象是否有read&#x2F;write&#x2F;aio_read&#x2F;aio_wirte操作</li>
+<li>access_ok（） 检查buf 和count 参数</li>
+<li>rw_verify_area() 检查是否有冲突的强制锁</li>
+<li>调用文件对象的 file-&gt;f_op-&gt;read&#x2F;write&#x2F;aio_read&#x2F;aio_wirte</li>
+<li>fput_light() 释放文件对象</li>
+<li>返回传送字节数</li>
+</ol>
+<h1 id="close调用"><a href="#close调用" class="headerlink" title="close调用"></a>close调用</h1><ol>
+<li>从fd获取文件对象</li>
+<li>对应fd位置设为null，这是通过修改 process-&gt;files 中的open_fds和close_on_exec 字段的对应位来进行的</li>
+<li>filp_close(), 调用f_op-&gt;flush ，释放强制锁，fput()释放文件对象</li>
+<li>返回状态码</li>
+</ol>
+<h1 id="文件加锁"><a href="#文件加锁" class="headerlink" title="文件加锁"></a>文件加锁</h1><h1 id="加锁"><a href="#加锁" class="headerlink" title="加锁"></a>加锁</h1><p>linux 支持劝告锁、强制锁、基于强制锁的租借锁（lease）。 fcntl() flock() 和lockf()。<br>文件锁存放在inode 的 i_flock字段对应的单向链表中。也存放在内核的对应类型锁的链表中。<br>blocker+waiter 用于管理进程和资源</p>
+<h2 id="FL-FLOCK锁"><a href="#FL-FLOCK锁" class="headerlink" title="FL_FLOCK锁"></a>FL_FLOCK锁</h2><p>此锁和文件对象相关联。由打开文件的进程维护。锁定范围为整个文件。<br>flock() 用于申请或删除劝告锁，LOCK_SH 共享读、LOCK_EX 互斥写、LOCK_UN释放锁、LOCK_NB不阻塞锁定操作、LOCK_MAND 共享模式强制锁</p>
+<h2 id="FL-POSIX锁"><a href="#FL-POSIX锁" class="headerlink" title="FL_POSIX锁"></a>FL_POSIX锁</h2><p>此锁总是与进程和索引节点关联。进程死亡或文件关闭时进行清除，不会通过fork() 进行继承。锁定范围为文件的部分范围。<br>POSIX文件锁是为了保证多个程序同时访问同一个文件时数据的完整性。Linux在每次文件读写和加锁时都会检测是否有锁冲突，每次加锁或解锁，都会更新相应区域的锁为新锁类型，当然，解锁是直接把该区域的锁信息删除。另外，Linux将文件锁的区域按照从左到右排序，提高了锁的访问效率。<br>fcntl() 参数为 fd、cmd、和flock数据结构（指定锁的文件部分范围）。</p>
+<ol>
+<li>F_GETLK  获取相应类型的锁，如果存在，返回相应锁的信息（包括l_pid设置为加锁进程的PID）</li>
+<li>F_SETLK 非阻塞加锁</li>
+<li>F_SETLKW 阻塞加锁</li>
+<li>F_GETLK64 F_SETLK64 F_SETLKW64 64位版本</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/09/18/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E4%BA%8C%E7%AB%A0)linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" data-id="cm6yz33dk001n8zlv2s728eyb" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/book-深入理解linux内核/(十八章)linux-Ext2和Ext3文件系统" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/08/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linux-Ext2%E5%92%8CExt3%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="article-date">
+  <time datetime="2022-08-14T10:00:00.000Z" itemprop="datePublished">2022-08-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/08/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linux-Ext2%E5%92%8CExt3%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">(十八章)linuxExt2和Ext3 文件系统</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="linux-Ext2和Ext3-文件系统"><a href="#linux-Ext2和Ext3-文件系统" class="headerlink" title="linux Ext2和Ext3 文件系统"></a>linux Ext2和Ext3 文件系统</h1><ul>
+<li>深入理解linux 内核：454 第十八章 Ext2和Ext3 文件系统<br>keywords： Ext2、Ext3、文件系统</li>
+</ul>
+<h1 id="磁盘数据结构"><a href="#磁盘数据结构" class="headerlink" title="磁盘数据结构"></a>磁盘数据结构</h1><p><img src="/./static/EXT2%E5%88%86%E5%8C%BA%E5%92%8CEXT2%E5%9D%97%E7%BB%84%E5%88%86%E5%B8%83%E5%9B%BE.png"><br>引导块：分区的引导扇区使用。<br>块组：大小相同，方便索引。内核会尽量把同一个文件放到一个块组中减少碎片。    其中包含：</p>
+<ul>
+<li>文件系统中超级块的拷贝：ext2_super_block,s_log_block_size:1024^ 为指数基数的块大小</li>
+<li>组描述符的拷贝：ext2_group_desc,描述块号 块个数，索引节点起始位置等。</li>
+<li>数据块位图:位图数据，大小固定为一个块，每一位描述一个数据块。</li>
+<li>索引节点位图:大小固定为一个块，每一位描述一个索引节点表中的块。</li>
+<li>索引节点表：ext2_innode,存放文件属性，一个索引节点128字节，一个1024的块可以存放8个索引节点，总数为：s_inodes_per_group&#x2F;每个块可以存放的索引节点数（比如8）<ul>
+<li>索引节点的增强属性：索引节点的i_file_acl 指向存放增强属性的块。块内头部包含增强属性名：ext2_xattr_entry描述符，尾部包含值。linux 2.6 通过增强属性实现ACL（访问控制列表）</li>
+</ul>
+</li>
+<li>属于文件的一大块数据，即数据块：<br>超级块和组描述符：只有快组0中被使用，其他的作为容灾备份。<br>快组个数取决于分区大小和块大小：因为数据块位图大小固定为一个块，每一位描述一个数据块，块组大小的最小值就固定了，分区除以快组大小就是可能的快组数量。</li>
+</ul>
+<h1 id="各种文件类型如何使用磁盘块"><a href="#各种文件类型如何使用磁盘块" class="headerlink" title="各种文件类型如何使用磁盘块"></a>各种文件类型如何使用磁盘块</h1><p>ext2 文件类型（file_type）</p>
+<table>
+<thead>
+<tr>
+<th>文件类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>未知</td>
+</tr>
+<tr>
+<td>1</td>
+<td>普通文件</td>
+</tr>
+<tr>
+<td>2</td>
+<td>目录</td>
+</tr>
+<tr>
+<td>3</td>
+<td>字符设备</td>
+</tr>
+<tr>
+<td>4</td>
+<td>块设备</td>
+</tr>
+<tr>
+<td>5</td>
+<td>命名管道</td>
+</tr>
+<tr>
+<td>6</td>
+<td>套接字</td>
+</tr>
+<tr>
+<td>7</td>
+<td>符号链接</td>
+</tr>
+</tbody></table>
+<h2 id="普通文件"><a href="#普通文件" class="headerlink" title="普通文件"></a>普通文件</h2><p>初始创建：不使用磁盘块<br>写入数据：使用磁盘快</p>
+<h2 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h2><p>EXT2使用特殊的文件结构实现了目录，文件的数据块把文件名和索引节点号存放在一起。<br>数据结构如下:</p>
+<ul>
+<li>__len32 inode：文件所在索引节点号</li>
+<li>__len16 rec_len:此目录项长度（Byte）</li>
+<li>__u8 name_len:文件名长度（Byte）</li>
+<li>__u8 file_type:文件类型</li>
+<li>char[EXT2_NAME_LEN] name:文件名<br>空间分布如下：（其中oldfile已经被删除）<br><img src="/./static/EXT2%E7%9B%AE%E5%BD%95%E6%96%87%E4%BB%B6%E7%9A%84%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90.png"></li>
+</ul>
+<h2 id="符号链接"><a href="#符号链接" class="headerlink" title="符号链接"></a>符号链接</h2><p>如果符号链接路径名小于等于60字符，存在索引节点的i_block（15*4Byte整数）字段。如果大于60个字符需要数据块。</p>
+<h2 id="设备文件、管道、套接字"><a href="#设备文件、管道、套接字" class="headerlink" title="设备文件、管道、套接字"></a>设备文件、管道、套接字</h2><p>不需要数据块。都存在索引节点中。</p>
+<h1 id="EXT2-内存数据结构"><a href="#EXT2-内存数据结构" class="headerlink" title="EXT2 内存数据结构"></a>EXT2 内存数据结构</h1><p><img src="/./static/EXT2%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84VFS%E6%98%A0%E5%83%8F.png"><br>内核使用高速缓存来缓存数据<br>总是缓存：一直存放在页高速缓存，直到分区被卸载。原理：引用计数一直大于0。周期性地写回磁盘<br>动态模式：只要对象被使用就缓存。页框回收算法回收后进行删除。</p>
+<h2 id="EXT2-超级块对象"><a href="#EXT2-超级块对象" class="headerlink" title="EXT2 超级块对象"></a>EXT2 超级块对象</h2><p><img src="/./static/EXT2%20ext2_sb_info%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"><br>EXT2 超级块(ext2_sb_info)中包含</p>
+<ul>
+<li>磁盘超级块中大部分字段</li>
+<li>s_es指针，指向磁盘超级块所在缓冲区</li>
+<li>s_sbh指针，指向磁盘超级块所在缓冲区的头部</li>
+<li>组描述符的个数s_desc_per_block,</li>
+<li>s_group_desc指针，指向一个缓冲区（包含组描述符的缓冲区）的首部数组</li>
+<li>其他与安装状态安装选项有关的数据<br>在安装ext2 文件系统时对以上字段进行初始化。包括读入包含EXT2组描述符的块，并将缓冲区首部地址写入s_group_desc。为根目录分配一个索引节点和目录项对象，从而可以读取根节点。</li>
+</ul>
+<h2 id="索引节点对象"><a href="#索引节点对象" class="headerlink" title="索引节点对象"></a>索引节点对象</h2><p>ext2_inode_info</p>
+<h1 id="数据块寻址"><a href="#数据块寻址" class="headerlink" title="数据块寻址"></a>数据块寻址</h1><p>对于文件内偏移量f如何找到其在磁盘中的位置?<br>f&#x2F;块大小 为所在的文件块号。<br><img src="/./static/EXT2%20%E5%AF%B9%E6%96%87%E4%BB%B6%E7%9A%84%E6%95%B0%E6%8D%AE%E5%9D%97%E8%BF%9B%E8%A1%8C%E5%AF%BB%E5%9D%80%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png"><br>其中一个寻址占用4B。</p>
+<ul>
+<li>0-11个用于直接寻址</li>
+<li>12号一次间接寻址</li>
+<li>13号二次间接寻址</li>
+<li>14号三次间接寻址</li>
+</ul>
+<p><img src="/./static/EXT2%E6%95%B0%E6%8D%AE%E5%9D%97%E5%AF%BB%E5%9D%80%E7%9A%84%E6%96%87%E4%BB%B6%E5%A4%A7%E5%B0%8F%E4%B8%8A%E7%95%8C.png"><br>比如块大小为1024Byte，直接寻址可以寻址12个块共12&#x3D;12KB。一次间接为 1*(1024&#x2F;4)+12&#x3D;256+12&#x3D;268KB。二次间接为 1*(1024&#x2F;4)*(1024&#x2F;4)+256+12&#x3D;65536+256+12&#x3D;64.26171875 MB。。。</p>
+<h1 id="文件中的洞"><a href="#文件中的洞" class="headerlink" title="文件中的洞"></a>文件中的洞</h1><p>引入文件的洞是为了避免磁盘空间的浪费，被广泛应用在数据库应用中，更一般的说，用于在文件上进行散列的所有应用。<br>文件洞在ext2中的实现是基于动态数据块分配的，只有当进程需要向一个块写数据时才会真正把这个块分配给文件。索引节点的i_size字段定义程序看到的文件大小，包括洞。i_blocks字段存放分配给文件的有效数据块数量（以512字节为单位）。</p>
+<p>echo -n “X” |dd of&#x3D;&#x2F;tmp&#x2F;hole bs&#x3D;1024 seek&#x3D;6 &#x2F;&#x2F; 在1024<em>6位置输出X<br>下图为上述命令在块大小为4096的ext2分区上的数据结构。此时i_size 大小为1024</em>6+1&#x3D;6145 i_block字段为1*4096&#x2F;512&#x3D;8。ibock数组第二个元素为已分配的块，其他为空。<br><img src="/./static/EXT2%E8%B5%B7%E5%A7%8B%E6%9C%89%E6%B4%9E%E7%9A%84%E6%96%87%E4%BB%B6.png"></p>
+<h1 id="块分配策略"><a href="#块分配策略" class="headerlink" title="块分配策略"></a>块分配策略</h1><p>EXT2首先尝试在文件最后一个块附近寻找块，然后是包含文件索引节点的块组内，然后是其他块组。<br>ext2 预分配策略：文件一次获取一组为8个邻接的块，ext2_inode_info的i_prealloc_count字段存放预分配的块数量,i_prealloc_block存放下次要使用的预分配块号。文件关闭、缩短、写操作非顺序写时释放预分配的块。</p>
+<h1 id="ext3文件系统"><a href="#ext3文件系统" class="headerlink" title="ext3文件系统"></a>ext3文件系统</h1><p>ext3文件系统可以视为  ext2+日志文件系统，日志文件系统作用是在程序断电或系统崩溃时通过日志能够快速恢复。<br>ext3提供三种不同的日志模式：</p>
+<ul>
+<li>日志（journal):对数据和元数据的修改都写入日志，最慢最安全</li>
+<li>预定（ordered）：默认模式，只有对文件系统元数据的修改才计入日志，ext3会把元数据和相关数据块进行分区，确保元数据之前数据块已经写入磁盘，尽可能减少文件内数据损坏。</li>
+<li>写回（writeback）:只有对文件系统元数据的修改才计入日志。最快，其他日志文件系统中发现的方法。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/08/14/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%8D%81%E5%85%AB%E7%AB%A0)linux-Ext2%E5%92%8CExt3%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" data-id="cm6yz33dn001r8zlv7cgcblkf" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/dtb文件" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/06/05/linux/dtb%E6%96%87%E4%BB%B6/" class="article-date">
+  <time datetime="2022-06-05T10:00:00.000Z" itemprop="datePublished">2022-06-05</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/06/05/linux/dtb%E6%96%87%E4%BB%B6/">kernel文档和邮件列表</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="https://blog.csdn.net/u014426028/article/details/109802120?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-1-109802120-blog-51782449.pc_relevant_default&spm=1001.2101.3001.4242.2&utm_relevant_index=4">https://blog.csdn.net/u014426028/article/details/109802120?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-1-109802120-blog-51782449.pc_relevant_default&amp;spm=1001.2101.3001.4242.2&amp;utm_relevant_index=4</a></p>
+<p> 是不是这样就感觉跟Linux内核一样Niubility了？没错！要的就是这种感觉。综合上面的需求，u-boot推出了全新的image格式—-FIT uImage，其中FIT是flattened image tree的简称。它利用了Device Tree Source files（DTS）的语法，生成的image文件也和dtb文件类似（称作itb），下面是我们项目中的示例代码。：</p>
+<p>FIT Image<br>既然是全新的东西，u-boot默认并不一定支持。如果要U-boot支持FIT Image启动的话，我们还得在u-boot的配置文件中添加它的支持，即加上 CONFIG_FIT 宏定义即可：</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/06/05/linux/dtb%E6%96%87%E4%BB%B6/" data-id="cm6yz33ci00038zlvhnbo1ul6" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/" rel="tag">linux</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-linux/全志h3 开发" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/06/05/linux/%E5%85%A8%E5%BF%97h3%20%E5%BC%80%E5%8F%91/" class="article-date">
+  <time datetime="2022-06-05T10:00:00.000Z" itemprop="datePublished">2022-06-05</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/06/05/linux/%E5%85%A8%E5%BF%97h3%20%E5%BC%80%E5%8F%91/">全志h3 开发</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="主线内核编译"><a href="#主线内核编译" class="headerlink" title="主线内核编译"></a>主线内核编译</h1><p>1.编译内核：<br>和U-boot编译类似，<br>进入内核主线目录下输入<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf- sun8iw7p1smp_defconfig<br>1<br>生成配置文件<br>接着输入：<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf-<br>1<br>CPU高级的记得加上-j<br>编译完成后在	&#x2F;home&#x2F;mainline&#x2F;mainline_kernel&#x2F;arch&#x2F;arm&#x2F;boot<br>zImage，这是我们内核目标文件，还需要处理一下，先不管。<br>接着输入：<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf- dtbs<br>编译设备树<br>目标文件在&#x2F;home&#x2F;mainline&#x2F;mainline_kernel&#x2F;arch&#x2F;arm&#x2F;boot&#x2F;dts下<br>sun8i-h3-orangepi-pc-plus.dtb文件<br>再输入<br>mkdir output<br>make ARCH&#x3D;arm CROSS_COMPILE&#x3D;arm-linux-gnueabihf- INSTALL_MOD_PATH&#x3D;&#x2F;home&#x2F;mainline&#x2F;mainline_kernel&#x2F;output modules_install<br>在output文件夹下得到一系列模块文件，先不管<br>至此编译流程结束，再简单处理一下即可烧入至SD中启动香橙派PC_Plus。<br>第一次写博客，操作不熟悉，看的不爽望原谅，接下来会写如何U-boot启动内核和内核的一些配置及坑</p>
+<p>4.补充问题及解决方法<br>安装交叉编译器：<br>apt-get install gcc-arm-linux-gnueabihf<br>recipe for target ‘scripts&#x2F;basic&#x2F;fixdep’ failed<br>apt-get install</p>
+<p>Python.h: No such file or directory<br>sudo apt-get install python3-dev</p>
+<h1 id="烧入内核"><a href="#烧入内核" class="headerlink" title="烧入内核"></a>烧入内核</h1><p>分区不会损坏之前烧入的U-boot,Linux分区从2048块开始，块单位是512B,也就是分区是从2048*0.5KB&#x3D;1MB处开始的，U-boot大小约为450KB,所以不用担心会损坏U-boot文件<br>首先，我们对TF卡进行分区，当然也可以不用分区，十分建议分区，用分区的原因下面再解释<br>输入命令：fdisk 你的tf卡<br>我这里是 :fdisk &#x2F;dev&#x2F;sdb<br>输入：p先查看信息</p>
+<p>Disk &#x2F;dev&#x2F;sdb：29.5 GiB，31666995200 字节，61849600 个扇区<br>单元：扇区 &#x2F; 1 * 512 &#x3D; 512 字节<br>扇区大小(逻辑&#x2F;物理)：512 字节 &#x2F; 512 字节<br>I&#x2F;O 大小(最小&#x2F;最佳)：512 字节 &#x2F; 512 字节</p>
+<p>再输入：n</p>
+<p>分区类型<br>   p   主分区 (0个主分区，0个扩展分区，4空闲)<br>   e   扩展分区 (逻辑分区容器)<br>选择 (默认 p)： p<br>分区号 (1-4, 默认  1): 1<br>第一个扇区 (2048-61849599, 默认 2048): 2048<br>上个扇区，+sectors 或 +size{K,M,G,T,P} (2048-61849599, 默认 61849599):+100M</p>
+<p>以此类推，再创建一个10G大小的分区<br>100M用于存储设备树文件和内核<br>10G用于储存根文件系统<br>大小没有特殊要求，设置为100G和1T也可以。<br>接着我们需要格式化分区，100M格式化成FAT,10G格式化为EXT2或3或4</p>
+<p>fdisk &#x2F;dev&#x2F;sdb<br>输入：t再选择分区1<br>输入L打印所有可以文件系统格式<br>再输入6，选择FAT16 FAT32都可以<br>我这里另外一个分区默认是ext4,不用管</p>
+<p>接着将<br>sun8i-h3-orangepi-pc-plus.dtb和UImage复制进分区1<br>最后拔出内存卡，插入香橙派，老样子插电打开串口。<br>进入U-boot控制台：<br>    输入：<br>        load mmc 0:1 0x43000000 sun8i-h3-orangepi-pc-plus.dtb<br>        load mmc 0:1 0x42000000 uImage<br>        bootm 0x42000000 - 0x43000000<br>    解释一下：load不用多说是加载的意思，mmc 0:1是指从mmc 第0个分区和第一个分区<br>    寻找名字叫sun8i-h3-orangepi-pc-plus.dtb的文件，然后加载到主存位置0x43000000来。<br>    为什么是分区0和分区1看全志手册：全志优先先给TF分配分区，所以是0和1,然后其他的比如EMMC的分区3，4。<br>    bootm的意思大概能猜出来了把，两个地址分别对应内核文件和设备树文件，缺一不可。</p>
+<pre><code>上文说过可以不用格式化为FAT，因为只要知道sun8i-h3-orangepi-pc-plus.dtb和uImage地址和文件大小，
+同样可以完成加载。
+
+打印：
+=&gt; load mmc 0:1 0x42000000 uImage
+7933608 bytes read in 357 ms (21.2 MiB/s)
+=&gt; load mmc 0:1 0x43000000 sun8i-h3-orangepi-pc-plus.dtb
+30640 bytes read in 5 ms (5.8 MiB/s)
+=&gt; bootm 0x42000000 - 0x43000000
+## Booting kernel from Legacy Image at 42000000 ...
+Image Name:   linux-5.3.5+
+Image Type:   ARM Linux Kernel Image (uncompressed)
+Data Size:    7933544 Bytes = 7.6 MiB
+Load Address: 46000000
+Entry Point:  46000000
+Verifying Checksum ... OK
+## Flattened Device Tree blob at 43000000
+Booting using the fdt blob at 0x43000000
+EHCI failed to shut down host controller.
+Loading Kernel Image
+Loading Device Tree to 49ff5000, end 49fff7af ... OK
+
+Starting kernel ...
+</code></pre>
+<p>这里代表内核启动成功了。<br>下面还有一串阿巴阿巴的信息，先不用管，因为我们的根文件系统还没拷贝进去。</p>
+<h1 id="根文件系统"><a href="#根文件系统" class="headerlink" title="根文件系统"></a>根文件系统</h1><p><a href="https://blog.csdn.net/qq_40937426/article/details/107553193">https://blog.csdn.net/qq_40937426/article/details/107553193</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/06/05/linux/%E5%85%A8%E5%BF%97h3%20%E5%BC%80%E5%8F%91/" data-id="cm6yz33cx000c8zlvhu9qe3q4" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+  <nav id="page-nav">
+    <a class="extend prev" rel="prev" href="/page/3/">&laquo; __(&#39;prev&#39;)</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span>
+  </nav>
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

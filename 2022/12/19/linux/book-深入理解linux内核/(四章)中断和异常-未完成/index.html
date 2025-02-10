@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>(四章)linux中断和异常-未完成 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="中断和异常 深入理解linux 内核： 第四章 中断和异常keywords： 中断、异常  中断和异常中断：  可屏蔽中断（maskable interrupt）：IO设备发出的所有中断请求（IRQ）。可屏蔽中断可处于两种状态（屏蔽的（masked）或非屏蔽的（unmasked）） 非屏蔽中断(nonmaskable interrupt)：只有几个危急事件（如硬件故障）才引起非屏蔽中断。  异常：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(四章)linux中断和异常-未完成">
+<meta property="og:url" content="http://yoursite.com/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="中断和异常 深入理解linux 内核： 第四章 中断和异常keywords： 中断、异常  中断和异常中断：  可屏蔽中断（maskable interrupt）：IO设备发出的所有中断请求（IRQ）。可屏蔽中断可处于两种状态（屏蔽的（masked）或非屏蔽的（unmasked）） 非屏蔽中断(nonmaskable interrupt)：只有几个危急事件（如硬件故障）才引起非屏蔽中断。  异常：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/%E5%A4%9AAPIC%E7%B3%BB%E7%BB%9F.png">
+<meta property="og:image" content="http://yoursite.com/static/%E7%94%B1%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E5%8F%91%E9%80%81%E7%9A%84%E4%BF%A1%E5%8F%B7.png">
+<meta property="og:image" content="http://yoursite.com/static/%E9%97%A8%E6%8F%8F%E8%BF%B0%E7%9A%84%E6%A0%BC%E5%BC%8F.png">
+<meta property="article:published_time" content="2022-12-19T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/%E5%A4%9AAPIC%E7%B3%BB%E7%BB%9F.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux内核/(四章)中断和异常-未完成" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/" class="article-date">
+  <time datetime="2022-12-19T10:00:00.000Z" itemprop="datePublished">2022-12-19</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a>►<a class="article-category-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      (四章)linux中断和异常-未完成
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="中断和异常"><a href="#中断和异常" class="headerlink" title="中断和异常"></a>中断和异常</h1><ul>
+<li>深入理解linux 内核： 第四章 中断和异常<br>keywords： 中断、异常</li>
+</ul>
+<h2 id="中断和异常-1"><a href="#中断和异常-1" class="headerlink" title="中断和异常"></a>中断和异常</h2><p>中断：</p>
+<ul>
+<li>可屏蔽中断（maskable interrupt）：IO设备发出的所有中断请求（IRQ）。可屏蔽中断可处于两种状态（屏蔽的（masked）或非屏蔽的（unmasked））</li>
+<li>非屏蔽中断(nonmaskable interrupt)：只有几个危急事件（如硬件故障）才引起非屏蔽中断。</li>
+</ul>
+<p>异常：</p>
+<ul>
+<li><p>处理器探测异常（processor-detected exception）</p>
+<ul>
+<li>故障（fault）:通常可以纠正，保存在eip中的值是引起故障的指令地址， 例如<code>缺页异常</code>.</li>
+<li>陷阱（trap）：在陷阱指令执行后立刻报告；保存在eip中的值是一个随后要执行的指令地址。陷阱的主要用途是为了<code>调试程序时下断点</code></li>
+<li>异常终止（abort）：发生一个严重错误；控制单元出问题，不能在eip寄存器中保存异常指令确切位置。如<code>硬件故障</code>或系<code>统表中无效的值或不一致的值</code>,控制权切换到异常终止处理程序，强制终止受影响的进程。</li>
+</ul>
+</li>
+<li><p>编程异常（programmed exception）：在编程者发出请求时发生。由int或int3 指令触发；当into（检查溢出）和bound（检查地址出界）指令检查的条件不为真时，也引发编程异常。控制单元把它当作<code>陷阱（trap）</code>处理。编程异常通常也叫做<code>软中断（software interrupt）</code>:用于执行<code>系统调用</code>以及给调试程序通报一个特定的事件</p>
+</li>
+</ul>
+<p>每个中断或异常是由0-255之间的一个数来标识。intel把这个8位的无符号证书叫做一个向量（vector）.非屏蔽中断的向量和异常的向量是固定的，而可屏蔽中断的向量可以通过对中断控制器进行编程来实现</p>
+<h3 id="IRQ和中断"><a href="#IRQ和中断" class="headerlink" title="IRQ和中断"></a>IRQ和中断</h3><p>IRQ(interrupt ReQuest)：能发出中断的设备对外提供IRQ线。所有的IRQ线都与一个名为可编程中断控制器（Programmable Interrpt Controuer,PIC）的硬件电路的输入引脚相连。可编程中断控制器执行下列动作：</p>
+<ol>
+<li>监视IRQ线，检查产生的信号（raised signal）. 如果同时有多条IRQ线上产生信号，就选择引脚编号较小的IRQ线(IRQ0 用于定时测量)</li>
+<li>如果一个引发信号出现在IRQ线上：<ol>
+<li>把收到的引发信号转成对应的向量</li>
+<li>把这个向量存放在中断控制器的一个I&#x2F;O端口，从而允许CPU通过数据总线读取此向量。</li>
+<li>把引发信号发送到处理器的INTR引脚，即产生一个中断。</li>
+<li>等待，直到CPU把这个中断信号写进可编程中断控制器的一个I&#x2F;O 端口来确认它被处理；这种情况发生时，清INTR线。</li>
+</ol>
+</li>
+<li>返回第一步</li>
+</ol>
+<p>第一条IRQ线通常表示成IRQ0。与IRQn关联的Intel的缺省向量是n+32。通过向中断控制器端口发布合适的指令，就可以修改IRQ和向量之间的映射。<br>禁止的中断是不会丢失的，一旦再被激活又会被发送到CPU，因此中断处理程序可以依赖此特性来依次处理多个中断。</p>
+<p>传统PIC由两片8259A风格的外部芯片“级联”的，每个芯片可以处理8个不同的IRQ输入线。因此可用IRQ线数量为15.</p>
+<h3 id="高级可编程中断控制器"><a href="#高级可编程中断控制器" class="headerlink" title="高级可编程中断控制器"></a>高级可编程中断控制器</h3><p>前面的可编程中断控制器是在单CPU情况下使用的，主PIC的输出直接连接到CPU的INTR引脚。如果系统中包含多个CPU，这种方法就不再有效，需要更复杂的PIC。</p>
+<p>高级可编程控制器（I&#x2F;O Advanced Programmable Interrupt Controller,I&#x2F;O APIC）用于替代老式的8259A可编程中断控制器。新主板为了兼容性都包含这两种芯片。另外8086处理器当前所有的CPU都含有一个本地APIC，每个本地APIC都有32位的寄存器、一个内部时钟、一个本地定时设备及为本地APIC中断保留的两条额外的IRQ线 LINT0 和 LINT1.所有本地APIC都连接到一个外部APIC，形成一个多APIC的系统。</p>
+<p><img src="/./static/%E5%A4%9AAPIC%E7%B3%BB%E7%BB%9F.png"></p>
+<p>I&#x2F;O APIC的组成为：</p>
+<ul>
+<li>一组24条IRQ线：中断优先级并不与引脚号相关联</li>
+<li>一张24项的中断重定向表（Interrupt Redirection Table）：中断重定向表中每一项都可以被单独编程以指明中断向量和优先级、目标处理器及选择处理器的方式</li>
+<li>可编程寄存器</li>
+<li>通过APIC总线发送和接受APIC信息的一个信息单元：重定向表中的信息用于把每个外部IRQ信号转换为一条消息，通过APIC总线把消息发送给一个或多个本地APIC单元。</li>
+</ul>
+<p>来自外部硬件设备的中断请求以两种方式在可用CPU之间分发：</p>
+<ul>
+<li>静态分发： 通过在中断重定向表中定义的方式进行静态分发。</li>
+<li>动态分发：通过判断多个CPU各自的可编程任务优先级寄存器（task priority register,TPR）来仲裁是由哪个CPU处理。通过动态调整仲裁优先级来实现中断的轮转分配。</li>
+</ul>
+<p>另外多APIC系统还允许CPU之间产生处理器间中断（interprocessor interrupt）。当需要发送时，CPU就在本地APIC的中断指令寄存器（Interrupt Command Register,ICR）中存放这个中断消息和目标本地APIC的标识符，也可以向自己发送。</p>
+<p>处理器间中断（简称IPI）是SMP体系结构至关重要的组成部分，并由linux有效地用来在CPU之间交换消息。</p>
+<p>目前大部分单处理器系统都包含一个IO APIC芯片，可以使用下面两种方式对这种芯片进行配置：</p>
+<ol>
+<li>作为8259A方式使用，本地APIC被禁止，LINT0和LINT1 本地IRQ被配置为INTR和NMI引脚</li>
+<li>作为标准外部IO APIC使用。本地APIC被激活，所有外部中断通过IO APIC接受。</li>
+</ol>
+<h3 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h3><p>8086处理器定义了大约20种不同的异常。内核必须为每一种异常提供一个专门的异常处理程序。</p>
+<p>编号20-31这些值由intel留作将来开发。下图中列出了用到的异常处理程序，它们通常把一个Unix信号发送到引起异常的进程。</p>
+<p><img src="/./static/%E7%94%B1%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%E5%8F%91%E9%80%81%E7%9A%84%E4%BF%A1%E5%8F%B7.png"></p>
+<h3 id="中断描述符表"><a href="#中断描述符表" class="headerlink" title="中断描述符表"></a>中断描述符表</h3><p>中断描述符表（Interrupt Descriptor Table,IDT）是一个系统表，他和每一个中断或异常向量相联系，每一个向量在标准共有相应的中断或异常处理程序的入口地址。内核在允许中断前，必须适当地初始化IDT。</p>
+<p>IDT的格式和GDT、LDT非常相似，表中的每一项对应一个中断或异常向量,每个向量由8字节组成，因此最多需要256*8&#x3D;2048字节来存放IDT。</p>
+<p>idtr寄存器使得IDT可以位于内存的任何地方，它指定IDT的线性基地址及其限制。允许中断前必须使用lidt汇编指令初始化idtr。</p>
+<p>IDT包含三种类型的描述符，其中40-43位的Type字段的值表示每种描述符的类型。</p>
+<p><img src="/./static/%E9%97%A8%E6%8F%8F%E8%BF%B0%E7%9A%84%E6%A0%BC%E5%BC%8F.png"></p>
+<p>这些描述符是：</p>
+<ul>
+<li>任务门（task gate）：中断发生时，必须取代当前进程的那个进程的TSS选择符存放在任务门中。</li>
+<li>中断门（interrupt gate）:包含段选择符和中断或异常处理程序的段内偏移量。当控制权转移到一个适当的段时，处理器清IF标志，从而关闭将来会发生的可屏蔽中断。</li>
+<li>陷阱门（Trap gate）: 与中断门相似，只是控制权转移后,处理器不清理IF标志。</li>
+</ul>
+<p>linux 利用中断门处理中断，陷阱门处理异常。</p>
+<h3 id="中断和异常的硬件处理（保护模式）"><a href="#中断和异常的硬件处理（保护模式）" class="headerlink" title="中断和异常的硬件处理（保护模式）"></a>中断和异常的硬件处理（保护模式）</h3><p>执行了一条指令后，CS和eip这对寄存器包含下一条将要执行的指令的逻辑地址.在 处理那条指令之前，控制单元会检查在运行前一条指令时是否已经发生了一个中断或异常。如果发生了一个中断或异常，那么控制单元执行下列操作:<br>    1）确定与中断或异常关联的向量i (0 ≤ i ≤ 255)<br>    2） 读由idtr寄存器指向的IDT表中的第i项(在下面的描述中，我们假定IDT表项 中包含的是一个中断门或一个陷阱门)。<br>    3） 从gdtr寄存器获得GDT的基地址，并在GDT中查找，以读取IDT表项中的选 择符所标识的段描述符.这个描述符指定中断或异常处理程序所在段的基地址.<br>    4） 确信中断是由授权的(中断)发生源发出的。 首先将当前特权组CPL(存放在cs寄 存器的低两位)与段描述符(存放在GDT中)的描述符特权级DPL比较，如果CPL 小于DPL. 就产生一个”Generalprotection” 异常.因为中断处理程序的特权不能<br>低于引起中断的程序的特权.对于编程异常，则做进一步的安全检查:比较CPL与 处于IDT中的门描述符的DPL，如果DPL小于CPL，就产生一个”General protection” 异常。这最后一个检查可以避免用户应用程序访问特殊的陷阱门或中断门.<br>    5） 检查是否发生了特权级的变化，也就是说，CPL是否不同于所选择的段描述符的 DPL.  如果是，控制单元必须开始使用与新的特权级相关的栈。通过执行以下步骤 来做到这点:<br>          a.  读tr寄存器，以访问运行进程的TSS段.<br>          b.  用与新特权级相关的钱段和战指针的正确值装载ss和esp寄存器。这些值可 以在TSS中找到<br>          c.  在新的栈中保存ss和esp以前的值. 这些值定义了与旧特权级相关的梭的逻 辑地址.<br>    6） 如果故障已发生，用引起异常的指令地址装载cs和elp客存器，从而使得这条指令 能再次被执行。<br>    7） 在战中保存eflags、 cs及eip的内容.<br>    8） 如果异常产生了一个硬件出错码，则将它保存在战中.<br>    9） 装载cs和eip寄存器，其值分别是IDT表中第i项门描述符的段选择符和偏移量 字段.这些值给出了中断或者异常处理程序的第一条指令的逻辑地址。</p>
+<p>控制单元所执行的最后一步就是跳转到中断或者异常处理程序.换句话说.处理完中断<br>信号后.控制单元所执行的指令就是被选中处理程序的第一条指令.<br>中断或异常被处理完后，相应的处理程序必须产生一条iret指令，把控制权转交给被<br>中断的进程，这将迫使控制单元:<br>    l） 用保存在校中的值装载cs、 eip或eflags寄存器。如果一个硬件出错码曾被压入校 中，并且在eip内容的上面，那么，执行iret指令前必须先弹出这个硬件出错码.<br>    2）检查处理程序的CPL是否等于cs中最低两位的值(这意味着被中断的进程与处理 程序运行在同一特权级). 如果是，iret终止执行， 否则，转入下一步.<br>    3）从战中装载ss和esp寄存器，因此，返回到与旧特权级相关的钱。<br>    4）  检查ds、 es、 fs，&amp;gs段寄存器的内容，如果其中一个寄存器包含的选择符是一 个段描述符，并且其DPL值小子CPL，那么，清相应的段寄存器.控制单元这么做 是为了禁止用户态的程序(CPL&#x3D;3)利用内核以前所用的段客存器(DPL&#x3D;O).如果 不清这些寄存器，怀有恶意的用户态程序就可能利用它们采访问内核地址空间.</p>
+<h2 id="中断和异常处理的嵌套执行"><a href="#中断和异常处理的嵌套执行" class="headerlink" title="中断和异常处理的嵌套执行"></a>中断和异常处理的嵌套执行</h2><h2 id="初始化中断描述符表"><a href="#初始化中断描述符表" class="headerlink" title="初始化中断描述符表"></a>初始化中断描述符表</h2><h2 id="异常处理"><a href="#异常处理" class="headerlink" title="异常处理"></a>异常处理</h2><p>cpu产生的大部分异常都由linux解释为出错条件。当其中一个异常发生时，内核就向引起异常的进程发送一个信号向他通知一个反常条件。<br>例如除0错误，CPU就产生一个”Divide error”异常,并由对应的异常处理程序给当前进程发送一个SIGFPE信号，这个进程将使用默认或自定义的信号处理程序来恢复或终止执行。</p>
+<p>在两种情况下，linux利用异常更有效地管理硬件资源。：</p>
+<ul>
+<li>第一种情况在第三章”保存和加载FPU、MMX及XMM寄存器”一节描述过，“Device not availeble”异常与CR0寄存器的TS标志一起用来把新值装入浮点寄存器</li>
+<li>第二种就是“Page Fault” 缺页异常。相应的处理程序可能表示一个错误条件，也可能不是一个错误条件。</li>
+</ul>
+<h2 id="中断处理"><a href="#中断处理" class="headerlink" title="中断处理"></a>中断处理</h2><h2 id="软中断和tasklet"><a href="#软中断和tasklet" class="headerlink" title="软中断和tasklet"></a>软中断和tasklet</h2><h2 id="工作队列"><a href="#工作队列" class="headerlink" title="工作队列"></a>工作队列</h2><h2 id="从中断和异常中返回"><a href="#从中断和异常中返回" class="headerlink" title="从中断和异常中返回"></a>从中断和异常中返回</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%9B%9B%E7%AB%A0)%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8-%E6%9C%AA%E5%AE%8C%E6%88%90/" data-id="cm6yz33dq001y8zlv20v7f7y1" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/12/19/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E5%85%AB%E7%AB%A0)%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (八章)linux内存管理
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/12/16/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/(%E4%BA%94%E7%AB%A0)%E5%86%85%E6%A0%B8%E5%90%8C%E6%AD%A5/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">(五章)linux内核同步</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

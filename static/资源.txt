@@ -1,0 +1,45 @@
+官网 https://www.kernel.org/
+源码 https://github.com/torvalds/linux
+文档 https://www.kernel.org/doc/html/latest/
+内核开发 https://www.bilibili.com/video/BV1XY411g72Y?p=5&spm_id_from=pageDriver
+字符设备驱动开发 https://www.bilibili.com/video/BV1VR4y1T7hu?p=3&spm_id_from=pageDriver
+
+泰晓科技 - Linux 知识星球 https://www.zhihu.com/column/tinylab
+
+linux 中国社区 https://linux.cn/
+oschina  https://www.oschina.net/
+
+
+
+内存管理知识库 https://linux-mm.org/
+Kernelnewbies https://kernelnewbies.org/
+
+
+内核动态新闻 https://lwn.net/Kernel/
+
+
+
+
+    嵌入式 Linux 知识库
+        翻译 http://elinux.org https://tinylab.org/elinux发起于 2015，由社区吴老师牵头
+    LWN 中文翻译
+        翻译 http://lwn.net http://tinylab.org/lwn发起于 2017，由社区汪辰老师牵头
+    Linux Doc 中文化
+        翻译 Linux 内核官方文档http://tinylab.org/linux-doc发起于 2015，由社区吴老师牵头
+
+
+0.C语言或C++开发
+1. 熟悉linux内核，至少阅读过一个子系统
+2. 熟悉linux内核调试、故障分析
+3. 精通linux操作系统，对linux系统各项机制均有所了解
+4. 了解汇编语言、编译、连接过程、ELF格式
+5. 熟悉微内核os、实时内核优先。嵌入式os、IOT os kvm 或容器引擎研发经验
+6. 内核社区补丁
+网络通信协议，驱动开发。
+1. GDB GDB server
+2. automake autoconf makefile
+3.tcp/ip 协议族
+4. vlan stp 
+
+【茶水（朱辉）主页】
+http://teawater.github.io/

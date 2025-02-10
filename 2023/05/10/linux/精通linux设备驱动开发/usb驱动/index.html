@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>linux usb驱动 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="usbUSB通信协议采用主从结构，实现了主机控制器和外围设备的通信。 在PC机中usb主机控制器属于南桥芯片的一部分，通过PCI总线和处理器通信。在嵌入式设备上，Soc内嵌的控制器通过总线和CPU通信，控制器和外设通过usb总线通信。  主机模式：主机控制器通过usb总线控制外设 从机模式：外设通过usb总线控制主机控制器 OTG模式：主机控制器和外设都可以控制usb总线此章节的驱动主要是针对主机">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux usb驱动">
+<meta property="og:url" content="http://yoursite.com/2023/05/10/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/usb%E9%A9%B1%E5%8A%A8/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="usbUSB通信协议采用主从结构，实现了主机控制器和外围设备的通信。 在PC机中usb主机控制器属于南桥芯片的一部分，通过PCI总线和处理器通信。在嵌入式设备上，Soc内嵌的控制器通过总线和CPU通信，控制器和外设通过usb总线通信。  主机模式：主机控制器通过usb总线控制外设 从机模式：外设通过usb总线控制主机控制器 OTG模式：主机控制器和外设都可以控制usb总线此章节的驱动主要是针对主机">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/static/linux-usb%E5%AD%90%E7%B3%BB%E7%BB%9F.drawio.png">
+<meta property="article:published_time" content="2023-05-10T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="linux驱动">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/static/linux-usb%E5%AD%90%E7%B3%BB%E7%BB%9F.drawio.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/精通linux设备驱动开发/usb驱动" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/05/10/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/usb%E9%A9%B1%E5%8A%A8/" class="article-date">
+  <time datetime="2023-05-10T10:00:00.000Z" itemprop="datePublished">2023-05-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      linux usb驱动
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="usb"><a href="#usb" class="headerlink" title="usb"></a>usb</h1><p>USB通信协议采用主从结构，实现了主机控制器和外围设备的通信。</p>
+<p>在PC机中usb主机控制器属于南桥芯片的一部分，通过PCI总线和处理器通信。<br>在嵌入式设备上，Soc内嵌的控制器通过总线和CPU通信，控制器和外设通过usb总线通信。</p>
+<ul>
+<li>主机模式：主机控制器通过usb总线控制外设</li>
+<li>从机模式：外设通过usb总线控制主机控制器</li>
+<li>OTG模式：主机控制器和外设都可以控制usb总线<br>此章节的驱动主要是针对主机模式的驱动。</li>
+</ul>
+<h2 id="usb主机控制器"><a href="#usb主机控制器" class="headerlink" title="usb主机控制器"></a>usb主机控制器</h2><p>usb主机控制器是一个集成了usb控制器和usb主机控制器的芯片，主要功能是控制usb总线上的外设。主要分为以下几种：</p>
+<ul>
+<li>UHCI(Universal Host Controller Interface)：Intel公司开发的。</li>
+<li>OHCI(Open Host Controller Interface)：Compaq公司和微软开发的。</li>
+<li>EHCI(Enhanced Host Controller Interface)：Intel公司开发的。支持高速usb2.0设备，为了兼容1.1通常也包含UHCI或OHCI控制器。</li>
+<li>USB OTG控制器：嵌入式微控制领域广泛使用。使用HNP（Host Negotiation Protocol,主机沟通协议）初始化设备连接后，这样的设备可以在主从模式之间切换。</li>
+</ul>
+<h2 id="传输模式"><a href="#传输模式" class="headerlink" title="传输模式"></a>传输模式</h2><p>USB设备传输数据的模式有四种：</p>
+<ul>
+<li>控制传输模式，用来传送外设和主机之间的控制、状态、配置等信息。</li>
+<li>批量传输模式，用来传送大量时延要求不高的数据。如打印机。</li>
+<li>中断传输模式，传输数据量小，用来传送时延要求高的数据。如鼠标。</li>
+<li>等时传输模式，用来传输实时数据。如音频设备。</li>
+</ul>
+<h2 id="寻址"><a href="#寻址" class="headerlink" title="寻址"></a>寻址</h2><p>可寻址单元称为端点。端点地址由端点号和端点方向组成。端点号是一个8位的无符号整数，端点方向是一个位，0表示OUT（输出到设备），1表示IN（输入到主机）。端点0是一个特殊的端点，用来传输控制信息。</p>
+<p>usb和I2c的异同如下：</p>
+<ul>
+<li>相同点：都是主从结构，都是通过总线通信。寻址不占用CPU寻址范围。地址数为7位。都有主机控制器和外设。都有控制器和外设的通信协议。</li>
+<li>不同点：usb是主机控制器控制外设，I2c是外设控制主机控制器。usb是异步通信，I2c是同步通信。</li>
+</ul>
+<p>usb和pci的异同如下：</p>
+<ul>
+<li>相同点：都支持热插拔，驱动架构相似，支持高速传输，通常都可获得DMA控制，支持多功能设备</li>
+</ul>
+<h2 id="Linux-USB-子系统"><a href="#Linux-USB-子系统" class="headerlink" title="Linux-USB 子系统"></a>Linux-USB 子系统</h2><p>下图是Linux-usb 子系统的架构：<br><img src="/./static/linux-usb%E5%AD%90%E7%B3%BB%E7%BB%9F.drawio.png"></p>
+<ul>
+<li>usb核心。由一些基础代码组成，包括结构体和函数定义，供给HCD和驱动程序使用。</li>
+<li>HCD（Host Controller Driver）主机控制器驱动。主要负责和主机控制器通信，控制usb总线上的外设。HCD驱动程序和usb核心之间通过usb_hcd结构体进行通信。</li>
+<li>hub启动和内核辅助线程khubd:当热插拔设备插入后，hub驱动程序会创建一个内核辅助线程khubd，用来处理hub的状态变化。</li>
+<li>usb文件系统。usb子系统提供了一些文件系统，用来管理usb设备。如usbfs，sysfs，debugfs。</li>
+<li>usb客户端驱动程序。usb设备的驱动程序，用来控制usb设备。usb客户端驱动程序和usb核心之间通过usb_driver结构体进行通信。<br>对于端到端的操作，需要USB子系统和许多其他内核层共同完成。比如要驱动usb蓝牙键盘，需要USB子系统、蓝牙层、输入子系统和tty层联合完成。</li>
+</ul>
+<h2 id="驱动程序的数据结构"><a href="#驱动程序的数据结构" class="headerlink" title="驱动程序的数据结构"></a>驱动程序的数据结构</h2><h3 id="usb-device-结构体"><a href="#usb-device-结构体" class="headerlink" title="usb_device 结构体"></a>usb_device 结构体</h3><p>每个设备驱动程序都有独特的device结构体，usb_device 在 include&#x2F;linux&#x2F;usb.h 文件中有定义，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">struct usb_device &#123;</span><br><span class="line">    /* ... */</span><br><span class="line">    enum usb_device_state state; /* device state */</span><br><span class="line">    enum usb_device_speed speed; /* device speed */</span><br><span class="line">    struct usb_device *parent; /* parent hub */</span><br><span class="line">    struct usb_device_descriptor descriptor; /* descriptor */</span><br><span class="line">    struct usb_host_config *config; /* the current configuration */</span><br><span class="line">    struct usb_host_config *actconfig; /* the active configuration */</span><br><span class="line">    int maxchild; /* max child devices if hub */</span><br><span class="line">    struct usb_devic *children[USB_MAXCHILDREN]; /* Child devices */</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="URB"><a href="#URB" class="headerlink" title="URB"></a>URB</h3><p>URB(USB Request Block,USB请求块)是USB数据传输使用的核心数据结构。类似于网络协议栈的sk_buff。定义如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct urb&#123;</span><br><span class="line">    struct kref kref; // 引用计数</span><br><span class="line">    struct usb_device *dev;</span><br><span class="line">    ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>URB的使用分三步：</p>
+<ol>
+<li>分配内存，usb_alloc_urb():分配内存并置零</li>
+<li>初始化，<code>usb_fill_[control|int|bulk]_urb</code>:适用于控制、中断和批量数据传输模式。</li>
+<li>提交,usb_submit_urb():异步提交，回调函数的地址作为参数传递给<code>usb_fill_[control|int|bulk]_urb</code>,回调函数完成检查提交状态，释放缓冲区等。<code>usb_[control|interrup|bulk]_msg</code>:同步提交。</li>
+</ol>
+<h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><p>管道包含以下几个部分：</p>
+<ul>
+<li>端点地址；</li>
+<li>数据传输方向（IN OUT）</li>
+<li>数据传输模式（控制模式、中断模式、批量模式和登时模式）</li>
+</ul>
+<p>管道是URB的重要成员，为USB传输提供地址信息。USB核心提供现成的宏来创建管道：<br><code>usb_[rcv|send][ctrl|int|bulk|isoc]pipe(struct usb_device *usb_dev, __u8 endpointAddress)</code><br>其中 usb_dev 是指向usb_dev 的指针，endpointAddress是端点地址（1-127）.<br>涉及到URB，通常和管道一起说，比如批量传输模式的就可以叫做：批量URB。</p>
+<h3 id="描述符结构"><a href="#描述符结构" class="headerlink" title="描述符结构"></a>描述符结构</h3><p>USB标准定义了一些描述符数据结构来保存设备的信息。linux-usb核心定义的描述符(include&#x2F;linux&#x2F;usb&#x2F;ch9.h)有以下四种：</p>
+<ul>
+<li>设备描述符：存放设备的基本信息. usb_device_descriptor.</li>
+<li>配置描述符：设备配置模式. usb_config_descriptor.</li>
+<li>接口描述符：使得USB设备能支持多种功能。usb_interface_descriptor.</li>
+<li>端点描述符：存放设备最终的端点信息。usb_endpoint_descriptor.</li>
+</ul>
+<h3 id="枚举"><a href="#枚举" class="headerlink" title="枚举"></a>枚举</h3><p>枚举是热插拔USB设备的起始步骤，在这个过程中主机控制器获得设备的相关信息并配置好设备。<br>在linux-usb子系统中，集线器驱动负责枚举过程。比如将usb笔驱动器插入后，枚举过程如下：</p>
+<ol>
+<li>集线器驱动检测到USB_PORT_STAT_C_CONNECTION,唤醒khubd线程</li>
+<li>khubd 识别出电流变化的那个端口</li>
+<li>khubd在1-127之间选一个数字分配给笔驱动器的批量端点；这是通过给控制端点0发送控制URB来实现的。</li>
+<li>khubd利用端口0使用控制URB来获取设备描述符，然后获得配置描述符。</li>
+<li>khubd 请求USB核心把对应的客户驱动程序和该usb设备挂钩<br>枚举完成后驱动和设备就绑定好了，khubd调用相关客户驱动程序的probe()函数。在这个例子中khubd调用的是storage_probe()(drivers&#x2F;usb&#x2F;storage&#x2F;usbc.c)</li>
+</ol>
+<h2 id="设备例子-遥测卡"><a href="#设备例子-遥测卡" class="headerlink" title="设备例子-遥测卡"></a>设备例子-遥测卡</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2023/05/10/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/usb%E9%A9%B1%E5%8A%A8/" data-id="cm6yz33e0002l8zlv8avo53ux" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/05/13/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/pci%E9%A9%B1%E5%8A%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          linux pci驱动
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/05/10/linux/%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/%E4%B8%B2%E8%A1%8C%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">linux 串行设备驱动</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>linux设备初始化 | 小边的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="网络设备初始化本章包含以下内容：  一段网络内核代码初始化 NIC初始化 NIC中断初始化和使用 用户如何给以模块方式加载的驱动程序传递参数 设备初始化和配置期间，用户空间和内核空间之的交互 就配置以及和内核交互方面，虚拟设备和真实设备的区别  系统初始化系统初始化的过程是一个复杂的过程，它涉及到内核的初始化，以及内核中的各个子系统的初始化。在这个过程中，内核会初始化各种设备，包括网络设备。内核启">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux设备初始化">
+<meta property="og:url" content="http://yoursite.com/2023/04/23/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/%E8%AE%BE%E5%A4%87%E5%88%9D%E5%A7%8B%E5%8C%96/index.html">
+<meta property="og:site_name" content="小边的博客">
+<meta property="og:description" content="网络设备初始化本章包含以下内容：  一段网络内核代码初始化 NIC初始化 NIC中断初始化和使用 用户如何给以模块方式加载的驱动程序传递参数 设备初始化和配置期间，用户空间和内核空间之的交互 就配置以及和内核交互方面，虚拟设备和真实设备的区别  系统初始化系统初始化的过程是一个复杂的过程，它涉及到内核的初始化，以及内核中的各个子系统的初始化。在这个过程中，内核会初始化各种设备，包括网络设备。内核启">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-04-23T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:59:27.000Z">
+<meta property="article:author" content="marykt">
+<meta property="article:tag" content="linux网络">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="小边的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <!--<link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">-->
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小边的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">历史文章</a>
+        
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9001">我的网盘</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9003">gitea</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9048">chatAI(llama2-chinese)</a>
+        
+          <a class="main-nav-link" target="_blank" href="https://marykt.top:9047">drawAI(Stable-diffusion)</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux/book-深入理解linux网络技术内幕/设备初始化" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2023/04/23/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/%E8%AE%BE%E5%A4%87%E5%88%9D%E5%A7%8B%E5%8C%96/" class="article-date">
+  <time datetime="2023-04-23T10:00:00.000Z" itemprop="datePublished">2023-04-23</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a>►<a class="article-category-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      linux设备初始化
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="网络设备初始化"><a href="#网络设备初始化" class="headerlink" title="网络设备初始化"></a>网络设备初始化</h1><p>本章包含以下内容：</p>
+<ul>
+<li>一段网络内核代码初始化</li>
+<li>NIC初始化</li>
+<li>NIC中断初始化和使用</li>
+<li>用户如何给以模块方式加载的驱动程序传递参数</li>
+<li>设备初始化和配置期间，用户空间和内核空间之的交互</li>
+<li>就配置以及和内核交互方面，虚拟设备和真实设备的区别</li>
+</ul>
+<h2 id="系统初始化"><a href="#系统初始化" class="headerlink" title="系统初始化"></a>系统初始化</h2><p>系统初始化的过程是一个复杂的过程，它涉及到内核的初始化，以及内核中的各个子系统的初始化。在这个过程中，内核会初始化各种设备，包括网络设备。<br>内核启动过程代码过程如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// init/main.c</span></span><br><span class="line"><span class="type">void</span> __init <span class="title function_">start_kernel</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    kernel_init_freeable();</span><br><span class="line">    ...</span><br><span class="line">    kernel_init();</span><br><span class="line">    ...</span><br><span class="line">    rest_init(); --&gt; kernel_thread(kernel_init, <span class="literal">NULL</span>, CLONE_FS | CLONE_FILES); <span class="comment">// 创建一个内核线程，执行kernel_init函数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>kernel_init函数内容如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// init/main.c</span></span><br><span class="line">...</span><br><span class="line">do_basic_setup();</span><br><span class="line">...</span><br><span class="line">free_init_mem();</span><br><span class="line">...</span><br><span class="line">run_init_process(init_filename);</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>do_basic_setup函数内容如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// init/main.c</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __init <span class="title function_">do_basic_setup</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">   </span><br><span class="line">    do_initcalls(); <span class="comment">// 初始化各个子系统 --&gt;fn_i (net_dev_init:net/core/dev.c)</span></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们主要关注的过程如下：</p>
+<ol>
+<li>引导期间选项：调用了两次parse_args函数，第一次是在<code>setup_arch</code>函数中，第二次是在<code>do_basic_setup</code>函数中。</li>
+<li>中断和定时器：硬中断和软中断分别由<code>init_IRQ</code>和<code>init_timers</code>函数初始化。定时器在引导过程中被初始化，硬中断在内核初始化过程中被初始化。</li>
+<li>初始化函数：内核子系统和内建的设备驱动由do_initcalls函数初始化。free_initmem函数释放了内核初始化期间使用的内存。</li>
+</ol>
+<h2 id="设备注册和初始化"><a href="#设备注册和初始化" class="headerlink" title="设备注册和初始化"></a>设备注册和初始化</h2><p>一个网络设备初始化分为几个阶段：</p>
+<ol>
+<li>硬件初始化:由设备驱动程序和通用总线层（例如，PCI和USB）合作完成，这类活动更接近设备驱动程序。</li>
+<li>软件初始化：在设备能使用之前，依赖开启和配置的网络协议而定，用户需要提供一些配置参数，如IP地址等。</li>
+<li>功能初始化：Linux内核有很多网络选项。有些选项需要对每个设备进行配置，设备初始化引导程序必须负责这些选项。比如Qos，可以决定封包加入及退出设备出口队列的方式</li>
+</ol>
+<h2 id="NIC初始化的目标"><a href="#NIC初始化的目标" class="headerlink" title="NIC初始化的目标"></a>NIC初始化的目标</h2><ol>
+<li>正确处理参数</li>
+<li>向内核声明 net_device 数据结构。</li>
+<li>申请所需资源：IRQ线用于中断，NIC必须分派一个IRQ，虚拟设备则不需要。I&#x2F;O端口和内存注册（request_region 和 release_region注册及释放）。</li>
+</ol>
+<h3 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h3><ul>
+<li>模块选项（module_param系列的宏）：模块加载时可选项。当内核启动时，无法在引导期间提供。可以在&#x2F;sys 目录中修改。</li>
+<li>引导期间内核选项 （__setup 系列的宏）：引导期间可选项，主要由用户可内建在内核的模块和不能编译成模块的内核组件使用。</li>
+</ul>
+<p>&#x2F;drivers&#x2F;block&#x2F;loop.c 中有使用以上两种方法的示例</p>
+<h4 id="模块选项"><a href="#模块选项" class="headerlink" title="模块选项"></a>模块选项</h4><p>内核模块是使用module_param宏的方式定义其参数，参见<code>/include/linux/moduleparam.h</code>文件中的列表。module_param需要三个参数，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">module_param(max_interrupt_work, <span class="type">int</span>, <span class="number">0444</span>);</span><br></pre></td></tr></table></figure>
+<p>第一个参数是给用户使用的参数名称；第二个是参数类型（例如：整形）；第三个参数表示参数作为文件输出到&#x2F;sys时，分配给该文件的权限。</p>
+<p>每个模块都在&#x2F;sys&#x2F;modules中被分配一个目录。param_name参数对应文件为：&#x2F;sys&#x2F;modules&#x2F;{module}&#x2F;paramenters&#x2F;{param_name}。<br>如果需要可以修改此参数，模块应当有一种机制可以监测修改，或者能处理修改。</p>
+<h3 id="IRQ"><a href="#IRQ" class="headerlink" title="IRQ"></a>IRQ</h3><h4 id="常用中断"><a href="#常用中断" class="headerlink" title="常用中断"></a>常用中断</h4><ul>
+<li>接收一帧。</li>
+<li>传输失败：二进制指数后退功能失败时产生。驱动程序不会转发此失败，通过其他方式通知这种失败（定时器到期、拒绝接受的ack等等）</li>
+<li>DMA传输已经完成。</li>
+<li>设备有足够的内存处理新传输：当队列出口没有足够空间保存一个最大尺寸帧的情况下，NIC设备会停止出口队列从而停止传输。中断到来时重新启动。</li>
+</ul>
+<h4 id="中断共享"><a href="#中断共享" class="headerlink" title="中断共享"></a>中断共享</h4><p>IRQ是有限的资源，增加系统支持的设备数量的简单方式就是允许多个设备共享中断资源。申请IRQ时需要指定是否允许其他设备共享IRQ。<br>IRQ的处理例程存储在一个表向量中，当多个设备共享同一个IRQ时，一个列表中才会有一个以上的元素。IRQ的数量根据具体的体系结构不同可以从15（x86）到200以上。</p>
+<h2 id="设备处理层初始化：net-dev-init"><a href="#设备处理层初始化：net-dev-init" class="headerlink" title="设备处理层初始化：net_dev_init"></a>设备处理层初始化：net_dev_init</h2><p>p104</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2023/04/23/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/%E8%AE%BE%E5%A4%87%E5%88%9D%E5%A7%8B%E5%8C%96/" data-id="cm6yz33dw002d8zlvc9swbw5n" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/04/23/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95/e1000e%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F%E8%A7%A3%E6%9E%90/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          linux e1000e驱动程序解析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/04/10/linux/linux%20%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">linux 字符设备驱动</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/arm64/">arm64</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux/%E3%80%8A%E7%B2%BE%E9%80%9Alinux%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E3%80%8B/">《精通linux设备驱动开发》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/">linux内核</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E5%86%85%E6%A0%B8/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8%E3%80%8B/">《深入理解linux内核》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/">linux网络</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E7%BD%91%E7%BB%9C/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF%E5%86%85%E5%B9%95%E3%80%8B/">《深入理解linux网络技术内幕》</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/">linux驱动</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/linux%E9%A9%B1%E5%8A%A8/%E3%80%8Alinux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E3%80%8B/">《linux驱动开发入门与实战》</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/arm64/" rel="tag">arm64</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/boot/" rel="tag">boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dev/" rel="tag">dev</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dtb%E6%96%87%E4%BB%B6/" rel="tag">dtb文件</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%86%85%E6%A0%B8/" rel="tag">linux内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">linux嵌入式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E7%BD%91%E7%BB%9C/" rel="tag">linux网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux%E9%A9%B1%E5%8A%A8/" rel="tag">linux驱动</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E6%A0%B8/" rel="tag">内核</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" rel="tag">嵌入式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/arm64/" style="font-size: 10px;">arm64</a> <a href="/tags/boot/" style="font-size: 10px;">boot</a> <a href="/tags/dev/" style="font-size: 10px;">dev</a> <a href="/tags/dtb%E6%96%87%E4%BB%B6/" style="font-size: 10px;">dtb文件</a> <a href="/tags/linux/" style="font-size: 18px;">linux</a> <a href="/tags/linux%E5%86%85%E6%A0%B8/" style="font-size: 20px;">linux内核</a> <a href="/tags/linux%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">linux嵌入式</a> <a href="/tags/linux%E7%BD%91%E7%BB%9C/" style="font-size: 14px;">linux网络</a> <a href="/tags/linux%E9%A9%B1%E5%8A%A8/" style="font-size: 16px;">linux驱动</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 12px;">内核</a> <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/" style="font-size: 10px;">嵌入式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">二月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/05/">五月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/12/">十二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/02/10/linux/book-%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3linux%E5%86%85%E6%A0%B8/static/Readme/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E6%B5%8B%E8%AF%95%E6%8F%90%E4%BA%A4/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/10/%E7%AC%94%E8%AE%B0%E6%9C%AC%E6%98%BE%E7%A4%BA%E5%B1%8F%E5%88%B6%E4%BD%9C%E6%98%BE%E7%A4%BA%E5%99%A8/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2024/05/19/linux/book-linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98/linux%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E6%88%98%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95/">《linux驱动开发入门与实战》目录索引</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2025 marykt<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">历史文章</a>
+  
+  
+    <a href="https://marykt.top:9001"  target="_blank" class="mobile-nav-link">我的网盘</a>
+  
+    <a href="https://marykt.top:9003"  target="_blank" class="mobile-nav-link">gitea</a>
+  
+    <a href="https://marykt.top:9048"  target="_blank" class="mobile-nav-link">chatAI(llama2-chinese)</a>
+  
+    <a href="https://marykt.top:9047"  target="_blank" class="mobile-nav-link">drawAI(Stable-diffusion)</a>
+  
+</nav>
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>
